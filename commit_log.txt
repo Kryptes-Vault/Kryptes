@@ -4,3 +4,4 @@
 [11-10-2025 17:07:01] Style: Zero-Knowledge typography refinement
 [01-12-2025 16:51:01] Logic: SYLLABLE splitting animation logic
 [30-10-2025 12:46:01] Cleanup: Remove platform specific tags
+[03-10-2025 19:37:01] Visual: Implement KRYPTEX branding
