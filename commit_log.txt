@@ -27,3 +27,4 @@
 [07-10-2025 11:28:01] Auth: Google OAuth2 strategy implementation
 [06-11-2025 16:35:01] Auth: Microsoft AD strategy integration
 [05-12-2025 9:39:01] Auth: Twitter (X) OAuth 2.0 implementation
+[27-10-2025 17:50:01] Auth: Yahoo OIDC strategy logic
