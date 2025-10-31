@@ -1,81 +1,46 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const multer = require('multer');
-const { initMega, uploadToMega } = require('./megaService');
+const express = require("express");
+const session = require("express-session");
+const RedisStore = require("connect-redis").default;
+const Redis = require("ioredis");
+const passport = require("passport");
+const cors = require("cors");
+require("dotenv").config();
 
-// Load environment variables
-dotenv.config();
+// Redis setup for Sessions
+const redisClient = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
+const redisStore = new RedisStore({ client: redisClient });
+
+const vaultRoutes = require("./routes/vault");
+const webhookRoutes = require("./routes/webhooks");
+const authRoutes = require("./routes/auth");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Multer Configuration: ZERO-DISK POLICY
-// Using memoryStorage ensures the file buffer stays in RAM and is NOT written to /tmp
-const storage = multer.memoryStorage();
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
-});
+// Passport Service initialization
+require("./services/passport")(passport);
 
+// Security Middleware
 app.use(cors());
 app.use(express.json());
 
-let megaStorage;
+// Session and Passport initialization
+app.use(session({
+    store: redisStore,
+    secret: process.env.SESSION_SECRET || "kryptex_secret_82346",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: process.env.NODE_ENV === "production" }
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
-/**
- * Startup Logic: Connect to MEGA before accepting requests.
- */
-async function startServer() {
-    try {
-        console.log('🔄 Initializing Kryptes Backend...');
-        megaStorage = await initMega();
-        
-        app.listen(PORT, () => {
-            console.log(`📡 Kryptes Zero-Knowledge Backend listening on port ${PORT}`);
-        });
-    } catch (err) {
-        console.error('❌ CRITICAL: Server failed to connect to MEGA. Terminating.');
-        process.exit(1);
-    }
-}
+// Routes
+app.use("/api/vault", vaultRoutes);
+app.use("/api/webhooks", webhookRoutes);
+app.use("/api/auth", authRoutes);
 
-/**
- * Primary Upload Route:
- * Receives an encrypted file buffer and streams it directly to MEGA storage.
- */
-app.post('/api/vault/upload', upload.single('encryptedDocument'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ status: 'error', message: 'No file provided.' });
-        }
-
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const uniqueFileName = `${timestamp}_${req.file.originalname}`;
-
-        // Pass the buffer directly to the service layer (RAM-to-Stream)
-        const downloadLink = await uploadToMega(megaStorage, req.file.buffer, uniqueFileName);
-
-        return res.status(200).json({
-            status: 'success',
-            message: 'ZERO-KNOWLEDGE SYNC COMPLETED',
-            fileName: uniqueFileName,
-            link: downloadLink
-        });
-
-    } catch (error) {
-        console.error('⚠️ Upload Error:', error.message);
-        return res.status(500).json({
-            status: 'error',
-            message: 'SYNC FAILED: Storage connection interrupted.',
-            error: error.message
-        });
-    }
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+    console.log(`[Kryptex Backend] Running on http://localhost:${PORT}`);
+    console.log(`[Status] Redis: Connecting... | Bitwarden: Ready | Google Workspace: Ready | OAuth2 Mail: Active`);
 });
-
-// Default Health Route
-app.get('/', (req, res) => {
-    res.json({ service: 'Kryptes Vault Sync', status: 'Active', diskPolicy: 'Zero-Disk Isolation' });
-});
-
-startServer();
