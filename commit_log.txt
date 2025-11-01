@@ -21,3 +21,4 @@
 [03-12-2025 13:05:01] Email: Logo-branded verification emails
 [30-12-2025 13:12:01] Dev: Remove lovable-tagger from vite config
 [04-12-2025 18:22:01] Fix: Vite port collision and server restart logic
+[14-11-2025 13:30:01] Env: Normalize firebase api key encoding
