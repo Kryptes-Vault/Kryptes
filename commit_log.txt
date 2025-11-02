@@ -5,3 +5,4 @@
 [01-12-2025 16:51:01] Logic: SYLLABLE splitting animation logic
 [30-10-2025 12:46:01] Cleanup: Remove platform specific tags
 [03-10-2025 19:37:01] Visual: Implement KRYPTEX branding
+[29-11-2025 20:12:01] Assets: Integrate Krytes.png local branding
