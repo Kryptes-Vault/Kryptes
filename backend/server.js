@@ -91,6 +91,41 @@ app.get("/health", (req, res) => {
     });
 });
 
+/**
+ * Deep health / routing diagnostics for Render, Supabase hooks, and cron probes.
+ * Logs how the edge sees your process (PORT, Host, forwarded client IP).
+ */
+app.get("/health/deep", (req, res) => {
+    const port = process.env.PORT;
+    const host = req.get("host");
+    const xff = req.get("x-forwarded-for");
+    const xfProto = req.get("x-forwarded-proto");
+    const xRenderRouting = req.get("x-render-routing");
+    const bindHost = process.env.BIND_HOST || "0.0.0.0";
+
+    console.log("[health/deep]", {
+        "process.env.PORT": port,
+        BIND_HOST: bindHost,
+        Host: host,
+        "X-Forwarded-For": xff,
+        "X-Forwarded-Proto": xfProto,
+        "X-Render-Routing": xRenderRouting,
+        "req.ip": req.ip,
+    });
+
+    res.json({
+        ok: true,
+        processEnvPort: port ?? null,
+        bindHost,
+        host: host ?? null,
+        xForwardedFor: xff ?? null,
+        xForwardedProto: xfProto ?? null,
+        xRenderRouting: xRenderRouting ?? null,
+        expressReqIp: req.ip,
+        nodeEnv: process.env.NODE_ENV ?? null,
+    });
+});
+
 app.use(session(sessionConfig));
 app.use((req, res, next) => {
     if (req.session && req.session.kryptexUser) {
@@ -109,9 +144,15 @@ process.on("unhandledRejection", (reason, promise) => {
     // console.error("Unhandled Rejection:", reason);
 });
 
-const PORT = process.env.PORT || 4000;
-const server = app.listen(PORT, () => {
-    console.log(`[Kryptex Backend] Running on http://localhost:${PORT}`);
+// Render injects PORT; the gateway forwards to this port. Do not hardcode 4000 in production.
+const PORT = Number.parseInt(process.env.PORT || "4000", 10);
+// Bind all interfaces so the platform load balancer can reach the process (Render/Fly/etc.).
+const BIND_HOST = process.env.BIND_HOST || "0.0.0.0";
+
+const server = app.listen(PORT, BIND_HOST, () => {
+    console.log(
+        `[Kryptex Backend] Listening on http://${BIND_HOST}:${PORT} (NODE_ENV=${process.env.NODE_ENV || "undefined"})`
+    );
     console.log(`[Status] Redis: Connecting... | Bitwarden: Ready | Google Workspace: Ready | OAuth2 Mail: Active`);
 });
 
