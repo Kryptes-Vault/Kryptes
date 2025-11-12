@@ -19,29 +19,35 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-type SettingsTab = "account" | "security" | "vault" | "data";
+type SettingsTab = "identity" | "account" | "security" | "vault" | "categories" | "data";
 
 interface SettingsProps {
   user: any;
   onSignOut: () => void;
+  activeTab?: SettingsTab;
 }
 
-const SettingsView = ({ user, onSignOut }: SettingsProps) => {
-  const [activeTab, setActiveTab] = useState<SettingsTab>("account");
+const SettingsView = ({ user, onSignOut, activeTab: externalActiveTab }: SettingsProps) => {
+  const [internalActiveTab, setInternalActiveTab] = useState<SettingsTab>("identity");
   const [confirmDelete, setConfirmDelete] = useState("");
 
+  const activeTab = externalActiveTab || internalActiveTab;
+  const setActiveTab = (tab: SettingsTab) => setInternalActiveTab(tab);
+
   const menuItems = [
+    { id: "identity", label: "Identity Profile", icon: User },
     { id: "account", label: "Account & Identity", icon: User },
     { id: "security", label: "Security & Access", icon: Shield },
     { id: "vault", label: "Vault Preferences", icon: Settings2 },
+    { id: "categories", label: "Vault Categories", icon: Database },
     { id: "data", label: "Data Management", icon: Database },
   ];
 
   const renderContent = () => {
     switch (activeTab) {
-      case "account":
+      case "identity":
         return (
-          <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
+          <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
             <section className="space-y-6">
               <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#FF3300]">Identity Profile</h3>
               <div className="bg-[#f8f8f8] border border-black/5 rounded-2xl p-6 flex items-center gap-6">
@@ -54,7 +60,12 @@ const SettingsView = ({ user, onSignOut }: SettingsProps) => {
                 </div>
               </div>
             </section>
+          </motion.div>
+        );
 
+      case "account":
+        return (
+          <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
             <section className="space-y-6">
               <div className="flex items-center gap-3">
                 <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#FF3300]">Master Revision</h3>
@@ -206,6 +217,19 @@ const SettingsView = ({ user, onSignOut }: SettingsProps) => {
           </motion.div>
         );
 
+      case "categories":
+        return (
+          <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
+            <section className="space-y-6">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#FF3300]">Vault Categories</h3>
+              <div className="rounded-2xl border border-black/5 bg-[#f8f8f8] p-6">
+                <p className="text-xs font-bold text-black">Category controls</p>
+                <p className="mt-1 text-[10px] leading-relaxed text-black/40">Organize, rename, and maintain your vault taxonomy here.</p>
+              </div>
+            </section>
+          </motion.div>
+        );
+
       case "data":
         return (
           <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
@@ -257,27 +281,9 @@ const SettingsView = ({ user, onSignOut }: SettingsProps) => {
             </button>
           </div>
 
-          <nav className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {menuItems.map((item) => {
-              const active = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id as SettingsTab)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[10px] font-bold uppercase tracking-widest transition-all ${
-                    active
-                      ? "bg-[#FF3300] text-white shadow-lg shadow-[#FF3300]/20"
-                      : "bg-[#f8f8f8] text-black/50 hover:text-black"
-                  }`}
-                >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="max-w-3xl">{renderContent()}</div>
+          <div className="grid grid-cols-1 gap-6">
+            <div className="max-w-3xl">{renderContent()}</div>
+          </div>
         </div>
       </main>
     </div>
