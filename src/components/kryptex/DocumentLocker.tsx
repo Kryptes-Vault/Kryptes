@@ -370,7 +370,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
             </button>
           </div>
 
-          <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">Vault Categories</p>
+          <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4"></p>
           <nav className="flex flex-col gap-1">
             {folderOptions.map((folder) => (
               <button
