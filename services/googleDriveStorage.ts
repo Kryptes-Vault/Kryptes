@@ -134,6 +134,18 @@ function getJwtClient(): JWT {
   return jwtSingleton;
 }
 
+/** Same JWT used by `getDriveClient()` — pass to `verifyDriveConnection`. */
+export function getDriveAuthClient(): JWT {
+  return getJwtClient();
+}
+
+/** True when env or discovered JSON provides service-account credentials. */
+export function isGoogleDriveConfigured(): boolean {
+  if (process.env.GDRIVE_CLIENT_EMAIL?.trim() && process.env.GDRIVE_PRIVATE_KEY) return true;
+  if (process.env.GDRIVE_CREDENTIALS_PATH?.trim()) return true;
+  return resolveCredentialsPath() !== null;
+}
+
 /** Lazily constructs `google.drive({ version: 'v3', auth })` with service-account JWT. */
 export function getDriveClient(): drive_v3.Drive {
   if (driveSingleton) return driveSingleton;
