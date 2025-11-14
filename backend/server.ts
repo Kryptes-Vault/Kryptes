@@ -16,6 +16,8 @@ const authRoutes = require("./routes/auth");
 const { handleSendEmailHook } = require("./routes/authEmailHook");
 const { corsOptions, getSessionCookieOptions } = require("./config/auth");
 const {
+  queueMegaUpload,
+  isMegaUploadBlockedError,
   getMegaStorage,
 } = require("./services/megaUploadQueue") as typeof import("./services/megaUploadQueue");
 
@@ -64,7 +66,6 @@ type MegaNode = {
 
 type MegaStorage = {
   root: MegaNode;
-  upload: (opts: { name: string; size: number }, buffer: undefined, cb: (err: any, file: MegaNode) => void) => { end: (buf: Buffer) => void };
 };
 
 type DocumentRecord = {
@@ -171,20 +172,6 @@ function initMegaStorage(): Promise<MegaStorage> {
     (s) => s as unknown as MegaStorage,
     (e: unknown) => Promise.reject(new Error(megaErrorMessage(e)))
   );
-}
-
-async function uploadBufferToMega(storage: MegaStorage, fileBuffer: Buffer, storedName: string) {
-  return new Promise<MegaNode>((resolve, reject) => {
-    const uploadStream = storage.upload(
-      { name: storedName, size: fileBuffer.length },
-      undefined,
-      (err: any, file: MegaNode) => {
-        if (err) return reject(err);
-        resolve(file);
-      }
-    );
-    uploadStream.end(fileBuffer);
-  });
 }
 
 async function makeNodePublicLink(node: MegaNode): Promise<string> {
@@ -444,10 +431,8 @@ app.post("/api/documents/upload", upload.single("file"), async (req: any, res: a
   scrubBuffer(file.buffer);
 
   try {
-    const storage = await initMegaStorage();
     const storedName = toStoredName(folder, file.originalname);
-    const uploadedNode = await uploadBufferToMega(storage, sourceBuffer, storedName);
-    const previewUrl = await makeNodePublicLink(uploadedNode);
+    const previewUrl = await queueMegaUpload(sourceBuffer, storedName);
     scrubBuffer(sourceBuffer);
 
     return res.status(201).json({
@@ -464,6 +449,12 @@ app.post("/api/documents/upload", upload.single("file"), async (req: any, res: a
     });
   } catch (error) {
     scrubBuffer(sourceBuffer);
+    if (isMegaUploadBlockedError(error)) {
+      return res.status(error.httpStatus).json({
+        error: error.message,
+        code: "MEGA_EBLOCKED",
+      });
+    }
     return res.status(500).json({ error: error instanceof Error ? error.message : "Upload failed." });
   }
 });
