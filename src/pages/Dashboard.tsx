@@ -1,44 +1,30 @@
-﻿import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FileText,
-  FileImage,
-  Image,
-  FileType2,
-  Archive,
   Briefcase,
   Key,
   KeyRound,
   LayoutGrid,
   LogOut,
-  Plus,
-  ScrollText,
   Shield,
-  Lock,
-  Flame,
   User,
-  Layout,
   Receipt,
   Settings,
   QrCode,
-  Menu,
-  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AddSecretModal } from "@/components/kryptex/AddSecretModal";
 import { AddPasswordModal } from "@/components/kryptex/AddPasswordModal";
 import AddNodeModal from "@/components/kryptex/AddNodeModal";
-import { AuditLogView } from "@/components/kryptex/AuditLogView";
 import { BurnShareModal } from "@/components/kryptex/BurnShareModal";
 import SettingsView from "@/components/kryptex/SettingsView";
 import TwoFAMigrationWizard from "@/components/kryptex/TwoFAMigrationWizard";
 import DocumentLocker from "@/components/kryptex/DocumentLocker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SecureVaultView } from "@/components/kryptex/SecureVaultView";
 import { PasswordGrid } from "@/components/kryptex/PasswordGrid";
 import type { CategoryFilter } from "@/hooks/usePasswordVault";
-import type { DocumentFormat } from "@/components/kryptex/DocumentLocker";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useVaultItems, type VaultItemRow } from "@/hooks/useVaultItems";
 import { useVaultMasterKey } from "@/hooks/useVaultMasterKey";
@@ -52,9 +38,8 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useSupabaseUser();
   const legacySessionKey = useVaultMasterKey();
-  const { items, loading: vaultLoading, error: vaultError, reload: reloadVault } = useVaultItems(user?.id ?? null);
+  const { items, reload: reloadVault } = useVaultItems(user?.id ?? null);
   const [viewMode, setViewMode] = useState<ViewMode>("documents");
-  const [documentFormat, setDocumentFormat] = useState<DocumentFormat | "all">("all");
   const [passwordCategory, setPasswordCategory] = useState<CategoryFilter>("all");
   const [addNodeOpen, setAddNodeOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -103,26 +88,8 @@ const Dashboard = () => {
     user?.email?.split("@")[0] ||
     "Agent";
 
-  const avatarUrl =
-    user?.user_metadata?.avatar_url ||
-    user?.user_metadata?.picture ||
-    null;
-
-  const initials =
-    displayName?.slice(0, 2)?.toUpperCase() ?? "KX";
-
-  const provider =
-    user?.app_metadata?.provider ||
-    "email";
-
-  const documentTypes = [
-    { id: "all" as const, label: "All Documents", icon: LayoutGrid },
-    { id: "pdf" as const, label: "PDF", icon: FileText },
-    { id: "png" as const, label: "PNG", icon: FileImage },
-    { id: "jpeg" as const, label: "JPEG", icon: Image },
-    { id: "webp" as const, label: "WEBP", icon: Image },
-    { id: "docx" as const, label: "DOCX", icon: FileType2 },
-  ];
+  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  const initials = displayName?.slice(0, 2)?.toUpperCase() ?? "KX";
 
   const passwordSections = [
     { id: "all" as const, label: "All Credentials", icon: LayoutGrid },
@@ -132,12 +99,8 @@ const Dashboard = () => {
     { id: "finance" as const, label: "Finance", icon: Shield },
   ];
 
-  const activeSidebarItems =
-    viewMode === "documents"
-      ? documentTypes
-      : viewMode === "passwords"
-      ? passwordSections
-      : [];
+  const activeSidebarItems = viewMode === "passwords" ? passwordSections : [];
+  const showMainSidebar = viewMode === "passwords";
 
   if (authLoading || !user) {
     return (
@@ -152,15 +115,14 @@ const Dashboard = () => {
 
   return (
     <div className="flex h-screen w-full bg-[#fafafa] text-[#111] font-sans selection:bg-[#FF3B13] selection:text-white overflow-hidden">
-      {/* ── App Control Bar (Thin Sidebar) ────────────────────────────────── */}
       <aside className="hidden lg:flex w-16 flex-col items-center border-r border-black/5 bg-white py-6 shrink-0">
         <div className="flex flex-col items-center gap-6">
           <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-black/5 border border-black/5">
             <img src="/Krytes.png" alt="Logo" className="w-full h-full object-cover" />
           </div>
-          
+
           <div className="w-8 h-[1px] bg-black/5" />
-          
+
           <nav className="flex flex-col items-center gap-4">
             {[
               { id: "documents", icon: FileText },
@@ -175,9 +137,7 @@ const Dashboard = () => {
                   setSidebarOpen(false);
                 }}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                  viewMode === item.id 
-                    ? "bg-black text-white" 
-                    : "text-black/30 hover:bg-black/5 hover:text-black/60"
+                  viewMode === item.id ? "bg-black text-white" : "text-black/30 hover:bg-black/5 hover:text-black/60"
                 }`}
               >
                 <item.icon className="w-5 h-5" />
@@ -185,7 +145,7 @@ const Dashboard = () => {
             ))}
           </nav>
         </div>
-        
+
         <div className="mt-auto">
           {avatarUrl ? (
             <img src={avatarUrl} className="h-8 w-8 rounded-lg object-cover ring-2 ring-black/5" />
@@ -197,75 +157,61 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      {/* ── Dashboard Sidebar (Main Sidebar) ─────────────────────────────── */}
-      <aside
-        className={`fixed inset-y-0 left-16 z-50 w-64 border-r border-black/5 bg-white transition-all duration-300 lg:static ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        } flex flex-col shrink-0`}
-      >
-        <div className="flex h-16 items-center px-6 border-b border-black/5 gap-3">
-          <button
-            type="button"
-            className="ml-auto lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <LogOut className="w-4 h-4 text-black/20" />
-          </button>
-        </div>
+      {showMainSidebar && (
+        <aside
+          className={`fixed inset-y-0 left-16 z-50 w-64 border-r border-black/5 bg-white transition-all duration-300 lg:static ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          } flex flex-col shrink-0`}
+        >
+          <div className="flex h-16 items-center px-6 border-b border-black/5 gap-3">
+            <button type="button" className="ml-auto lg:hidden" onClick={() => setSidebarOpen(false)}>
+              <LogOut className="w-4 h-4 text-black/20" />
+            </button>
+          </div>
 
-        <nav className="mt-6 flex-1 space-y-1 px-3">
-          {activeSidebarItems.map((item) => {
-            const active = viewMode === "documents" ? documentFormat === item.id : passwordCategory === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  if (viewMode === "documents") {
-                    setDocumentFormat(item.id as DocumentFormat | "all");
-                  } else {
+          <nav className="mt-6 flex-1 space-y-1 px-3">
+            {activeSidebarItems.map((item) => {
+              const active = passwordCategory === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
                     setPasswordCategory(item.id as CategoryFilter);
-                  }
-                  setSidebarOpen(false);
-                }}
-                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[11px] font-bold uppercase tracking-widest transition-all ${
-                  active
-                    ? "bg-[#FF3B13] text-white shadow-lg shadow-[#FF3B13]/20"
-                    : "text-black/40 hover:bg-black/[0.03] hover:text-black/70"
-                }`}
-              >
-                <item.icon className="w-4 h-4 shrink-0" />
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
+                    setSidebarOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[11px] font-bold uppercase tracking-widest transition-all ${
+                    active ? "bg-[#FF3B13] text-white shadow-lg shadow-[#FF3B13]/20" : "text-black/40 hover:bg-black/[0.03] hover:text-black/70"
+                  }`}
+                >
+                  <item.icon className="w-4 h-4 shrink-0" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
 
-        <div className="mt-auto border-t border-black/5 p-4 flex flex-col items-center gap-3">
-          <button
-            type="button"
-            onClick={() => void handleSignOut()}
-            className="w-full flex items-center justify-center gap-2 rounded-xl border border-black/5 py-3 text-[10px] font-bold uppercase tracking-widest text-black/40 hover:text-[#FF3B13] transition-all"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Sign out
-          </button>
-        </div>
-      </aside>
-
-      {/* Sidebar overlay (mobile) */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+          <div className="mt-auto border-t border-black/5 p-4 flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-black/5 py-3 text-[10px] font-bold uppercase tracking-widest text-black/40 hover:text-[#FF3B13] transition-all"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sign out
+            </button>
+          </div>
+        </aside>
       )}
 
-      {/* ── Main content area ─────────────────────────────────────────── */}
+      {showMainSidebar && sidebarOpen && (
+        <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-[1200px] mx-auto">
-            {viewMode === "documents" && <DocumentLocker activeFormat={documentFormat} />}
+            {viewMode === "documents" && <DocumentLocker />}
 
             {viewMode === "passwords" && (
               <div className="space-y-6">
@@ -314,31 +260,22 @@ const Dashboard = () => {
               </div>
             )}
 
-            {viewMode === "settings" && (
-              <SettingsView user={user} onSignOut={handleSignOut} />
-            )}
-
+            {viewMode === "settings" && <SettingsView user={user} onSignOut={handleSignOut} />}
             {viewMode === "authenticator" && <TwoFAMigrationWizard />}
           </div>
         </main>
       </div>
 
-{addNodeOpen && (
-          <AddNodeModal
-            onClose={() => setAddNodeOpen(false)}
-            onSave={(data) => {
-              console.log("Saving new node:", data);
-              reloadVault();
-            }}
-          />
-        )}
+      {addNodeOpen && (
+        <AddNodeModal
+          onClose={() => setAddNodeOpen(false)}
+          onSave={() => {
+            reloadVault();
+          }}
+        />
+      )}
 
-        <AddSecretModal
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        userId={user.id}
-        onCreated={() => void reloadVault()}
-      />
+      <AddSecretModal open={addOpen} onOpenChange={setAddOpen} userId={user.id} onCreated={() => void reloadVault()} />
 
       <BurnShareModal
         open={burnItem != null}
@@ -350,12 +287,7 @@ const Dashboard = () => {
         onShared={() => void reloadVault()}
       />
 
-      <AddPasswordModal
-        open={addPasswordOpen}
-        onOpenChange={setAddPasswordOpen}
-        userId={user.id}
-        onCreated={() => void reloadVault()}
-      />
+      <AddPasswordModal open={addPasswordOpen} onOpenChange={setAddPasswordOpen} userId={user.id} onCreated={() => void reloadVault()} />
     </div>
   );
 };
