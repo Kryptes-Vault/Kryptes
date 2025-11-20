@@ -362,8 +362,8 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
     <>
     <div className="bg-white text-black min-h-full">
       <div className="w-full flex flex-col md:flex-row">
-        {/* Left Sidebar for Folders */}
-        <aside className="w-full md:w-64 flex flex-col pt-8 px-6 border-r border-black/5 min-h-screen bg-[#f7f7f7]">
+        {/* Left Sidebar for Folders - Matches Main Sidebar Geometry */}
+        <aside className="w-full md:w-64 flex flex-col pt-8 px-6 bg-[#f7f7f7] rounded-tr-[2.5rem] min-h-screen">
           <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">Vault Categories</p>
           <nav className="flex flex-col gap-1">
             {folderOptions.map((folder) => (
