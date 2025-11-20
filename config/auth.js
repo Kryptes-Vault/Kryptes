@@ -6,9 +6,7 @@
  * - REDIS_URL
  * - API_BASE_URL (e.g. https://kryptes.onrender.com)
  * - FRONTEND_URL (e.g. https://kryptes.vercel.app)
- * - Google: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL
- * - X/Twitter: TWITTER_CLIENT_ID, TWITTER_CLIENT_SECRET, TWITTER_CALLBACK_URL
- * - Yahoo OAuth 2: YAHOO_CLIENT_ID, YAHOO_CLIENT_SECRET, YAHOO_CALLBACK_URL
+ * - SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (API — validate JWT + sync session)
  */
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://kryptes.vercel.app";
@@ -61,7 +59,7 @@ module.exports = {
 
 /*
  * ---------------------------------------------------------------------------
- * Environment variable template (copy into .env)
+ * Environment variable template (copy into .env on Render)
  * ---------------------------------------------------------------------------
  *
  * # Core
@@ -76,20 +74,9 @@ module.exports = {
  * # Redis (Upstash / Redis Cloud — single URL)
  * REDIS_URL=rediss://default:password@host:port
  *
- * # Google OAuth 2.0
- * GOOGLE_CLIENT_ID=
- * GOOGLE_CLIENT_SECRET=
- * GOOGLE_CALLBACK_URL=https://kryptes.onrender.com/api/auth/google/callback
- *
- * # X (Twitter) OAuth 2.0 — Client ID / Secret from developer portal
- * TWITTER_CLIENT_ID=
- * TWITTER_CLIENT_SECRET=
- * TWITTER_CALLBACK_URL=https://kryptes.onrender.com/api/auth/twitter/callback
- *
- * # Yahoo OAuth 2.0 / OpenID Connect (Yahoo Developer Network — OAuth 2 credentials)
- * YAHOO_CLIENT_ID=
- * YAHOO_CLIENT_SECRET=
- * YAHOO_CALLBACK_URL=https://kryptes.onrender.com/api/auth/yahoo/callback
+ * # Supabase (server — use service role; never expose to Vercel)
+ * SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+ * SUPABASE_SERVICE_ROLE_KEY=your_service_role_jwt
  *
  * ---------------------------------------------------------------------------
  */
