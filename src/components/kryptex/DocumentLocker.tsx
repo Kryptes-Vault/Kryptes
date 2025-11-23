@@ -400,8 +400,17 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
         body: form,
         credentials: "include",
       });
-      const data = await response.json();
-      if (!response.ok || !data?.document) throw new Error(data?.error || "Upload failed");
+      let data: { document?: unknown; error?: string };
+      try {
+        data = (await response.json()) as { document?: unknown; error?: string };
+      } catch {
+        toast.error(`Upload failed (${response.status}).`);
+        return;
+      }
+      if (!response.ok || !data?.document) {
+        toast.error(typeof data?.error === "string" ? data.error : `Upload failed (${response.status}).`);
+        return;
+      }
       const uploadedDoc: LockerDocument = {
         id: data.document.id,
         name: data.document.name,
@@ -414,6 +423,8 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
         previewUrl: data.document.previewUrl,
       };
       syncDocument(uploadedDoc);
+    } catch (e) {
+      toast.error(networkFetchToastMessage(e));
     } finally {
       window.clearInterval(interval);
       setUploads((prev) => prev.filter((item) => item.id !== tempId));
