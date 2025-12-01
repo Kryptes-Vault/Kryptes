@@ -2,3 +2,4 @@
 [21-12-2025 20:39:01] UX: Scroll-driven card divergence animation
 [05-12-2025 17:06:01] UI: Interlocking font selection for HERO section
 [11-10-2025 17:07:01] Style: Zero-Knowledge typography refinement
+[01-12-2025 16:51:01] Logic: SYLLABLE splitting animation logic
