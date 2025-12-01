@@ -4,8 +4,10 @@ import { VaultWidget } from "@/components/dashboard/VaultWidget";
 import { FinanceWidget } from "@/components/dashboard/FinanceWidget";
 import { EmailWidget } from "@/components/dashboard/EmailWidget";
 import { ScheduleWidget } from "@/components/dashboard/ScheduleWidget";
+import { AllExpensesSection } from "@/components/dashboard/AllExpensesSection";
 
 const navItems = [
+  { id: "all-expenses", label: "All Expenses", icon: BarChart3 },
   { id: "vault", label: "Vault", icon: Shield },
   { id: "finance", label: "Finance", icon: BarChart3 },
   { id: "email", label: "Email", icon: Mail },
@@ -15,7 +17,7 @@ const navItems = [
 type NavId = (typeof navItems)[number]["id"];
 
 const Dashboard = () => {
-  const [activeNav, setActiveNav] = useState<NavId>("vault");
+  const [activeNav, setActiveNav] = useState<NavId>("all-expenses");
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -77,26 +79,30 @@ const Dashboard = () => {
           </div>
         </header>
 
-        {/* Bento Grid */}
+        {/* Content */}
         <div className="p-4 md:p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 auto-rows-min">
-            {/* Vault - spans 2 cols on xl */}
-            <div className="xl:col-span-2">
-              <VaultWidget />
+          {activeNav === "all-expenses" ? (
+            <AllExpensesSection />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 auto-rows-min">
+              {/* Vault - spans 2 cols on xl */}
+              <div className="xl:col-span-2">
+                <VaultWidget />
+              </div>
+              {/* Finance - spans 2 cols on xl */}
+              <div className="xl:col-span-2">
+                <FinanceWidget />
+              </div>
+              {/* Email - spans 2 cols on md, 2 on xl */}
+              <div className="md:col-span-1 xl:col-span-2">
+                <EmailWidget />
+              </div>
+              {/* Schedule */}
+              <div className="md:col-span-1 xl:col-span-2">
+                <ScheduleWidget />
+              </div>
             </div>
-            {/* Finance - spans 2 cols on xl */}
-            <div className="xl:col-span-2">
-              <FinanceWidget />
-            </div>
-            {/* Email - spans 2 cols on md, 2 on xl */}
-            <div className="md:col-span-1 xl:col-span-2">
-              <EmailWidget />
-            </div>
-            {/* Schedule */}
-            <div className="md:col-span-1 xl:col-span-2">
-              <ScheduleWidget />
-            </div>
-          </div>
+          )}
         </div>
       </main>
 
