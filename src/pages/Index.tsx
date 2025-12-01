@@ -1,4 +1,5 @@
 import { Shield, BarChart3, Mail, CalendarDays, Lock, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import smartphoneMockup from "@/assets/smartphone-ui-mockup.jpg";
 import laptopMockup from "@/assets/laptop-ui-mockup.jpg";
