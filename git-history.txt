@@ -1,1 +1,2 @@
 feat: add Zero-Knowledge Typography with syllable-level splitting
+style: implement onyx-long italic font scaling for hero section
