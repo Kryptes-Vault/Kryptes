@@ -124,7 +124,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#FAFAFB] text-[#111] font-sans selection:bg-[#0066FF] selection:text-white overflow-hidden flex-col">
+    <div className="flex h-screen w-full bg-white text-[#111] font-sans selection:bg-[#0066FF] selection:text-white overflow-hidden flex-col">
       {/* Full-Width Navigation Bar */}
       <header className="h-20 bg-white flex items-center justify-between px-6 lg:px-8 shrink-0 z-50">
         <div className="flex items-center gap-6 lg:gap-10">
@@ -191,7 +191,7 @@ const Dashboard = () => {
 
       <div className="flex flex-1 min-h-0 relative">
         {/* Original Mini Sidebar - Always Visible */}
-        <aside className="hidden lg:flex w-16 flex-col items-center bg-white py-6 shrink-0 relative z-40">
+        <aside className="hidden lg:flex w-16 flex-col items-center bg-[#f7f7f7] py-6 shrink-0 relative z-40">
           <nav className="flex flex-col items-center gap-4">
             {[
               { id: "documents", icon: FileText },
@@ -219,7 +219,7 @@ const Dashboard = () => {
         {showMainSidebar && (
           <aside className="hidden lg:flex w-[260px] flex-col bg-transparent shrink-0 relative z-30">
             {/* Sidebar Body with flush left and Rounded Top-Right Side */}
-            <div className="flex-1 flex flex-col bg-white border-r border-[#F3F4F6] rounded-tr-[2.5rem] ml-0 mt-0 mb-0 py-6 px-6 overflow-y-auto overflow-x-hidden shadow-[2px_0_12px_rgba(0,0,0,0.01)] transition-all">
+            <div className="flex-1 flex flex-col bg-[#f7f7f7] rounded-tr-[2.5rem] ml-0 mt-0 mb-0 py-6 px-6 overflow-y-auto overflow-x-hidden transition-all">
               <div className="mb-8">
                 <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">Vault Categories</p>
                 <nav className="flex flex-col gap-1">
@@ -274,7 +274,7 @@ const Dashboard = () => {
           </aside>
         )}
 
-        <main className="flex-1 overflow-y-auto bg-[#FAFAFB]">
+        <main className="flex-1 overflow-y-auto bg-white">
           <div className={`p-8 ${viewMode === "documents" ? "max-w-[1400px]" : "max-w-[1200px]"} mx-auto`}>
             {viewMode === "documents" && <DocumentLocker />}
             {/* ... other views ... */}
