@@ -4,3 +4,4 @@ feat: create book-opening vault door animation for central lock
 feat: implement horizontal divergence for feature cards on scroll
 ui: add authentication overlay with fixed viewport centering
 feat: implement 'Click-Outside' to revert login state
+ui: split 'ZERO-KNOWLEDGE' into multi-line stacked layout
