@@ -8,3 +8,4 @@ ui: split 'ZERO-KNOWLEDGE' into multi-line stacked layout
 ui: split 'DIGITAL ECOSYSTEM' into multi-line stacked layout
 refactor: improve cubic-bezier easing for high-fidelity transitions
 fix: resolve z-index stacking order for 'SECURE NOW' button
+feat: add password visibility toggle to login portal
