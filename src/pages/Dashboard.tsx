@@ -23,10 +23,7 @@ import {
   CreditCard,
   Target,
   Database,
-<<<<<<< HEAD
   Landmark
-=======
->>>>>>> e8715624721645242fe7c831993979066bea9673
 } from "lucide-react";
 import { toast } from "sonner";
 import { AddSecretModal } from "@/components/kryptex/AddSecretModal";
@@ -36,10 +33,7 @@ import { BurnShareModal } from "@/components/kryptex/BurnShareModal";
 import SettingsView from "@/components/kryptex/SettingsView";
 import TwoFAMigrationWizard from "@/components/kryptex/TwoFAMigrationWizard";
 import DocumentLocker from "@/components/kryptex/DocumentLocker";
-<<<<<<< HEAD
 import { BankingView } from "@/components/kryptex/BankingView";
-=======
->>>>>>> e8715624721645242fe7c831993979066bea9673
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordGrid } from "@/components/kryptex/PasswordGrid";
@@ -51,11 +45,7 @@ import { ENCRYPTION_VERSION_V2_PBKDF2 } from "@/lib/crypto/vaultCrypto";
 import { unlockVaultWithPassword } from "@/lib/kryptexVaultService";
 import { supabase } from "@/lib/supabase";
 
-<<<<<<< HEAD
 type ViewMode = "documents" | "passwords" | "banking" | "settings" | "authenticator";
-=======
-type ViewMode = "documents" | "passwords" | "settings" | "authenticator";
->>>>>>> e8715624721645242fe7c831993979066bea9673
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -64,10 +54,7 @@ const Dashboard = () => {
   const { items, reload: reloadVault } = useVaultItems(user?.id ?? null);
   const [viewMode, setViewMode] = useState<ViewMode>("documents");
   const [passwordCategory, setPasswordCategory] = useState<CategoryFilter>("all");
-<<<<<<< HEAD
   const [bankingCategory, setBankingCategory] = useState<"all" | "accounts" | "cards">("all");
-=======
->>>>>>> e8715624721645242fe7c831993979066bea9673
   const [addNodeOpen, setAddNodeOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addPasswordOpen, setAddPasswordOpen] = useState(false);
@@ -127,16 +114,11 @@ const Dashboard = () => {
   ];
 
   const activeSidebarItems = viewMode === "passwords" ? passwordSections : [];
-<<<<<<< HEAD
-  
   const bankingSections = [
     { id: "all" as const, label: "All Assets", icon: LayoutGrid },
     { id: "accounts" as const, label: "Bank Accounts", icon: Landmark },
     { id: "cards" as const, label: "Payment Cards", icon: CreditCard },
   ];
-
-=======
->>>>>>> e8715624721645242fe7c831993979066bea9673
   const [settingsTab, setSettingsTab] = useState("identity");
 
   const settingsSections = [
@@ -148,11 +130,7 @@ const Dashboard = () => {
     { id: "data", label: "Data Management", icon: Database },
   ];
 
-<<<<<<< HEAD
   const showMainSidebar = viewMode === "passwords" || viewMode === "settings" || viewMode === "banking";
-=======
-  const showMainSidebar = viewMode === "passwords" || viewMode === "settings";
->>>>>>> e8715624721645242fe7c831993979066bea9673
 
   if (authLoading || !user) {
     return (
@@ -178,14 +156,7 @@ const Dashboard = () => {
         </div>
 
         <div className="flex items-center gap-4 lg:gap-6">
-<<<<<<< HEAD
-=======
-          <div className="hidden lg:flex flex-1 max-w-sm relative">
-             <div className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-black/20">📍</div>
-             <input type="text" placeholder="Search here" className="h-10 w-full pl-10 pr-4 rounded-full border border-black/5 bg-[#FAFAFB] text-[12px] outline-none transition-all focus:border-[#FF3B13]/20 focus:ring-4 focus:ring-[#FF3B13]/5" />
-          </div>
 
->>>>>>> e8715624721645242fe7c831993979066bea9673
           <div className="flex items-center gap-4">
             <button className="text-black/40 hover:text-black/60 transition-colors">
               <Shield className="w-5 h-5" />
@@ -218,33 +189,21 @@ const Dashboard = () => {
         <aside className="hidden lg:flex w-16 flex-col items-center bg-[#f7f7f7] py-6 shrink-0 relative z-40">
           <nav className="flex flex-col items-center gap-4">
             {[
-<<<<<<< HEAD
               { id: "documents", icon: FileText, path: null },
               { id: "passwords", icon: KeyRound, path: null },
               { id: "banking", icon: CreditCard, path: null },
               { id: "authenticator", icon: QrCode, path: null },
               { id: "settings", icon: Settings, path: null },
-=======
-              { id: "documents", icon: FileText },
-              { id: "passwords", icon: KeyRound },
-              { id: "authenticator", icon: QrCode },
-              { id: "settings", icon: Settings },
->>>>>>> e8715624721645242fe7c831993979066bea9673
             ].map((item) => (
               <button
                 key={item.id}
                 onClick={() => {
-<<<<<<< HEAD
                   if (item.path) {
                     navigate(item.path);
                   } else {
                     setViewMode(item.id as ViewMode);
                     setSidebarOpen(false);
                   }
-=======
-                  setViewMode(item.id as ViewMode);
-                  setSidebarOpen(false);
->>>>>>> e8715624721645242fe7c831993979066bea9673
                 }}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
                   viewMode === item.id ? "bg-[#FF3B13] text-white shadow-md shadow-[#FF3B13]/20" : "text-black/30 hover:bg-black/5 hover:text-black/60"
@@ -263,11 +222,7 @@ const Dashboard = () => {
             <div className="flex-1 flex flex-col bg-[#f7f7f7] rounded-tr-[2.5rem] ml-0 mt-0 mb-0 py-6 px-6 overflow-y-auto overflow-x-hidden transition-all">
               <div className="mb-8">
                 <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">
-<<<<<<< HEAD
                   {viewMode === "passwords" ? "Vault Categories" : viewMode === "banking" ? "Banking & Cards" : "Vault Settings"}
-=======
-                  {viewMode === "passwords" ? "Vault Categories" : "Vault Settings"}
->>>>>>> e8715624721645242fe7c831993979066bea9673
                 </p>
                 <nav className="flex flex-col gap-1">
                   {viewMode === "passwords" && activeSidebarItems.map((item) => {
@@ -289,7 +244,6 @@ const Dashboard = () => {
                       </button>
                     );
                   })}
-<<<<<<< HEAD
                   {viewMode === "banking" && bankingSections.map((item) => {
                     const active = bankingCategory === item.id;
                     return (
@@ -309,8 +263,6 @@ const Dashboard = () => {
                       </button>
                     );
                   })}
-=======
->>>>>>> e8715624721645242fe7c831993979066bea9673
                   {viewMode === "settings" && settingsSections.map((item) => {
                     const active = settingsTab === item.id;
                     return (
@@ -365,10 +317,7 @@ const Dashboard = () => {
         <main className="flex-1 overflow-y-auto bg-white">
           <div className={`${viewMode === "documents" ? "p-0" : "p-8 max-w-[1200px] mx-auto"}`}>
             {viewMode === "documents" && <DocumentLocker />}
-<<<<<<< HEAD
             {viewMode === "banking" && <BankingView userId={user.id} filter={bankingCategory} />}
-=======
->>>>>>> e8715624721645242fe7c831993979066bea9673
             {/* ... other views ... */}
 
             {viewMode === "passwords" && (
