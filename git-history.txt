@@ -19,3 +19,4 @@ feat: implement ambient background glow for hero container
 ui: add grid pattern texture mask to hero background
 feat: add 'Scroll Down' vertical indicator for desktop
 refactor: modularize syring-based transform hooks for scroll performance
+feat: add on-device processing trust signals to footer section
