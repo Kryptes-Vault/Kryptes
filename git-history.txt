@@ -17,3 +17,4 @@ ui: remove top navigation bar for immersive landing experience
 style: theme entire landing page to clean white/orange aesthetic
 feat: implement ambient background glow for hero container
 ui: add grid pattern texture mask to hero background
+feat: add 'Scroll Down' vertical indicator for desktop
