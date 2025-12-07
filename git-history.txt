@@ -21,3 +21,4 @@ feat: add 'Scroll Down' vertical indicator for desktop
 refactor: modularize syring-based transform hooks for scroll performance
 feat: add on-device processing trust signals to footer section
 ui: modernize 'CORE ARCHITECTURE' section with interactive cards
+style: implement rounded-[3rem] ultra-soft corner radius
