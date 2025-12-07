@@ -23,3 +23,4 @@ feat: add on-device processing trust signals to footer section
 ui: modernize 'CORE ARCHITECTURE' section with interactive cards
 style: implement rounded-[3rem] ultra-soft corner radius
 feat: add responsive layout adjustments for tablet and mobile
+ui: add 'AES-256' and 'Offline Engine' node visualizations
