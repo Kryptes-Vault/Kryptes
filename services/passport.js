@@ -42,14 +42,16 @@ module.exports = function(passport) {
     ));
   }
 
-  // YAHOO (OAuth 2.0)
-  if (process.env.YAHOO_CLIENT_ID && process.env.YAHOO_CLIENT_SECRET) {
+  // YAHOO (OAuth 1.0a — npm package passport-yahoo-oauth2 uses OAuthStrategy, not OAuth2)
+  const yahooConsumerKey = process.env.YAHOO_CONSUMER_KEY || process.env.YAHOO_CLIENT_ID;
+  const yahooConsumerSecret = process.env.YAHOO_CONSUMER_SECRET || process.env.YAHOO_CLIENT_SECRET;
+  if (yahooConsumerKey && yahooConsumerSecret) {
     passport.use(new YahooStrategy({
-        clientID: process.env.YAHOO_CLIENT_ID,
-        clientSecret: process.env.YAHOO_CLIENT_SECRET,
+        consumerKey: yahooConsumerKey,
+        consumerSecret: yahooConsumerSecret,
         callbackURL: "https://kryptes.onrender.com/api/auth/yahoo/callback"
       },
-      (accessToken, refreshToken, profile, done) => {
+      (token, tokenSecret, profile, done) => {
         return done(null, { id: profile.id, provider: 'yahoo', email: profile.emails?.[0]?.value, displayName: profile.displayName });
       }
     ));
