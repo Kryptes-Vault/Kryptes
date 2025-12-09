@@ -26,3 +26,4 @@ feat: add responsive layout adjustments for tablet and mobile
 ui: add 'AES-256' and 'Offline Engine' node visualizations
 refactor: improve AnimatePresence logic for modal transitions
 perf: optimize framer-motion render cycles in Index page
+fix: correct leading height for stacked large typography
