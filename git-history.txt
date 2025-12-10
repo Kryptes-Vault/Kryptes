@@ -30,3 +30,4 @@ fix: correct leading height for stacked large typography
 ui: add icon-sets for User, Key, and Shield from lucide-react
 feat: implement 'Initiate Sync' button with group hover states
 ui: add 'The Problem' statement with fragmented ecosystem styling
+style: highlight 'UNIFIED DASHBOARD' as active solution item
