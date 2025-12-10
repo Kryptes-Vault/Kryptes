@@ -1,40 +1,49 @@
 # Privacy Policy for Kryptex
 **Effective Date:** April 6, 2026
 
-Kryptex ("we," "us," or "our") is committed to protecting your privacy through a **Zero-Knowledge Architecture**. This Privacy Policy explains how we handle your information and, more importantly, what we cannot access.
+## 🚀 TL;DR (Too Long; Didn't Read)
+*   **Zero-Knowledge:** We use client-side AES-256 encryption. We cannot see your files, messages, or passwords.
+*   **On-Device Processing:** Financial SMS parsing happens locally on your phone. No raw transaction data is uploaded.
+*   **Login Only:** We use OAuth 2.0 (Google, X, MS, Yahoo) only to verify who you are. We don't read your emails or tweets.
+*   **Data Security:** Your data is stored as "encrypted blobs" via MEGA. Even they can't read it.
+*   **Your Responsibility:** If you lose your Master Password, your data is gone forever. We have no "Reset Password" for your vault.
+*   **No Selling:** We do not sell your data or use it to train AI.
 
 ---
 
-### 1. Zero-Knowledge Architecture
-Kryptex is designed so that only you can access your data.
-- **Client-Side Encryption:** All data is encrypted on your device using the **AES-256** algorithm before it ever leaves your local environment.
-- **No Access to Vaults:** We do not have access to your master password, recovery keys, encrypted files, or vault contents.
-- **No Backdoors:** Because we do not hold the keys, we cannot decrypt your data, even if requested by law enforcement.
+## 1. Introduction
+Kryptex ("the App," "we," "us") is built on the principle of **Privacy by Design**. Unlike traditional clouds, Kryptex is a **Zero-Knowledge Super App**. This means we have architected the system so that we have technical inability to access your unencrypted data. Our policy complies with GDPR, CCPA, and the Indian Information Technology Act.
 
-### 2. Information We Collect
-We minimize data collection to the absolute necessity for account management:
-- **Identity Verification:** We use OAuth 2.0 (Google, X, Microsoft, Yahoo) for authentication. We only receive your basic profile information (Email and Name) to create and identify your account.
-- **Service Metadata:** We store minimal metadata required to sync your encrypted blobs across devices.
+## 2. The Zero-Knowledge Architecture
+All sensitive data—including digital vault contents, finance trackers, and smart assistant notes—is encrypted on your device using **AES-256** before being transmitted.
+*   **No Access:** Kryptex developers and servers have zero access to your unencrypted data.
+*   **The Master Key:** Your Master Password is the sole key to your data. We do not store this password on our servers.
 
-### 3. Data Processing & Storage
-- **Financial Data (SMS):** SMS parsing for expense tracking is performed **locally** on your device. The resulting data is stored as encrypted blobs.
-- **Documents & Files:** Personal documents (certificates, IDs) are stored as encrypted blobs.
-- **Storage Providers:** Large files are stored via the **MEGA API**. These files are encrypted client-side before upload; neither Kryptex nor MEGA can read their contents.
-- **Database:** Encrypted vault data and metadata are stored in our secure backend (MongoDB/Redis), but remain unreadable to us.
+## 3. Data Collection and Usage
+### 3.1 Authentication (OAuth 2.0)
+We use OAuth 2.0 via Google, Microsoft, X (Twitter), and Yahoo for identity verification.
+*   **Metadata Collected:** Only basic identity metadata (Email, Name, Unique Provider ID).
+*   **Purpose:** To create your account and manage your subscription. We do not access your contacts, emails, or private messages from these providers.
 
-### 4. Third-Party Services
-We use the following third-party integrations:
-- **OAuth Providers:** Google, X (Twitter), Microsoft, Yahoo.
-- **Storage:** MEGA.nz (for encrypted file hosting).
-- **Communication:** Email services for account-related notifications.
+### 3.2 Financial Privacy (On-Device Parsing)
+Kryptex includes a Finance Engine that tracks expenses via SMS.
+*   **Local Processing:** All SMS parsing occurs **strictly on-device**.
+*   **No Raw Uploads:** Raw SMS text or raw transaction data is never uploaded to our servers. Only the resulting encrypted expense summaries are stored in your vault.
 
-### 5. Your Responsibilities
-**The Master Password and Recovery Key are your sole responsibility.** 
-- If you lose your Master Password, your data is **permanently unrecoverable**.
-- Kryptex cannot reset your password or recover your data because we never possess your keys.
+### 3.3 Large File Storage (MEGA API)
+Encrypted file "blobs" are stored using the MEGA API. These files remain encrypted with your keys during transit and at rest. Neither Kryptex nor MEGA can decrypt these files.
 
-### 6. Jurisdiction
-This Privacy Policy and your use of Kryptex are governed by the laws of **Hyderabad, India**. Any disputes shall be subject to the exclusive jurisdiction of the courts in Hyderabad.
+## 4. No Data Monetization & AI
+We maintain a strict stance against data exploitation:
+*   **No Selling:** We do not sell, rent, or trade your personal data to third parties.
+*   **No AI Training:** Your data is never used to train machine learning models or Artificial Intelligence.
 
-### 7. Contact Us
-If you have questions about this Privacy Policy, contact us at: [support@kryptes.com](mailto:support@kryptes.com)
+## 5. Security & Technical Data
+*   **Redis Caching:** We use Redis for temporary, encrypted session caching to improve performance. These sessions are short-lived and discarded.
+*   **Bitwarden-Compatible Metadata:** Vault metadata follows a Bitwarden-compatible architecture to ensure industry-standard security and interoperability.
+
+## 6. Jurisdiction
+This policy is governed by the laws of **Hyderabad, India**.
+
+## 7. Contact
+For privacy-related inquiries: [privacy@kryptes.com](mailto:privacy@kryptes.com)
