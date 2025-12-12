@@ -36,3 +36,4 @@ ui: improve contrast for secondary text items in dark mode
 refactor: clean up duplicate import statements in Index.tsx
 ui: add ghost button styles for 'Cancel' and 'Trouble Logging in'
 feat: implement local SMS sync service prototype in react-native
+ui: add BankSmsTracker screen for mobile companion app
