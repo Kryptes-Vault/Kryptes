@@ -37,9 +37,10 @@ const createTransporter = async () => {
       },
     });
 
+    console.log("[Email Service] Transporter created for:", transporter.options.auth.user);
     return transporter;
   } catch (error) {
-    console.error("Transporter creation error:", error);
+    console.error("[Email Service] Transporter creation error:", error);
     throw error;
   }
 };
@@ -49,6 +50,7 @@ const createTransporter = async () => {
  */
 const sendVerificationEmail = async (toEmail, verificationCode) => {
   try {
+    console.log(`[Email Service] Preparing verification email for ${toEmail}`);
     const transporter = await createTransporter();
     
     const mailOptions = {
@@ -68,9 +70,10 @@ const sendVerificationEmail = async (toEmail, verificationCode) => {
     };
 
     const result = await transporter.sendMail(mailOptions);
+    console.log("[Email Service] Verification email sent:", result?.messageId);
     return result;
   } catch (error) {
-    console.error("Email send error:", error);
+    console.error("[Email Service] Verification email send error:", error);
     throw error;
   }
 };
