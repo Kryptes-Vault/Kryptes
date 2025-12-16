@@ -18,6 +18,9 @@ dist-ssr
 backend/.env
 !.env.example
 
+# Local Google service account JSON (never commit real keys)
+kryptes-storage-bot.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
