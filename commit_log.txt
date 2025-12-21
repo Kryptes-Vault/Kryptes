@@ -7,3 +7,4 @@
 [03-10-2025 19:37:01] Visual: Implement KRYPTEX branding
 [29-11-2025 20:12:01] Assets: Integrate Krytes.png local branding
 [28-10-2025 16:12:01] Backend: Setup Express server with zero-disk streaming
+[19-11-2025 12:08:01] Infra: Multer and MegaJS integration for secure file upload
