@@ -364,6 +364,12 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
       <div className="w-full flex flex-col md:flex-row">
         {/* Left Sidebar for Folders - Matches Main Sidebar Geometry */}
         <aside className="w-full md:w-64 flex flex-col pt-8 px-6 bg-[#f7f7f7] rounded-tr-[2.5rem] min-h-screen">
+          <div className="px-4 mb-6">
+            <button onClick={createFolder} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#0066FF] hover:opacity-80 transition-opacity">
+              <FolderPlus className="h-4 w-4" /> Add Folder
+            </button>
+          </div>
+
           <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">Vault Categories</p>
           <nav className="flex flex-col gap-1">
             {folderOptions.map((folder) => (
@@ -382,20 +388,6 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
               </button>
             ))}
           </nav>
-          
-          <div className="mt-8 px-4">
-            <div className="flex flex-col gap-2">
-              <input
-                value={folderName}
-                onChange={(e) => setFolderName(e.target.value)}
-                placeholder="New folder..."
-                className="h-9 w-full rounded-xl border border-black/5 bg-white px-3 text-[11px] outline-none"
-              />
-              <button onClick={createFolder} className="text-[10px] font-bold uppercase tracking-widest text-[#0066FF] hover:underline text-left px-1">
-                + Add Folder
-              </button>
-            </div>
-          </div>
         </aside>
 
         {/* Main Content Area */}
