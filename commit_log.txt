@@ -23,3 +23,4 @@
 [04-12-2025 18:22:01] Fix: Vite port collision and server restart logic
 [14-11-2025 13:30:01] Env: Normalize firebase api key encoding
 [21-10-2025 20:38:01] Backend: Initialize Passport.js core
+[21-11-2025 19:36:01] Session: Redis-backed session management for ZK
