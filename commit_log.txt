@@ -30,3 +30,4 @@
 [27-10-2025 17:50:01] Auth: Yahoo OIDC strategy logic
 [07-11-2025 16:19:01] Routes: Unified callback for dashboard redirection
 [08-11-2025 18:32:01] Config: OAuth2 environment variables template
+[28-12-2025 16:49:01] Fix: Redundant local logo removal per UX request
