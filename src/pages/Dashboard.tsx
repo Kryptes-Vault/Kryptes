@@ -13,6 +13,15 @@ import {
   Settings,
   QrCode,
   ChevronDown,
+  LayoutDashboard,
+  Users,
+  ShoppingCart,
+  MessageSquare,
+  HelpCircle,
+  FileSearch,
+  Store,
+  CreditCard,
+  Target,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AddSecretModal } from "@/components/kryptex/AddSecretModal";
@@ -101,7 +110,7 @@ const Dashboard = () => {
   ];
 
   const activeSidebarItems = viewMode === "passwords" ? passwordSections : [];
-  const showMainSidebar = viewMode === "passwords";
+  const showMainSidebar = viewMode === "passwords" || viewMode === "settings";
 
   if (authLoading || !user) {
     return (
@@ -115,10 +124,11 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#FAFAFB] text-[#111] font-sans selection:bg-[#FF3B13] selection:text-white overflow-hidden">
-      <aside className="hidden lg:flex w-16 flex-col items-center border-r border-black/5 bg-white py-6 shrink-0 relative z-50">
+    <div className="flex h-screen w-full bg-[#FAFAFB] text-[#111] font-sans selection:bg-[#0066FF] selection:text-white overflow-hidden">
+      {/* Original Mini Sidebar - Always Visible */}
+      <aside className="hidden lg:flex w-16 flex-col items-center border-r border-[#F3F4F6] bg-white py-6 shrink-0 relative z-50">
         <div className="flex flex-col items-center gap-6">
-          <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-black/5 border border-black/5">
+          <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-sm border border-black/5">
             <img src="/Krytes.png" alt="Logo" className="w-full h-full object-cover" />
           </div>
 
@@ -151,28 +161,95 @@ const Dashboard = () => {
           {avatarUrl ? (
             <img src={avatarUrl} className="h-8 w-8 rounded-lg object-cover ring-2 ring-black/5" />
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FF3B13]/10 font-bold text-[#FF3B13] text-[10px]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0066FF]/10 font-bold text-[#0066FF] text-[10px]">
               {initials}
             </div>
           )}
         </div>
       </aside>
 
+      {/* Redesigned Expanded Sidebar (Only for settings and passwords/keys) */}
+      {showMainSidebar && (
+        <aside className="hidden lg:flex w-[280px] flex-col bg-white shrink-0 relative z-40 border-r border-black/5">
+          {/* Branding Above Sidebar */}
+          <div className="h-20 flex items-center px-8 gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold tracking-tight text-[#111] flex items-center gap-2">
+                Kryptes<span className="h-2 w-2 rounded-full bg-[#0066FF]" />
+              </span>
+            </div>
+            <div className="ml-auto">
+              <div className="flex items-center gap-1 bg-[#2D2D33] text-white px-3 py-1.5 rounded-full text-[10px] font-bold">
+                Seller <div className="w-3 h-3 rounded-full bg-white shadow-sm" />
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar Body with Rounded Right Side */}
+          <div className="flex-1 flex flex-col bg-[#F3F4F6]/50 rounded-r-[3rem] mt-6 ml-0 py-8 px-6 overflow-y-auto overflow-x-hidden">
+            <div className="mb-8">
+              <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">Vault Categories</p>
+              <nav className="flex flex-col gap-1">
+                {viewMode === "passwords" && activeSidebarItems.map((item) => {
+                  const active = passwordCategory === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setPasswordCategory(item.id as CategoryFilter);
+                      }}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                        active
+                          ? "bg-white text-[#0066FF] shadow-sm font-bold" 
+                          : "text-black/50 hover:bg-white/50 hover:text-black"
+                      }`}
+                    >
+                      <item.icon className="w-5 h-5 shrink-0" />
+                      <span className="text-[13px] font-medium">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            <div className="mt-auto pt-6 border-t border-black/5">
+              <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">System</p>
+              <nav className="flex flex-col gap-1">
+                {[
+                  { id: "settings", label: "Settings", icon: Settings },
+                  { id: "logout", label: "Logout", icon: LogOut },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      if (item.id === "logout") handleSignOut();
+                      else if (item.id === "settings") setViewMode("settings");
+                    }}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                      viewMode === item.id 
+                        ? "bg-white text-[#0066FF] shadow-sm font-bold" 
+                        : "text-black/50 hover:bg-white/50 hover:text-black"
+                    }`}
+                  >
+                    <item.icon className="w-5 h-5 shrink-0" />
+                    <span className="text-[13px] font-medium">{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+            </div>
+          </div>
+        </aside>
+      )}
+
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Navigation Bar */}
         <header className="h-20 border-b border-black/5 bg-white flex items-center justify-between px-8 shrink-0 z-40">
           <div className="flex items-center gap-10">
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold tracking-tight text-[#111] flex items-center gap-2">
-                Kryptes<span className="h-1.5 w-1.5 rounded-full bg-[#0066FF]" />
-              </span>
-            </div>
-
             <nav className="hidden md:flex items-center gap-6">
-              <button className={`text-[13px] font-medium transition-colors ${viewMode === "documents" ? "text-black" : "text-black/40 hover:text-black/60"}`} onClick={() => setViewMode("documents")}>
+              <button className={`text-[13px] font-medium transition-colors ${viewMode === "documents" ? "text-[#0066FF] bg-[#0066FF]/5 px-4 py-2 rounded-xl" : "text-black/40 hover:text-black/60"}`} onClick={() => setViewMode("documents")}>
                 Invoice
               </button>
-              <button className={`text-[13px] font-medium transition-colors ${viewMode === "documents" ? "text-black/40" : "text-black/40 hover:text-black/60"}`}>
+              <button className="text-[13px] font-medium text-black/40 hover:text-black/60 px-4 py-2">
                 Files
               </button>
             </nav>
