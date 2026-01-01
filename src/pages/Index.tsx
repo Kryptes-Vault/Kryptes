@@ -69,9 +69,17 @@ const Index = () => {
         setEmailSent(true);
         toast.success("Verification email sent!");
       } else {
-        await signInWithEmailAndPassword(auth, formData.identifier, formData.password);
-        toast.success("Welcome back!");
-        setIsAuthVisible(false);
+        try {
+          await signInWithEmailAndPassword(auth, formData.identifier, formData.password);
+          toast.success("Welcome back!");
+          setIsAuthVisible(false);
+        } catch (error: any) {
+          if (error.code === 'auth/user-not-found') {
+            toast.error("No account found. Create a new account below!");
+          } else {
+            toast.error(error.message);
+          }
+        }
       }
     } catch (error: any) {
       toast.error(error.message);
@@ -179,19 +187,19 @@ const Index = () => {
                         {/* SOCIAL AUTH OPTIONS */}
                         <div className="grid grid-cols-4 gap-3 mb-6">
                           <a 
-                            href="http://localhost:4000/api/auth/google" 
+                            href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/auth/google`} 
                             className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm"
                           >
                             <img src="https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png" className="w-5 h-5 transition-all" alt="Google" />
                           </a>
                           <a 
-                            href="http://localhost:4000/api/auth/microsoft" 
+                            href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/auth/microsoft`} 
                             className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm"
                           >
                             <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" className="w-5 h-5 transition-all" alt="Microsoft" />
                           </a>
                           <a 
-                            href="http://localhost:4000/api/auth/twitter" 
+                            href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/auth/twitter`} 
                             className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm"
                           >
                             <svg viewBox="0 0 24 24" className="w-4 h-4 fill-black transition-all">
@@ -199,7 +207,7 @@ const Index = () => {
                             </svg>
                           </a>
                           <a 
-                            href="http://localhost:4000/api/auth/yahoo" 
+                            href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/auth/yahoo`} 
                             className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm"
                           >
                             <img 
@@ -284,7 +292,7 @@ const Index = () => {
                         disabled={loading}
                         className="w-full bg-[#FF3B13] text-white py-4 sm:py-5 rounded-xl sm:rounded-2xl font-bold text-[10px] sm:text-xs tracking-[0.2em] shadow-[0_15px_30px_rgba(255,59,19,0.3)] hover:bg-black transition-all flex items-center justify-center gap-3 sm:gap-4 group disabled:opacity-50"
                       >
-                        {loading ? "PROCESSING..." : isSignUp ? "CREATE VAULT" : "INITIATE SYNC"}
+                        {loading ? "PROCESSING..." : isSignUp ? "CREATE VAULT" : "LOGIN"}
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </button>
 
@@ -301,7 +309,7 @@ const Index = () => {
             )}
           </AnimatePresence>
 
-          <div ref={containerRef} className="mt-16 sm:mt-24 rounded-[3rem] bg-[#f8f8f8] border border-black/5 h-[400px] sm:h-[600px] w-full overflow-hidden relative shadow-sm flex items-center justify-center">
+          <div ref={containerRef} className="mt-16 sm:mt-24 relative rounded-[3rem] bg-[#f8f8f8] border border-black/5 h-[400px] sm:h-[600px] w-full overflow-hidden shadow-sm flex items-center justify-center">
             <div className="absolute inset-0 flex items-center justify-center opacity-40">
               <div className="w-[80%] h-[150%] sm:w-[600px] sm:h-[600px] rounded-full blur-[100px] bg-[radial-gradient(circle_at_50%_50%,#FF3B13_0%,#FF8B5E_40%,transparent_80%)]" />
             </div>
