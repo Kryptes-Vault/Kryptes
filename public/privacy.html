@@ -5,32 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy - Kryptex</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #333; background-color: #f9f9f9; }
-        h1, h2, h3 { color: #222; }
-        hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
-        .footer { font-size: 0.8em; color: #777; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px; }
-        .zero-knowledge { background-color: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 5px solid #2196f3; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #333; background-color: #ffffff; }
+        h1, h2, h3 { color: #1a1a1a; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 30px 0; }
+        .tldr { background-color: #f0f7ff; padding: 20px; border-radius: 12px; border-left: 6px solid #007bff; margin-bottom: 30px; }
+        .zero-knowledge { background-color: #fff9db; padding: 15px; border-radius: 8px; border-left: 5px solid #fcc419; font-weight: bold; }
+        .footer { font-size: 0.9em; color: #888; margin-top: 50px; border-top: 1px solid #eee; padding-top: 20px; text-align: center; }
+        code { background: #f4f4f4; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
     </style>
 </head>
 <body>
     <h1>Privacy Policy for Kryptex</h1>
     <p><strong>Effective Date:</strong> April 6, 2026</p>
-    <div class="zero-knowledge">
-        <h3>Zero-Knowledge Architecture</h3>
-        <p>Kryptex is designed so that only you can access your data. We use client-side <strong>AES-256</strong> encryption before your data is stored or transmitted. We have no access to your master password, recovery keys, or vault contents.</p>
+
+    <div class="tldr">
+        <h2>🚀 TL;DR (Too Long; Didn't Read)</h2>
+        <ul>
+            <li><strong>Zero-Knowledge:</strong> We use client-side <code>AES-256</code> encryption. We cannot see your files, messages, or passwords.</li>
+            <li><strong>On-Device Processing:</strong> Financial SMS parsing happens locally. No raw transaction data is uploaded.</li>
+            <li><strong>Login Only:</strong> We use OAuth 2.0 (Google, X, MS, Yahoo) only for identity. We do not read your emails or tweets.</li>
+            <li><strong>Data Security:</strong> Your data is stored as encrypted blobs. Even the storage provider (MEGA) cannot read it.</li>
+            <li><strong>No Selling:</strong> We do not sell your data or use it for AI/ML training.</li>
+        </ul>
     </div>
-    <h2>1. Information We Collect</h2>
-    <p>We use OAuth 2.0 (Google, X, Microsoft, Yahoo) for account creation and identity verification. We only collect your email and name to distinguish your account.</p>
-    <h2>2. Local Data Processing</h2>
-    <p>All sensitive information, including SMS parsing for financial tracking and document management, occurs <strong>locally</strong> on your device. Only encrypted blobs are stored in the cloud.</p>
-    <h2>3. Encrypted Storage</h2>
-    <p>Metadata is stored in a secure database as encrypted records. Large files are handled via the <strong>MEGA API</strong>, where they are stored as encrypted blobs that neither Kryptex nor MEGA can access.</p>
-    <h2>4. Your Responsibility</h2>
-    <p>The Master Password and Recovery Key are your sole responsibility. If lost, your data is <strong>permanently unrecoverable</strong>.</p>
-    <h2>5. Jurisdiction</h2>
+
+    <h2>1. Introduction</h2>
+    <p>Kryptex is built on the principle of <strong>Privacy by Design</strong>. As a <strong>Zero-Knowledge Super App</strong>, we have architected the system so that we have a technical inability to access your unencrypted data. Our policy complies with GDPR, CCPA, and the Indian Information Technology Act.</p>
+
+    <div class="zero-knowledge">
+        The Zero-Knowledge Guarantee: Your Master Password is the ONLY key. If lost, Kryptex staff cannot recover your data.
+    </div>
+
+    <h2>2. Encryption Architecture</h2>
+    <p>All sensitive data (Digital Vault, Finance Manager, Smart Assistant notes) is encrypted on your device using <strong>AES-256</strong> before being transmitted to any server.</p>
+
+    <h2>3. Data Collection and Usage</h2>
+    <h3>3.1 Authentication (OAuth 2.0)</h3>
+    <p>We use OAuth 2.0 via Google, Microsoft, X (Twitter), and Yahoo for identity verification. We only retrieve basic identity metadata (Email, Name, Unique Provider ID) to create your account.</p>
+
+    <h3>3.2 Financial Privacy (Local SMS Parsing)</h3>
+    <p>The Finance Engine tracks expenses via SMS. All parsing occurs <strong>strictly on-device</strong>. Raw SMS data is never uploaded to our servers.</p>
+
+    <h2>4. Storage & Infrastructure</h2>
+    <p>Encrypted file "blobs" are stored via the <strong>MEGA API</strong>. Metadata is managed via a <strong>Bitwarden-compatible architecture</strong>. We use <strong>Redis</strong> for temporary, encrypted session caching.</p>
+
+    <h2>5. No Data Monetization</h2>
+    <p>We do not sell data to third parties, nor do we use your encrypted data for AI model training.</p>
+
+    <h2>6. Jurisdiction</h2>
     <p>This policy is governed by the laws of <strong>Hyderabad, India</strong>.</p>
+
     <div class="footer">
-        <p>Contact: <a href="mailto:support@kryptes.com">support@kryptes.com</a></p>
+        <p>Copyright © 2026 Kryptex. All rights reserved.</p>
+        <p>Contact: <a href="mailto:privacy@kryptes.com">privacy@kryptes.com</a></p>
     </div>
 </body>
 </html>

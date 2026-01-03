@@ -5,31 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terms of Service - Kryptex</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #333; background-color: #f9f9f9; }
-        h1, h2, h3 { color: #222; }
-        hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
-        .footer { font-size: 0.8em; color: #777; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px; }
-        .zero-knowledge { background-color: #fff3e0; padding: 15px; border-radius: 8px; border-left: 5px solid #ff9800; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #333; background-color: #ffffff; }
+        h1, h2, h3 { color: #1a1a1a; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 30px 0; }
+        .tldr { background-color: #fff4f4; padding: 20px; border-radius: 12px; border-left: 6px solid #d9534f; margin-bottom: 30px; }
+        .zero-knowledge { background-color: #fff9db; padding: 15px; border-radius: 8px; border-left: 5px solid #fcc419; font-weight: bold; }
+        .footer { font-size: 0.9em; color: #888; margin-top: 50px; border-top: 1px solid #eee; padding-top: 20px; text-align: center; }
+        code { background: #f4f4f4; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
     </style>
 </head>
 <body>
     <h1>Terms of Service for Kryptex</h1>
     <p><strong>Effective Date:</strong> April 6, 2026</p>
-    <div class="zero-knowledge">
-        <h3>Zero-Knowledge Architecture & Your Responsibility</h3>
-        <p>Kryptex is a <strong>Zero-Knowledge</strong> application. This means <strong>only you hold the decryption keys</strong> (your Master Password). We **cannot** reset your password or recover your data if you lose your keys. You are solely responsible for safeguarding your Master Password and Recovery Key. If your keys are lost, your data is <strong>unrecoverable</strong>.</p>
+
+    <div class="tldr">
+        <h2>📜 TL;DR (Too Long; Didn't Read)</h2>
+        <ul>
+            <li><strong>Encrypted:</strong> Your data is encrypted locally using <code>AES-256</code>. We cannot see it.</li>
+            <li><strong>No Access:</strong> If you lose your Master Password or Recovery Key, your data is <strong>lost forever</strong>.</li>
+            <li><strong>OAuth:</strong> We use Google, X, Microsoft, and Yahoo for login strictly for identity verification.</li>
+            <li><strong>Account Identity:</strong> We only collect basic name and email info to manage your account.</li>
+            <li><strong>No Selling:</strong> We do not sell your data or use it for AI/ML training.</li>
+        </ul>
     </div>
+
     <h2>1. Acceptance of Terms</h2>
-    <p>By using Kryptex, you agree to these Terms. If you do not agree to these Terms, do not use our Services.</p>
-    <h2>2. Use of Services</h2>
-    <p>You agree to use Kryptex only for lawful purposes. You are responsible for any materials you store or share via Kryptex.</p>
-    <h2>3. Authentication</h2>
-    <p>We use OAuth 2.0 (Google, X, Microsoft, Yahoo) for identity verification. You are responsible for maintaining the confidentiality of your account credentials.</p>
-    <h2>4. Limitation of Liability</h2>
-    <p>Kryptex shall not be liable for any indirect, incidental, special, or consequential damages, including data loss, arising out of or related to your use of the Services.</p>
-    <h2>5. Jurisdiction</h2>
-    <p>These terms are governed by the laws of <strong>Hyderabad, India</strong>.</p>
-    <h2>6. Contact Us</h2>
-    <p>If you have any legal questions, please contact: <a href="mailto:support@kryptes.com">support@kryptes.com</a></p>
+    <p>By using Kryptex, you agree to these Terms. If you do not agree, do not use the app. These terms are governed by the <strong>Indian IT Act</strong> and global data laws (GDPR/CCPA).</p>
+
+    <div class="zero-knowledge">
+        User Responsibility: You are the sole custodian of your encryption keys. Loss of your Master Password means permanent loss of your data.
+    </div>
+
+    <h2>2. Zero-Knowledge Architecture</h2>
+    <p>Kryptex is a <strong>Zero-Knowledge</strong> application. Our developers and staff have no technical way to decrypt your data or reset your vault password.</p>
+
+    <h2>3. Authentication & Account Creation</h2>
+    <p>We use <strong>OAuth 2.0</strong> for Google, Microsoft, X (Twitter), and Yahoo. This is strictly for identity verification. We only retrieve your basic profile info (Email/Name) and do not access any other third-party account data.</p>
+
+    <h2>4. Financial Engine (Local Mastery)</h2>
+    <p>Finance tracking using SMS parsing occurs <strong>strictly on-device</strong>. Raw transaction data is never uploaded to our servers, only encrypted summaries you choose to store in your vault.</p>
+
+    <h2>5. Infrastructure & Storage</h2>
+    <p>Encrypted blobs are stored via the <strong>MEGA API</strong>. Metadata is managed via a <strong>Bitwarden-compatible architecture</strong>. We use <strong>Redis</strong> for temporary, encrypted session caching.</p>
+
+    <h2>6. Limitation of Liability</h2>
+    <p>To the maximum extent permitted by law, Kryptex is not liable for data loss due to forgotten passwords, unauthorized device access, or other user failures.</p>
+
+    <h2>7. Jurisdiction</h2>
+    <p>These terms are governed by the laws of <strong>Hyderabad, India</strong>. All legal matters will be handled in the courts of Hyderabad.</p>
+
+    <div class="footer">
+        <p>Copyright © 2026 Kryptex. All rights reserved.</p>
+        <p>Contact: <a href="mailto:support@kryptes.com">support@kryptes.com</a></p>
+    </div>
 </body>
 </html>

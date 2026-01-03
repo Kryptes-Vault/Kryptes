@@ -1,41 +1,47 @@
 # Terms of Service for Kryptex
 **Effective Date:** April 6, 2026
 
-These Terms of Service ("Terms") govern your access to and use of the **Kryptex** app and related services ("Services"). By using Kryptex, you agree to these Terms.
+## 📜 TL;DR (Too Long; Didn't Read)
+*   **Encrypted:** Your data is encrypted locally using AES-256. We cannot see it.
+*   **No Access:** If you lose your Master Password or Recovery Key, we cannot help you. Your data is lost.
+*   **OAuth:** We use Google, X, Microsoft, etc., for login. We only take your name/email to identify you.
+*   **Storage:** Large files go to the MEGA API (encrypted).
+*   **Responsibility:** You are responsible for all data stored in your Kryptex account.
+*   **Jurisdiction:** Legal matters are handled in Hyderabad, India.
 
 ---
 
-### 1. Acceptance of Terms
-By accessing or using Kryptex, you confirm that you can form a binding contract with us. If you do not agree to these Terms, do not use our Services.
+## 1. Acceptance of Terms
+By accessing Kryptex ("the App"), you agree to these Terms. If you do not agree, do not use the app. These terms are governed by the Indian IT Act and global data laws.
 
-### 2. Zero-Knowledge Architecture & Your Responsibility
-Kryptex is a **Zero-Knowledge** application. This means:
-- **Keys:** Only you hold the decryption keys (your Master Password).
-- **No Recovery:** We **cannot** reset your password or recover your data if you lose your keys. **You are solely responsible for safeguarding your Master Password and Recovery Key.**
-- **Consequences:** If your keys are lost, your data is **unrecoverable**. We are not liable for data loss under any circumstances.
+## 2. Zero-Knowledge Accountability
+Kryptex is a **Zero-Knowledge** digital vault. By using this service, you acknowledge and agree that:
+*   **User Responsibility:** You are the sole custodian of your encryption keys (Master Password/Recovery Key).
+*   **Data Irrecoverability:** Kryptex staff has no technical way to reset your password or decrypt your data. **Loss of your Master Password means permanent loss of your data.**
+*   **No Liability:** We are not responsible for data loss due to forgotten passwords, device loss, or malicious acts by third parties using your credentials.
 
-### 3. Use of Services
-You agree to use Kryptex only for lawful purposes. You are responsible for any materials you store or share via Kryptex.
+## 3. Account Creation & Authentication
+Kryptex uses **OAuth 2.0** for Google, Microsoft, X (Twitter), and Yahoo. This is used strictly for identity verification.
+*   **Account Identity:** We store your basic identity metadata (Name/Email) only for account management.
+*   **Access Revocation:** You can revoke Kryptex's access through your third-party provider's security settings at any time.
 
-### 4. Account and Authentication
-- **OAuth Identity:** We use OAuth 2.0 (Google, X, Microsoft, Yahoo) to verify your identity.
-- **Account Creation:** You are responsible for maintaining the confidentiality of your account credentials.
+## 4. Use of the App (Digital Vault & Finance Engine)
+*   **On-Device Finance Mastery:** Our Finance Tracker parses SMS data locally. You are responsible for granting or denying access permissions.
+*   **Encrypted Storage:** All vault contents are stored as encrypted blobs. We do not monitor, scan, or analyze your files.
+*   **Third-Party Storage (MEGA):** By using our cloud storage feature, you also agree to MEGA's technical terms, as encryption/decryption happens client-side before reaching their servers.
 
-### 5. Data Privacy and Local Processing
-- **Financial SMS Parsing:** Our app processes SMS data locally on your device for expense tracking. This data is only stored in your encrypted vault.
-- **File Storage:** We use the **MEGA API** for storing large files. All files are encrypted client-side using **AES-256** before being sent to the server.
+## 5. Security Architecture
+*   **Redis Caching:** We use high-speed Redis caching for session tokens. These are transient and encrypted.
+*   **Bitwarden Compatibility:** We adhere to the high standards of the Bitwarden-compatible metadata architecture.
 
-### 6. Disclaimer of Warranties
-Kryptex is provided "as is" and "as available" without any warranties of any kind. We do not guarantee that the Services will be uninterrupted, error-free, or completely secure against all cyber threats.
+## 6. Prohibited Activities
+You may not use Kryptex to store or transmit illegal content, spam, or malicious software. 
 
-### 7. Limitation of Liability
-To the maximum extent permitted by law, Kryptex shall not be liable for any indirect, incidental, special, or consequential damages, including loss of data, arising out of or related to your use of the Services.
+## 7. Limitation of Liability
+To the maximum extent permitted by law, Kryptex and its developers shall not be liable for any indirect or consequential damages, including loss of data.
 
-### 8. Jurisdiction & Dispute Resolution
-These Terms are governed by the laws of **Hyderabad, India**. Any disputes or legal proceedings shall be conducted exclusively in the courts located in **Hyderabad**.
+## 8. Jurisdiction & Governing Law
+These Terms are governed by the laws of **Hyderabad, India**. Any legal proceedings will occur in the courts of Hyderabad.
 
-### 9. Changes to Terms
-We may update these Terms from time to time. Your continued use of Kryptex after changes indicates your acceptance of the new Terms.
-
-### 10. Contact Information
-For any legal inquiries, please contact: [support@kryptes.com](mailto:support@kryptes.com)
+## 9. Contact Us
+Legal Inquiries: [support@kryptes.com](mailto:support@kryptes.com)
