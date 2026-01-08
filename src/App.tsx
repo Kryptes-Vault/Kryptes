@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import AuthCallback from "./pages/AuthCallback.tsx";
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/privacy" element={<div dangerouslySetInnerHTML={{ __html: `<iframe src="/privacy.html" style="width:100%; height:100vh; border:none;"></iframe>` }} />} />
           <Route path="/terms" element={<div dangerouslySetInnerHTML={{ __html: `<iframe src="/terms.html" style="width:100%; height:100vh; border:none;"></iframe>` }} />} />
