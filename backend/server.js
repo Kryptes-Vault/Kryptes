@@ -2,7 +2,6 @@ const express = require("express");
 const session = require("express-session");
 const { RedisStore } = require("connect-redis");
 const Redis = require("ioredis");
-const passport = require("passport");
 const cors = require("cors");
 require("dotenv").config();
 
@@ -52,9 +51,6 @@ const app = express();
 // Behind Render / other reverse proxies — required for secure cookies & correct client IP
 app.set("trust proxy", 1);
 
-// Passport Service initialization
-require("./services/passport")(passport);
-
 // Security Middleware — Vercel origin + credentials for session cookies
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -84,8 +80,12 @@ app.get("/health", (req, res) => {
 });
 
 app.use(session(sessionConfig));
-app.use(passport.initialize());
-app.use(passport.session());
+app.use((req, res, next) => {
+    if (req.session && req.session.kryptexUser) {
+        req.user = req.session.kryptexUser;
+    }
+    next();
+});
 
 // Routes
 app.use("/api/vault", vaultRoutes);
