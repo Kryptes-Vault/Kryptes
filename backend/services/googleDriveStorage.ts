@@ -146,6 +146,23 @@ export function isGoogleDriveConfigured(): boolean {
   return resolveCredentialsPath() !== null;
 }
 
+/**
+ * Verifies JWT auth and a lightweight Drive API round-trip at startup.
+ * On failure, logs the critical error and exits the process unless `GDRIVE_STARTUP_FAIL_FAST=false`.
+ */
+export async function verifyDriveConnection(driveClient: drive_v3.Drive, authClient: JWT): Promise<void> {
+  try {
+    await authClient.authorize();
+    await driveClient.about.get({ fields: "user" });
+    console.log("✅ Google Drive API: Connected and Authorized!");
+  } catch (error) {
+    console.error("❌ CRITICAL: Failed to connect to Google Drive API.", error);
+    if (process.env.GDRIVE_STARTUP_FAIL_FAST !== "false") {
+      process.exit(1);
+    }
+  }
+}
+
 /** Lazily constructs `google.drive({ version: 'v3', auth })` with service-account JWT. */
 export function getDriveClient(): drive_v3.Drive {
   if (driveSingleton) return driveSingleton;
