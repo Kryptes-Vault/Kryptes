@@ -365,7 +365,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
         {/* Left Sidebar for Folders - Matches Main Sidebar Geometry */}
         <aside className="w-full md:w-64 flex flex-col pt-8 px-6 bg-[#f7f7f7] rounded-tr-[2.5rem] min-h-screen">
           <div className="px-4 mb-6">
-            <button onClick={createFolder} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#0066FF] hover:opacity-80 transition-opacity">
+            <button onClick={createFolder} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#FF3B13] hover:opacity-80 transition-opacity">
               <FolderPlus className="h-4 w-4" /> Add Folder
             </button>
           </div>
@@ -379,8 +379,8 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                 onClick={() => setActiveFolder(folder)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
                   activeFolder === folder 
-                    ? "bg-white text-[#0066FF] shadow-sm font-bold" 
-                    : "text-black/40 hover:bg-black/5 hover:text-black"
+                    ? "bg-white text-[#FF3B13] shadow-sm font-bold" 
+                    : "text-black/40 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13]"
                 }`}
               >
                 <FolderOpen className="h-4 w-4 shrink-0" />
