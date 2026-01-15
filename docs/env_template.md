@@ -16,7 +16,9 @@
 |------|-------------|
 | `SUPABASE_URL` | Same as `VITE_SUPABASE_URL` |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Service role** key — bypasses RLS; server only |
+| `SUPABASE_HOOK_SECRET` | Send Email Auth Hook secret (`v1,whsec_…`) — Standard Webhooks verification |
 | `REDIS_URL` | Session store |
+| `MAIL_FROM` | Optional `"Name" <email@domain>` for outbound mail |
 | `SESSION_SECRET` | Random string for `express-session` |
 | `FRONTEND_URL` | `https://kryptes.vercel.app` (CORS) |
 | `API_BASE_URL` | `https://kryptes.onrender.com` |
