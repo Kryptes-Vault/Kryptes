@@ -44,3 +44,4 @@ Do not set service role keys in `VITE_*` variables.
 - [Send Email HTTPS hook](./06_email_auth_hook_integration.md)
 - [Custom SMTP integration](./06_custom_smtp_integration.md)
 - [Architecture update (Firebase to Supabase)](./architecture_update.md)
+- [Environment variable template](./env_template.md)
