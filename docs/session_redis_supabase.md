@@ -46,3 +46,4 @@ Do not set service role keys in `VITE_*` variables.
 - [Architecture update (Firebase to Supabase)](./architecture_update.md)
 - [Environment variable template](./env_template.md)
 - [Documentation index](./README.md)
+- [Post-deploy checklist](./checklists/post-deploy.md)
