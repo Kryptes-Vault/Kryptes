@@ -47,3 +47,4 @@ Do not set service role keys in `VITE_*` variables.
 - [Environment variable template](./env_template.md)
 - [Documentation index](./README.md)
 - [Post-deploy checklist](./checklists/post-deploy.md)
+- [Supabase dashboard checklist](./checklists/supabase-dashboard.md)
