@@ -6,7 +6,12 @@ import path from "path";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    /**
+     * Dev server port — **5173** is Vite’s default. Add `http://localhost:5173/**` to Supabase
+     * Authentication → URL Configuration (Redirect URLs) so OAuth matches `window.location.origin`.
+     * Do not rely on port 8080 here; dynamic `redirectTo` uses whatever origin the browser uses.
+     */
+    port: 5173,
     hmr: {
       overlay: false,
     },
