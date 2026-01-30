@@ -115,7 +115,7 @@ function normalizedExtension(name: string): DocumentFormat | null {
   const ext = name.split(".").pop()?.toLowerCase();
   if (!ext) return null;
   if (ext === "jpg") return "jpeg";
-  if (ACCEPTED_EXTENSIONS.includes(ext as any)) return ext as DocumentFormat;
+  if ((ACCEPTED_EXTENSIONS as readonly string[]).includes(ext)) return ext as DocumentFormat;
   return null;
 }
 
@@ -300,6 +300,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- preview blob is reset when previewDoc changes; avoids reload loops
   }, [previewDoc]);
 
   useEffect(() => {
@@ -307,20 +308,23 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
       setSyncing(true);
       try {
         const response = await fetch(`${API_BASE}/api/documents`, { credentials: "include" });
-        const data = await response.json();
-        const docs = Array.isArray(data?.documents) ? data.documents : [];
+        const data = (await response.json()) as { documents?: unknown };
+        const raw = Array.isArray(data?.documents) ? data.documents : [];
         setDocuments(
-          docs.map((doc: any) => ({
-            id: doc.id,
-            name: doc.name,
-            size: doc.size,
-            type: doc.type,
-            folder: doc.folder,
-            updatedAt: doc.updatedAt,
-            thumbnailSeed: (doc.name || "").slice(0, 1).toUpperCase() || "D",
-            source: "mega" as const,
-            previewUrl: doc.previewUrl,
-          }))
+          raw.map((row) => {
+            const doc = row as Record<string, unknown>;
+            return {
+              id: String(doc.id ?? ""),
+              name: String(doc.name ?? ""),
+              size: Number(doc.size ?? 0),
+              type: doc.type as DocumentFormat,
+              folder: String(doc.folder ?? ""),
+              updatedAt: String(doc.updatedAt ?? ""),
+              thumbnailSeed: String(doc.name || "").slice(0, 1).toUpperCase() || "D",
+              source: "mega" as const,
+              previewUrl: typeof doc.previewUrl === "string" ? doc.previewUrl : undefined,
+            };
+          })
         );
       } finally {
         setSyncing(false);
