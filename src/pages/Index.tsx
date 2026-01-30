@@ -1,13 +1,26 @@
 import { ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, Lock, Shield, Smartphone, Zap, User, Key, Eye, EyeOff, Mail, Phone, CheckCircle2 } from "lucide-react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
-import { auth } from "../lib/firebase";
-import { 
-  createUserWithEmailAndPassword, 
-  sendEmailVerification, 
-  signInWithEmailAndPassword 
-} from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 import { toast } from "sonner";
+
+const apiBase = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+
+async function syncApiSession(accessToken: string) {
+  const res = await fetch(`${apiBase}/api/auth/supabase/sync`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { error?: string }).error || "API session sync failed");
+  }
+}
 
 const logos = [
   { name: "PAPERZ", img: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Logo_TV_2015.svg" },
@@ -19,11 +32,13 @@ const logos = [
 const serviceItems = ["FINANCE ENGINE", "ZERO-KNOWLEDGE VAULT", "UNIFIED DASHBOARD", "SMART SCHEDULER", "ON-DEVICE AUTOMATION"];
 
 const Index = () => {
+  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isAuthVisible, setIsAuthVisible] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
 
   // Form State
@@ -64,27 +79,53 @@ const Index = () => {
           return;
         }
 
-        const userCredential = await createUserWithEmailAndPassword(auth, formData.identifier, formData.password);
-        await sendEmailVerification(userCredential.user);
-        setEmailSent(true);
-        toast.success("Verification email sent!");
+        const { error } = await supabase.auth.signUp({
+          email: formData.identifier,
+          password: formData.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+        if (error) {
+          toast.error(error.message);
+        } else {
+          setEmailSent(true);
+          toast.success("Check your email to confirm your account.");
+        }
       } else {
-        try {
-          await signInWithEmailAndPassword(auth, formData.identifier, formData.password);
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.identifier,
+          password: formData.password,
+        });
+        if (error) {
+          toast.error(error.message);
+        } else if (data.session) {
+          await syncApiSession(data.session.access_token);
           toast.success("Welcome back!");
           setIsAuthVisible(false);
-        } catch (error: any) {
-          if (error.code === 'auth/user-not-found') {
-            toast.error("No account found. Create a new account below!");
-          } else {
-            toast.error(error.message);
-          }
+          navigate("/dashboard");
         }
       }
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Something went wrong";
+      toast.error(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const signInWithProvider = async (provider: "google" | "azure" | "twitter") => {
+    setOauthLoading(provider);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) toast.error(error.message);
+    } finally {
+      setOauthLoading(null);
     }
   };
 
@@ -185,42 +226,37 @@ const Index = () => {
 
                       <div className="space-y-4">
                         {/* SOCIAL AUTH OPTIONS */}
-                        <div className="grid grid-cols-4 gap-3 mb-6">
-                          <a 
-                            href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/auth/google`} 
-                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm"
+                        <div className="grid grid-cols-3 gap-3 mb-6">
+                          <button
+                            type="button"
+                            disabled={!!oauthLoading}
+                            onClick={() => signInWithProvider("google")}
+                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
                           >
                             <img src="https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png" className="w-5 h-5 transition-all" alt="Google" />
-                          </a>
-                          <a 
-                            href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/auth/microsoft`} 
-                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm"
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!!oauthLoading}
+                            onClick={() => signInWithProvider("azure")}
+                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
                           >
                             <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" className="w-5 h-5 transition-all" alt="Microsoft" />
-                          </a>
-                          <a 
-                            href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/auth/twitter`} 
-                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm"
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!!oauthLoading}
+                            onClick={() => signInWithProvider("twitter")}
+                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
                           >
-                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-black transition-all">
+                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-black transition-all" aria-hidden>
                               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                             </svg>
-                          </a>
-                          <a 
-                            href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/auth/yahoo`} 
-                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm"
-                          >
-                            <img 
-                              src="https://www.vectorlogo.zone/logos/yahoo/yahoo-ar21.svg" 
-                              className="w-10 h-6 transition-all object-contain pointer-events-none" 
-                              alt="Yahoo"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.parentElement!.innerHTML = '<span class="text-[10px] font-black text-[#6001d2]">YAHOO!</span>';
-                              }}
-                            />
-                          </a>
+                          </button>
                         </div>
+                        <p className="text-[9px] text-center text-black/35 mb-2 font-medium uppercase tracking-wide">
+                          Yahoo and other providers: add via Supabase custom OAuth (see docs/architecture_update.md)
+                        </p>
 
                         <div className="relative mb-6">
                           <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-black/5"></div></div>
