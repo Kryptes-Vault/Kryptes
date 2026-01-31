@@ -1,3 +1,4 @@
+/** Post-OAuth: session sync; redirect URI must match `window.location.origin` / allowlist. */
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
