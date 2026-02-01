@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const passport = require("passport");
-const { sendVerificationEmail } = require("../services/emailService");
-const { logUserToSheet } = require("../integrations/googleService");
+const {
+  getPostLoginRedirect,
+  getOAuthFailureRedirect,
+} = require("../config/auth");
 
 /**
  * @route POST /api/auth/send-code
@@ -14,6 +16,7 @@ router.post("/send-code", async (req, res) => {
 
   try {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const { sendVerificationEmail } = require("../services/emailService");
     await sendVerificationEmail(email, code);
     res.json({ success: true, message: "Verification code sent" });
   } catch (error) {
@@ -21,27 +24,68 @@ router.post("/send-code", async (req, res) => {
   }
 });
 
-// MULTI-PROVIDER AUTH ENDPOINTS
-const VERCEL_DASHBOARD = "https://kryptes.vercel.app/dashboard";
+const successRedirect = (req, res) => {
+  res.redirect(getPostLoginRedirect());
+};
 
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
-router.get("/google/callback", passport.authenticate("google", { failureRedirect: "/login" }), (req, res) => {
-    res.redirect(VERCEL_DASHBOARD);
+const failureRedirect = getOAuthFailureRedirect();
+
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { failureRedirect }),
+  successRedirect
+);
+
+router.get(
+  "/twitter",
+  passport.authenticate("twitter", {
+    scope: ["users.read", "tweet.read", "users.email"],
+  })
+);
+router.get(
+  "/twitter/callback",
+  passport.authenticate("twitter", { failureRedirect }),
+  successRedirect
+);
+
+router.get(
+  "/yahoo",
+  passport.authenticate("yahoo", { scope: ["openid", "email", "profile"] })
+);
+router.get(
+  "/yahoo/callback",
+  passport.authenticate("yahoo", { failureRedirect }),
+  successRedirect
+);
+
+/** Optional: who am I for the SPA (session cookie) */
+router.get("/me", (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ authenticated: false });
+  }
+  res.json({
+    authenticated: true,
+    user: {
+      id: req.user.id,
+      provider: req.user.provider,
+      email: req.user.email,
+      displayName: req.user.displayName,
+    },
+  });
 });
 
-router.get("/microsoft", passport.authenticate("microsoft", { scope: ["user.read"] }));
-router.get("/microsoft/callback", passport.authenticate("microsoft", { failureRedirect: "/login" }), (req, res) => {
-    res.redirect(VERCEL_DASHBOARD);
-});
-
-router.get("/twitter", passport.authenticate("twitter"));
-router.get("/twitter/callback", passport.authenticate("twitter", { failureRedirect: "/login" }), (req, res) => {
-    res.redirect(VERCEL_DASHBOARD);
-});
-
-router.get("/yahoo", passport.authenticate("yahoo"));
-router.get("/yahoo/callback", passport.authenticate("yahoo", { failureRedirect: "/login" }), (req, res) => {
-    res.redirect(VERCEL_DASHBOARD);
+router.post("/logout", (req, res) => {
+  req.logout((err) => {
+    if (err) return res.status(500).json({ error: "Logout failed" });
+    req.session.destroy(() => {
+      res.clearCookie("kryptex.sid", { path: "/" });
+      res.json({ success: true });
+    });
+  });
 });
 
 module.exports = router;
