@@ -32,6 +32,10 @@
     --input: 228 12% 20%;
     --ring: 28 92% 55%;
 
+    /* 3D Vault Intro accent (Emerald) */
+    --vault-glow: 160 84% 39%;
+    --vault-glow-light: 160 67% 52%;
+
     --radius: 0.75rem;
 
     --sidebar-background: 228 15% 10%;
@@ -73,5 +77,16 @@
 
   .glow-orange {
     box-shadow: 0 0 60px -12px hsl(28 92% 55% / 0.4);
+  }
+
+  .glow-emerald {
+    box-shadow: 0 0 60px -12px hsl(var(--vault-glow) / 0.4);
+  }
+}
+
+/* ── Accessibility: skip 3D animation ──────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  #vault-intro-canvas {
+    display: none !important;
   }
 }
