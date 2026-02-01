@@ -40,11 +40,16 @@ function buildVerifyUrl(email_data) {
  * Supabase Send Email HTTPS hook (Standard Webhooks signature).
  */
 async function handleSendEmailHook(req, res) {
+  console.log("[Auth Hook] Received request body:", JSON.stringify(req.body, null, 2));
+  console.log("[Auth Hook] Headers:", JSON.stringify(req.headers, null, 2));
+
   const rawBody = Buffer.isBuffer(req.body)
     ? req.body.toString("utf8")
     : typeof req.body === "string"
       ? req.body
       : JSON.stringify(req.body ?? {});
+
+  console.log("[Auth Hook] Raw body processed:", rawBody.substring(0, 100) + "...");
 
   let user;
   let email_data;
@@ -53,12 +58,14 @@ async function handleSendEmailHook(req, res) {
     const wh = new Webhook(secret);
     const payload = wh.verify(rawBody, req.headers);
     ({ user, email_data } = payload);
+    console.log("[Auth Hook] Webhook verified. User:", user?.email, "Action:", email_data?.email_action_type);
   } catch (err) {
     console.error("[Auth Hook] Webhook verification failed:", err.message);
     return res.status(401).json({ error: "Invalid webhook signature" });
   }
 
   if (!user || !email_data) {
+    console.error("[Auth Hook] Missing user or email_data in payload");
     return res.status(400).json({ error: "Missing user or email_data" });
   }
 
@@ -72,16 +79,19 @@ async function handleSendEmailHook(req, res) {
   const confirmationUrl = buildVerifyUrl(email_data);
   const to = user.email;
   if (!to) {
+    console.error("[Auth Hook] User email missing in user object:", user);
     return res.status(400).json({ error: "User email missing" });
   }
 
   try {
+    console.log(`[Auth Hook] Attempting to send signup confirmation email to ${to}`);
     const { sendSignupConfirmationEmail } = require("../services/emailService");
-    await sendSignupConfirmationEmail(to, {
+    const result = await sendSignupConfirmationEmail(to, {
       confirmationUrl,
       token: email_data.token,
       siteUrl: email_data.site_url,
     });
+    console.log("[Auth Hook] Email sent successfully:", result?.messageId);
   } catch (err) {
     console.error("[Auth Hook] sendSignupConfirmationEmail failed:", err);
     return res.status(500).json({ error: "Failed to send email" });
