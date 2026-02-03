@@ -1,8 +1,6 @@
-/** Vault row UI: `share_count` on the badge reflects Supabase audit trigger (see docs/16). */
+/** Vault item card — white + #FF3B13 design system */
 import { useEffect, useState } from "react";
-import { Flame, Loader2, Lock } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Flame, Loader2, Lock, Eye, EyeOff } from "lucide-react";
 import {
   decryptVaultPayload,
   decryptSecret,
@@ -13,9 +11,7 @@ import type { VaultItemRow } from "@/hooks/useVaultItems";
 
 type Props = {
   item: VaultItemRow;
-  /** v1 session random key */
   legacySessionKey: CryptoKey | null;
-  /** v2 PBKDF2-derived key (unlock vault first) */
   pbkdfDerivedKey: CryptoKey | null;
   onBurn: (item: VaultItemRow) => void;
 };
@@ -25,6 +21,7 @@ export function VaultItemCard({ item, legacySessionKey, pbkdfDerivedKey, onBurn 
   const [bodyPlain, setBodyPlain] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [decrypting, setDecrypting] = useState(true);
+  const [revealed, setRevealed] = useState(false);
 
   const isV2 = item.encryption_version === ENCRYPTION_VERSION_V2_PBKDF2;
 
@@ -78,56 +75,78 @@ export function VaultItemCard({ item, legacySessionKey, pbkdfDerivedKey, onBurn 
 
   const displayTitle = isV2 ? item.title ?? "Untitled" : payload?.title ?? "Untitled";
   const displayBody = isV2 ? bodyPlain : payload?.body;
-
   const lockedV2 = isV2 && !pbkdfDerivedKey;
 
   return (
-    <article className="group relative flex flex-col rounded-xl border border-white/10 bg-black/40 p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] backdrop-blur-md transition hover:border-emerald-500/30">
+    <article className="group relative flex flex-col rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:shadow-md hover:border-[#FF3B13]/20">
+      {/* Header */}
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           {lockedV2 ? (
-            <div className="flex items-center gap-2 text-amber-200/90">
+            <div className="flex items-center gap-2 text-amber-600">
               <Lock className="h-4 w-4 shrink-0" />
-              <span className="text-sm">Unlock vault with master password to view</span>
+              <span className="text-xs font-bold uppercase tracking-wider">Locked</span>
             </div>
           ) : decrypting ? (
-            <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="flex items-center gap-2 text-black/30">
               <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-              <span className="text-sm">Unlocking…</span>
+              <span className="text-xs">Decrypting…</span>
             </div>
           ) : err ? (
-            <p className="text-sm text-destructive">{err}</p>
+            <p className="text-xs text-red-500 font-bold">{err}</p>
           ) : (
-            <h3 className="truncate font-medium text-foreground">{displayTitle}</h3>
+            <h3 className="truncate text-sm font-bold text-black tracking-tight">{displayTitle}</h3>
           )}
         </div>
-        <Badge variant="secondary" className="shrink-0 border border-emerald-500/25 bg-emerald-500/10 font-mono text-[10px] text-emerald-400">
-          {item.share_count} shares
-        </Badge>
+        <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FF3B13]/5 border border-[#FF3B13]/10">
+          <Flame className="w-3 h-3 text-[#FF3B13]" />
+          <span className="text-[10px] font-bold text-[#FF3B13]">{item.share_count}</span>
+        </div>
       </div>
-      <div className="min-h-[4rem] flex-1 rounded-md border border-white/5 bg-black/50 p-2">
+
+      {/* Body */}
+      <div className="min-h-[4rem] flex-1 rounded-xl bg-[#f8f8f8] border border-black/[0.03] p-3">
         {lockedV2 ? (
-          <div className="flex h-16 items-center justify-center text-xs text-muted-foreground">—</div>
+          <div className="flex h-16 items-center justify-center text-xs text-black/20 font-medium">
+            Unlock vault to view
+          </div>
         ) : decrypting ? (
-          <div className="h-16 animate-pulse rounded bg-white/5" />
+          <div className="h-16 animate-pulse rounded-lg bg-black/[0.03]" />
         ) : (
-          <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-emerald-100/80">
-            {displayBody ? displayBody : err ? "" : "—"}
-          </pre>
+          <div className="relative">
+            <pre className={`max-h-40 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-black/60 ${
+              !revealed && displayBody ? "blur-sm select-none" : ""
+            }`}>
+              {displayBody ? displayBody : err ? "" : "—"}
+            </pre>
+            {displayBody && (
+              <button
+                type="button"
+                onClick={() => setRevealed(!revealed)}
+                className="absolute top-1 right-1 w-7 h-7 rounded-lg bg-white border border-black/5 flex items-center justify-center text-black/30 hover:text-[#FF3B13] transition-colors shadow-sm"
+                title={revealed ? "Hide" : "Reveal"}
+              >
+                {revealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
+            )}
+          </div>
         )}
       </div>
-      <div className="mt-4 flex justify-end">
-        <Button
+
+      {/* Footer */}
+      <div className="mt-4 flex items-center justify-between">
+        <span className="text-[9px] font-bold uppercase tracking-widest text-black/15">
+          {isV2 ? "PBKDF2" : "v1"} · AES-GCM
+        </span>
+        <button
           type="button"
-          size="sm"
-          variant="outline"
           disabled={decrypting || Boolean(err) || lockedV2}
-          className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+          className="h-8 px-3 rounded-lg border border-[#FF3B13]/20 text-[10px] font-bold uppercase tracking-wider text-[#FF3B13] hover:bg-[#FF3B13] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5"
           onClick={() => onBurn(item)}
         >
-          <Flame className="mr-1.5 h-3.5 w-3.5" />
-          Burn link
-        </Button>
+          <Flame className="w-3 h-3" />
+          Burn Link
+        </button>
       </div>
     </article>
   );
