@@ -3,14 +3,10 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { getOAuthRedirectUrl } from "../lib/oauthRedirect";
 import { toast } from "sonner";
 
 const apiBase = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
-
-/** OAuth return URL: always matches the current origin (localhost:5173, Vercel, etc.) — never a hardcoded port. */
-function getOAuthRedirectUrl(): string {
-  return `${window.location.origin}/auth/callback`;
-}
 
 async function syncApiSession(accessToken: string) {
   const res = await fetch(`${apiBase}/api/auth/supabase/sync`, {
