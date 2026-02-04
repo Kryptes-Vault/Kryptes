@@ -1,7 +1,7 @@
 import { ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, Lock, Shield, Smartphone, Zap, User, Key, Eye, EyeOff, Mail, Phone, CheckCircle2 } from "lucide-react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { getOAuthRedirectUrl, getProviderOptions } from "../lib/oauthRedirect";
 import { toast } from "sonner";
@@ -437,6 +437,24 @@ const Index = () => {
            </div>
         </div>
       </section>
+      <footer className="mx-auto max-w-7xl px-6 sm:px-12 py-12 border-t border-black/5 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#FF3B13] flex items-center justify-center">
+            <Shield className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-xs font-bold tracking-widest uppercase italic">KRYPTEX</span>
+        </div>
+        
+        <div className="flex items-center gap-8 text-[10px] font-bold uppercase tracking-widest text-black/40">
+          <Link to="/privacy" className="hover:text-[#FF3B13] transition-colors">Privacy Policy</Link>
+          <Link to="/terms" className="hover:text-[#FF3B13] transition-colors">Terms of Service</Link>
+          <a href="mailto:support@kryptes.com" className="hover:text-[#FF3B13] transition-colors">Support</a>
+        </div>
+
+        <p className="text-[10px] font-bold uppercase tracking-widest text-black/20">
+          © 2026 Kryptex protocol
+        </p>
+      </footer>
     </div>
   );
 };
