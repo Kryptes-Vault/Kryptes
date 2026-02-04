@@ -33,12 +33,14 @@ begin
   );
 
   -- ── Resolve display name (provider-priority cascade) ─────────────
+  -- LinkedIn: "full_name" or "given_name" + "family_name"
   -- Twitter:  "name" or "user_name"
   -- Google:   "full_name" or "name"
   -- Azure:    "full_name" or "preferred_username"
   -- Email:    falls back to email prefix
   _display_name := coalesce(
     new.raw_user_meta_data ->> 'full_name',
+    (new.raw_user_meta_data ->> 'given_name') || ' ' || (new.raw_user_meta_data ->> 'family_name'),
     new.raw_user_meta_data ->> 'name',
     new.raw_user_meta_data ->> 'user_name',
     new.raw_user_meta_data ->> 'preferred_username',
@@ -49,6 +51,7 @@ begin
   -- Twitter:  "avatar_url"
   -- Google:   "avatar_url" or "picture"
   -- Azure:    "picture"
+  -- LinkedIn: "picture"
   _avatar_url := coalesce(
     new.raw_user_meta_data ->> 'avatar_url',
     new.raw_user_meta_data ->> 'picture'
