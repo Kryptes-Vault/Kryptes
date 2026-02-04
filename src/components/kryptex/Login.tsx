@@ -289,7 +289,7 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
                     disabled={loading}
                     className="w-full bg-[#FF3B13] text-white py-4 sm:py-5 rounded-xl sm:rounded-2xl font-bold text-[10px] sm:text-xs tracking-[0.2em] shadow-[0_15px_30px_rgba(255,59,19,0.3)] hover:bg-black transition-all flex items-center justify-center gap-3 sm:gap-4 group disabled:opacity-50"
                   >
-                    {loading ? "PROCESSING..." : isSignUp ? "CREATE VAULT" : "AUTHORIZE ACCESS"}
+                    {loading ? "PROCESSING..." : isSignUp ? "CREATE VAULT" : "LOGIN"}
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </button>
 
