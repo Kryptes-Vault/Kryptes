@@ -5,8 +5,7 @@ import type { PasswordCategory } from "@/lib/passwordVaultService";
 
 export type CategoryFilter = PasswordCategory | "all";
 
-export function usePasswordVault(items: VaultItemRow[]) {
-  const [category, setCategory] = useState<CategoryFilter>("all");
+export function usePasswordVault(items: VaultItemRow[], category: CategoryFilter = "all") {
   const [search, setSearch] = useState("");
 
   const passwordItems = useMemo(
@@ -45,8 +44,6 @@ export function usePasswordVault(items: VaultItemRow[]) {
   return {
     passwordItems,
     filtered,
-    category,
-    setCategory,
     search,
     setSearch,
     counts,

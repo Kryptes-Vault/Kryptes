@@ -3,6 +3,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import { lazy, Suspense, useRef, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import Login from "@/components/kryptex/Login";
+import { AnimatedWord } from "@/components/AnimatedWord";
 
 /* ── Lazy-load the 3D canvas so Three.js never blocks initial paint ── */
 const VaultIntroCanvas = lazy(
@@ -21,40 +22,6 @@ const heroReveal = {
       ease: [0.16, 1, 0.3, 1] as const,
     },
   }),
-};
-
-/* ── Split character animation logic ──────────────────────────────── */
-const AnimatedWord = ({ 
-  text, 
-  isAuthVisible, 
-  splitAt, 
-  distance 
-}: { 
-  text: string; 
-  isAuthVisible: boolean; 
-  splitAt: number; 
-  distance: number;
-}) => {
-  return (
-    <>
-      {text.split("").map((char, i) => (
-        <motion.span
-          key={i}
-          animate={{ 
-            x: isAuthVisible ? (i < splitAt ? -distance : distance) : 0, 
-            opacity: isAuthVisible ? 0 : 1 
-          }}
-          transition={{ 
-            duration: 0.8, 
-            ease: [0.16, 1, 0.3, 1],
-            delay: i * 0.04 // Sequential stagger
-          }}
-        >
-          {char}
-        </motion.span>
-      ))}
-    </>
-  );
 };
 
 const Index = () => {
@@ -326,3 +293,8 @@ const Index = () => {
 };
 
 export default Index;
+
+
+
+
+

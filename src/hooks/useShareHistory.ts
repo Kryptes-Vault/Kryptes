@@ -1,4 +1,4 @@
-/** Realtime `share_history` for audit UI (shared_at / legacy created_at). */
+/** Realtime `vault_audit_log` for tracking vault actions. */
 import { useCallback, useEffect, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
@@ -7,15 +7,15 @@ export type ShareHistoryRow = {
   id: string;
   user_id: string;
   vault_item_id: string;
-  /** When the share link was generated (preferred; migration renames legacy `created_at`). */
-  shared_at?: string;
-  created_at?: string;
-  share_type: string;
+  /** Action performed: "reveal" | "copy" | "create" | "delete" */
+  action: string;
+  metadata: any;
+  created_at: string;
 };
 
-/** Timestamp for sorting/display (supports pre-migration `created_at`). */
+/** Timestamp for sorting/display (supports vault_audit_log naming). */
 export function shareHistoryTime(r: ShareHistoryRow): string {
-  return r.shared_at ?? r.created_at ?? "";
+  return r.created_at ?? "";
 }
 
 export function useShareHistory(userId: string | null) {
@@ -31,19 +31,14 @@ export function useShareHistory(userId: string | null) {
     }
     setLoading(true);
     setError(null);
-    let res = await supabase
-      .from("share_history")
+    
+    // Redirecting from non-existent "share_history" to "vault_audit_log"
+    const { data, error: qErr } = await supabase
+      .from("vault_audit_log")
       .select("*")
-      .order("shared_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(200);
-    if (res.error?.message?.includes("shared_at") || res.error?.code === "42703") {
-      res = await supabase
-        .from("share_history")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(200);
-    }
-    const { data, error: qErr } = res;
+
     if (qErr) {
       setError(qErr.message);
       setRows([]);
@@ -61,13 +56,13 @@ export function useShareHistory(userId: string | null) {
     if (!userId) return;
 
     const ch: RealtimeChannel = supabase
-      .channel(`share_history:${userId}`)
+      .channel(`vault_audit_log:${userId}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
-          table: "share_history",
+          table: "vault_audit_log",
           filter: `user_id=eq.${userId}`,
         },
         () => {
@@ -83,3 +78,4 @@ export function useShareHistory(userId: string | null) {
 
   return { rows, loading, error, reload: load };
 }
+
