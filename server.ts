@@ -570,6 +570,28 @@ const server = app.listen(PORT, BIND_HOST, () => {
   } else {
     console.log("[Status] MEGA: skipped (MEGA_EMAIL / MEGA_PASSWORD not set)");
   }
+
+  if (process.env.GDRIVE_STARTUP_VERIFY === "false") {
+    console.log("[Status] Google Drive: startup verify skipped (GDRIVE_STARTUP_VERIFY=false)");
+  } else {
+    void (async () => {
+      const gdrive = require("./services/googleDriveStorage") as typeof import("./services/googleDriveStorage");
+      if (!gdrive.isGoogleDriveConfigured()) {
+        console.log("[Status] Google Drive: skipped (no service account in env or JSON path)");
+        return;
+      }
+      try {
+        const drive = gdrive.getDriveClient();
+        const auth = gdrive.getDriveAuthClient();
+        await gdrive.verifyDriveConnection(drive, auth);
+      } catch (e) {
+        console.error("[Status] Google Drive: startup verify error:", e instanceof Error ? e.message : e);
+        if (process.env.GDRIVE_STARTUP_FAIL_FAST !== "false") {
+          process.exit(1);
+        }
+      }
+    })();
+  }
 });
 
 server.on("error", (err: NodeJS.ErrnoException) => {
