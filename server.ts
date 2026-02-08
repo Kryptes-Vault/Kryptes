@@ -9,14 +9,15 @@ const cors = require("cors") as any;
 const multer = require("multer") as any;
 const sharp = require("sharp") as any;
 const { PDFDocument } = require("pdf-lib") as any;
-const { Storage } = require("megajs") as any;
 
 const vaultRoutes = require("./routes/vault");
 const webhookRoutes = require("./routes/webhooks");
 const authRoutes = require("./routes/auth");
 const { handleSendEmailHook } = require("./routes/authEmailHook");
 const { corsOptions, getSessionCookieOptions } = require("./config/auth");
-
+const {
+  getMegaStorage,
+} = require("./services/megaUploadQueue") as typeof import("./services/megaUploadQueue");
 
 const app = express();
 const upload = multer({
@@ -63,6 +64,7 @@ type MegaNode = {
 
 type MegaStorage = {
   root: MegaNode;
+  upload: (opts: { name: string; size: number }, buffer: undefined, cb: (err: any, file: MegaNode) => void) => { end: (buf: Buffer) => void };
 };
 
 type DocumentRecord = {
@@ -155,28 +157,32 @@ function parseStoredName(storedName: string) {
   return { folder, name, ts };
 }
 
-function initMegaStorage(): Promise<MegaStorage> {
-  return new Promise((resolve, reject) => {
-    const email = process.env.MEGA_EMAIL;
-    const password = process.env.MEGA_PASSWORD;
-    if (!email || !password) return reject(new Error("MEGA credentials are not configured on the backend."));
+function megaErrorMessage(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/EBLOCKED|User blocked/i.test(msg)) {
+    return "MEGA rejected this session (account blocked or restricted). Check your MEGA account status and credentials.";
+  }
+  return msg;
+}
 
-    const storage = new Storage(
-      { email, password, userAgent: "Kryptes-Document-Service/1.0" },
-      (error: Error | null) => {
-        if (error) return reject(error);
-        resolve(storage as MegaStorage);
-      }
-    );
-  });
+/** Uses the same singleton as `megaUploadQueue` (one MEGA session for list + uploads + download). */
+function initMegaStorage(): Promise<MegaStorage> {
+  return getMegaStorage().then(
+    (s) => s as unknown as MegaStorage,
+    (e: unknown) => Promise.reject(new Error(megaErrorMessage(e)))
+  );
 }
 
 async function uploadBufferToMega(storage: MegaStorage, fileBuffer: Buffer, storedName: string) {
   return new Promise<MegaNode>((resolve, reject) => {
-    const uploadStream = storage.root.upload({ name: storedName, size: fileBuffer.length }, (err: any, file: MegaNode) => {
-      if (err) return reject(err);
-      resolve(file);
-    });
+    const uploadStream = storage.upload(
+      { name: storedName, size: fileBuffer.length },
+      undefined,
+      (err: any, file: MegaNode) => {
+        if (err) return reject(err);
+        resolve(file);
+      }
+    );
     uploadStream.end(fileBuffer);
   });
 }
@@ -584,7 +590,7 @@ server.on("error", (err: NodeJS.ErrnoException) => {
 });
 
 function gracefulShutdown(signal: string) {
-  console.log(`[Kryptex] Received ${signal}. Closing HTTP server…`);
+  console.log(`[Kryptex] Received ${signal}. Closing HTTP serverΓÇª`);
   server.close(() => {
     if (redisClient && redisClient.status !== "end") {
       redisClient.quit().finally(() => process.exit(0));
