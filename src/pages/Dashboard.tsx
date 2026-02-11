@@ -1,10 +1,17 @@
 ﻿import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  FileText,
+  FileImage,
+  Image,
+  FileType2,
+  Archive,
+  Briefcase,
   Key,
   KeyRound,
   LayoutGrid,
   LogOut,
+  Plus,
   ScrollText,
   Shield,
   Lock,
@@ -13,18 +20,25 @@ import {
   Layout,
   Receipt,
   Settings,
+  QrCode,
   Menu,
   Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AddSecretModal } from "@/components/kryptex/AddSecretModal";
 import { AddPasswordModal } from "@/components/kryptex/AddPasswordModal";
+import AddNodeModal from "@/components/kryptex/AddNodeModal";
 import { AuditLogView } from "@/components/kryptex/AuditLogView";
 import { BurnShareModal } from "@/components/kryptex/BurnShareModal";
+import SettingsView from "@/components/kryptex/SettingsView";
+import TwoFAMigrationWizard from "@/components/kryptex/TwoFAMigrationWizard";
+import DocumentLocker from "@/components/kryptex/DocumentLocker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SecureVaultView } from "@/components/kryptex/SecureVaultView";
-import { useShareHistory } from "@/hooks/useShareHistory";
+import { PasswordGrid } from "@/components/kryptex/PasswordGrid";
+import type { CategoryFilter } from "@/hooks/usePasswordVault";
+import type { DocumentFormat } from "@/components/kryptex/DocumentLocker";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useVaultItems, type VaultItemRow } from "@/hooks/useVaultItems";
 import { useVaultMasterKey } from "@/hooks/useVaultMasterKey";
@@ -32,16 +46,17 @@ import { ENCRYPTION_VERSION_V2_PBKDF2 } from "@/lib/crypto/vaultCrypto";
 import { unlockVaultWithPassword } from "@/lib/kryptexVaultService";
 import { supabase } from "@/lib/supabase";
 
-type Tab = "vault" | "passwords" | "audit";
+type ViewMode = "documents" | "passwords" | "settings" | "authenticator";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useSupabaseUser();
   const legacySessionKey = useVaultMasterKey();
   const { items, loading: vaultLoading, error: vaultError, reload: reloadVault } = useVaultItems(user?.id ?? null);
-  const { rows: historyRows, loading: historyLoading, error: historyError } = useShareHistory(user?.id ?? null);
-
-  const [tab, setTab] = useState<Tab>("vault");
+  const [viewMode, setViewMode] = useState<ViewMode>("documents");
+  const [documentFormat, setDocumentFormat] = useState<DocumentFormat | "all">("all");
+  const [passwordCategory, setPasswordCategory] = useState<CategoryFilter>("all");
+  const [addNodeOpen, setAddNodeOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addPasswordOpen, setAddPasswordOpen] = useState(false);
   const [burnItem, setBurnItem] = useState<VaultItemRow | null>(null);
@@ -50,10 +65,7 @@ const Dashboard = () => {
   const [unlockBusy, setUnlockBusy] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const hasV2Items = useMemo(
-    () => items.some((i) => i.encryption_version === ENCRYPTION_VERSION_V2_PBKDF2),
-    [items]
-  );
+  const hasV2Items = useMemo(() => items.some((i) => i.encryption_version === ENCRYPTION_VERSION_V2_PBKDF2), [items]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -103,6 +115,30 @@ const Dashboard = () => {
     user?.app_metadata?.provider ||
     "email";
 
+  const documentTypes = [
+    { id: "all" as const, label: "All Documents", icon: LayoutGrid },
+    { id: "pdf" as const, label: "PDF", icon: FileText },
+    { id: "png" as const, label: "PNG", icon: FileImage },
+    { id: "jpeg" as const, label: "JPEG", icon: Image },
+    { id: "webp" as const, label: "WEBP", icon: Image },
+    { id: "docx" as const, label: "DOCX", icon: FileType2 },
+  ];
+
+  const passwordSections = [
+    { id: "all" as const, label: "All Credentials", icon: LayoutGrid },
+    { id: "social" as const, label: "Social", icon: User },
+    { id: "work" as const, label: "Work", icon: Briefcase },
+    { id: "shopping" as const, label: "Shopping", icon: Receipt },
+    { id: "finance" as const, label: "Finance", icon: Shield },
+  ];
+
+  const activeSidebarItems =
+    viewMode === "documents"
+      ? documentTypes
+      : viewMode === "passwords"
+      ? passwordSections
+      : [];
+
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -119,22 +155,27 @@ const Dashboard = () => {
       {/* ── App Control Bar (Thin Sidebar) ────────────────────────────────── */}
       <aside className="hidden lg:flex w-16 flex-col items-center border-r border-black/5 bg-white py-6 shrink-0">
         <div className="flex flex-col items-center gap-6">
-          <div className="w-10 h-10 rounded-xl bg-[#FF3B13] flex items-center justify-center shadow-lg shadow-[#FF3B13]/20">
-            <Shield className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-black/5 border border-black/5">
+            <img src="/Krytes.png" alt="Logo" className="w-full h-full object-cover" />
           </div>
           
           <div className="w-8 h-[1px] bg-black/5" />
           
           <nav className="flex flex-col items-center gap-4">
             {[
-              { icon: Layout, active: true },
-              { icon: Receipt, active: false },
-              { icon: Settings, active: false },
-            ].map((item, idx) => (
+              { id: "documents", icon: FileText },
+              { id: "passwords", icon: KeyRound },
+              { id: "authenticator", icon: QrCode },
+              { id: "settings", icon: Settings },
+            ].map((item) => (
               <button
-                key={idx}
+                key={item.id}
+                onClick={() => {
+                  setViewMode(item.id as ViewMode);
+                  setSidebarOpen(false);
+                }}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                  item.active 
+                  viewMode === item.id 
                     ? "bg-black text-white" 
                     : "text-black/30 hover:bg-black/5 hover:text-black/60"
                 }`}
@@ -163,15 +204,6 @@ const Dashboard = () => {
         } flex flex-col shrink-0`}
       >
         <div className="flex h-16 items-center px-6 border-b border-black/5 gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#FF3B13] flex items-center justify-center shadow-lg shadow-[#FF3B13]/20 shrink-0">
-            <Shield className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <p className="text-xs font-bold tracking-tighter uppercase italic leading-none">KRYPTES</p>
-            <p className="text-[8px] font-bold uppercase tracking-widest text-black/30 leading-none mt-1">
-              Zero-Knowledge
-            </p>
-          </div>
           <button
             type="button"
             className="ml-auto lg:hidden"
@@ -182,18 +214,18 @@ const Dashboard = () => {
         </div>
 
         <nav className="mt-6 flex-1 space-y-1 px-3">
-          {([
-            { id: "vault" as Tab, label: "Vault Items", icon: LayoutGrid },
-            { id: "passwords" as Tab, label: "Credentials", icon: KeyRound },
-            { id: "audit" as Tab, label: "Log Center", icon: ScrollText },
-          ] as const).map((item) => {
-            const active = tab === item.id;
+          {activeSidebarItems.map((item) => {
+            const active = viewMode === "documents" ? documentFormat === item.id : passwordCategory === item.id;
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => {
-                  setTab(item.id);
+                  if (viewMode === "documents") {
+                    setDocumentFormat(item.id as DocumentFormat | "all");
+                  } else {
+                    setPasswordCategory(item.id as CategoryFilter);
+                  }
                   setSidebarOpen(false);
                 }}
                 className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[11px] font-bold uppercase tracking-widest transition-all ${
@@ -209,7 +241,7 @@ const Dashboard = () => {
           })}
         </nav>
 
-        <div className="mt-auto border-t border-black/5 p-4">
+        <div className="mt-auto border-t border-black/5 p-4 flex flex-col items-center gap-3">
           <button
             type="button"
             onClick={() => void handleSignOut()}
@@ -233,10 +265,12 @@ const Dashboard = () => {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-[1200px] mx-auto">
-            {tab === "vault" && (
-              <>
+            {viewMode === "documents" && <DocumentLocker activeFormat={documentFormat} />}
+
+            {viewMode === "passwords" && (
+              <div className="space-y-6">
                 {hasV2Items && (
-                  <form onSubmit={handleVaultUnlock} className="mb-8 bg-white rounded-2xl border border-black/5 p-5 shadow-sm">
+                  <form onSubmit={handleVaultUnlock} className="bg-white rounded-2xl border border-black/5 p-5 shadow-sm">
                     <div className="flex flex-col sm:flex-row sm:items-end gap-4">
                       <div className="flex-1 space-y-2">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-[#FF3B13]">Master Password</label>
@@ -270,31 +304,36 @@ const Dashboard = () => {
                   </form>
                 )}
 
-                <SecureVaultView
+                <PasswordGrid
                   items={items}
-                  loading={vaultLoading}
-                  error={vaultError}
-                  legacySessionKey={legacySessionKey}
+                  userId={user.id}
                   pbkdfDerivedKey={pbkdfDerivedKey}
-                  onAddClick={() => setAddOpen(true)}
-                  onBurn={(item) => setBurnItem(item)}
+                  onAddClick={() => setAddNodeOpen(true)}
+                  activeCategory={passwordCategory}
                 />
-              </>
+              </div>
             )}
 
-            {tab === "audit" && (
-              <AuditLogView
-                rows={historyRows}
-                vaultItems={items}
-                loading={historyLoading}
-                error={historyError}
-              />
+            {viewMode === "settings" && (
+              <SettingsView user={user} onSignOut={handleSignOut} />
             )}
+
+            {viewMode === "authenticator" && <TwoFAMigrationWizard />}
           </div>
         </main>
       </div>
 
-      <AddSecretModal
+{addNodeOpen && (
+          <AddNodeModal
+            onClose={() => setAddNodeOpen(false)}
+            onSave={(data) => {
+              console.log("Saving new node:", data);
+              reloadVault();
+            }}
+          />
+        )}
+
+        <AddSecretModal
         open={addOpen}
         onOpenChange={setAddOpen}
         userId={user.id}
