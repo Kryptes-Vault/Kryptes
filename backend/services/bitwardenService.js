@@ -63,4 +63,44 @@ const fetchFromBitwarden = async (userId) => {
     }
 };
 
-module.exports = { saveToBitwarden, fetchFromBitwarden, logBitwardenStartupStatus };
+const saveCardToBitwarden = async (userId, payload) => {
+    try {
+        console.log(`[Bitwarden] Saving Card entry for User: ${userId}`);
+        const response = await axios.post(`${process.env.BITWARDEN_API_URL}/secrets`, {
+            key: `kryptex_card_${userId}_${Date.now()}`,
+            value: JSON.stringify(payload),
+            note: "Secure Card & Bank Info"
+        }, {
+            headers: { Authorization: `Bearer ${process.env.BITWARDEN_TOKEN}` }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error("Bitwarden Card Write Failed:", error.message);
+        throw new Error("Failed to save card securely to vault.");
+    }
+}
+
+const fetchCardsFromBitwarden = async (userId) => {
+    try {
+        console.log(`[Bitwarden] Listing Card entries for User: ${userId}`);
+        // In this simulated environment, we fetch all secrets starting with 'kryptex_card_<userId>'
+        const response = await axios.get(`${process.env.BITWARDEN_API_URL}/secrets?prefix=kryptex_card_${userId}`, {
+            headers: { Authorization: `Bearer ${process.env.BITWARDEN_TOKEN}` }
+        });
+        
+        // Map the results back to JSON objects
+        return response.data.map(item => JSON.parse(item.value));
+    } catch (error) {
+        console.error("Bitwarden Card List Failed:", error.message);
+        return []; // Return empty list on failure or if none found
+    }
+}
+
+module.exports = { 
+    saveToBitwarden, 
+    fetchFromBitwarden, 
+    logBitwardenStartupStatus, 
+    saveCardToBitwarden,
+    fetchCardsFromBitwarden 
+};
