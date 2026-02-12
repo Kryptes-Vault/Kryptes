@@ -24,6 +24,7 @@ router.post("/send-code", async (req, res) => {
 /**
  * @route POST /api/auth/supabase/sync
  * @desc Validates Supabase access token, creates shell user in Redis, sets session cookie.
+ *       Handles multi-provider metadata mapping (Google, Twitter/X, Azure, email).
  */
 router.post("/supabase/sync", async (req, res) => {
   const authHeader = req.headers.authorization;
@@ -47,17 +48,31 @@ router.post("/supabase/sync", async (req, res) => {
 
     const identity = user.identities && user.identities[0];
     const provider = identity?.provider || "email";
+    const meta = user.user_metadata || {};
+
+    // ── Multi-provider metadata resolution ───────────────────────────
+    // Twitter (X):  name, user_name, avatar_url
+    // Google:       full_name, name, picture
+    // Azure:        full_name, preferred_username
+    // Email:        (no profile metadata)
+    const displayName =
+      meta.full_name ||
+      meta.name ||
+      meta.user_name ||
+      meta.preferred_username ||
+      null;
+
+    const avatarUrl =
+      meta.avatar_url ||
+      meta.picture ||
+      null;
 
     const shell = await ensureShellUser({
       provider,
       providerId: user.id,
       email: user.email,
-      displayName:
-        user.user_metadata?.full_name ||
-        user.user_metadata?.name ||
-        user.user_metadata?.user_name ||
-        user.user_metadata?.preferred_username ||
-        null,
+      displayName,
+      avatarUrl,
     });
 
     req.session.kryptexUser = shell;
@@ -92,6 +107,7 @@ router.get("/me", (req, res) => {
       provider: user.provider,
       email: user.email,
       displayName: user.displayName,
+      avatarUrl: user.avatarUrl || null,
     },
   });
 });
