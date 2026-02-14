@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { vaultSchema } = require("../models/vaultSchema");
 const { getCachedVault, setCachedVault } = require("../services/redisService");
-const { saveToBitwarden, fetchFromBitwarden } = require("../services/bitwardenService");
+const { saveToBitwarden, fetchFromBitwarden, saveCardToBitwarden, fetchCardsFromBitwarden } = require("../services/bitwardenService");
 const rateLimit = require("express-rate-limit");
 
 // Prevent Brute Force
@@ -60,6 +60,69 @@ router.get("/get", vaultLimiter, async (req, res) => {
         res.json({ encryptedData: data, source: "vault" });
     } catch (error) {
         res.status(500).json({ error: "Vault Retrieval Error - Please retry later" });
+    }
+});
+
+/**
+ * @route POST /api/vault/cards
+ * @desc Encrypts and persists debit/credit card info along with bank details to Bitwarden
+ */
+router.post("/cards", vaultLimiter, async (req, res) => {
+    try {
+        const { userId, cardholderName, cardNumber, expMonth, expYear, code, accountNumber, ifscCode } = req.body;
+
+        // Basic validation matching frontend
+        if (!userId || !accountNumber || !ifscCode) {
+            return res.status(400).json({ error: "Missing required fields (userId, accountNumber, ifscCode)" });
+        }
+
+        // Structure the Bitwarden Item payload
+        const bitwardenPayload = {
+            type: 3, // 3 = Card type in Bitwarden
+            name: `Bank Card - ${cardholderName || 'Unknown'}`,
+            card: {
+                cardholderName: cardholderName,
+                number: cardNumber,
+                expMonth: expMonth,
+                expYear: expYear,
+                code: code
+            },
+            fields: [
+                {
+                    name: "Account Number",
+                    value: accountNumber,
+                    type: 1 // 1 = Hidden/Secure text
+                },
+                {
+                    name: "IFSC Code",
+                    value: ifscCode,
+                    type: 1 // 1 = Hidden/Secure text
+                }
+            ]
+        };
+
+        // Wrap Bitwarden call in try/catch to ensure clean response
+        await saveCardToBitwarden(userId, bitwardenPayload);
+
+        res.json({ success: true, message: "Card securely stored in Bitwarden Vault" });
+    } catch (error) {
+        res.status(500).json({ error: error.message || "Failed to persist card to secure vault" });
+    }
+});
+
+/**
+ * @route GET /api/vault/cards
+ * @desc Retrieve user cards from Bitwarden
+ */
+router.get("/cards", vaultLimiter, async (req, res) => {
+    try {
+        const { userId } = req.query;
+        if (!userId) return res.status(400).json({ error: "userId is required." });
+
+        const cards = await fetchCardsFromBitwarden(userId);
+        res.json({ cards });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to retrieve cards from secure vault." });
     }
 });
 
