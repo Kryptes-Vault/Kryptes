@@ -35,7 +35,8 @@ export type LockerDocument = {
   folder: string;
   updatedAt: string;
   thumbnailSeed: string;
-  source: "cache" | "fresh" | "upload";
+  source: "mega" | "upload";
+  previewUrl?: string;
 };
 
 type DocumentLockerProps = {
@@ -51,11 +52,8 @@ type UploadItem = {
 
 const ACCEPTED_EXTENSIONS = ["pdf", "png", "jpg", "jpeg", "webp", "docx"] as const;
 
-const CACHED_DOCUMENTS: LockerDocument[] = [];
-
-const FRESH_DOCUMENTS: LockerDocument[] = [];
-
 const DEFAULT_FOLDERS = ["Education", "Government", "Vehicle", "Certificates"];
+const API_BASE = (import.meta.env.VITE_BACKEND_URL || "http://localhost:4000").replace(/\/$/, "");
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -101,7 +99,7 @@ function getAllowedTargets(original: DocumentFormat): DocumentFormat[] {
     case "webp":
       return ["png", "jpeg", "webp", "pdf"];
     case "docx":
-      return ["docx", "pdf", "png"];
+      return ["docx"];
     default:
       return [original];
   }
@@ -115,57 +113,22 @@ function normalizedExtension(name: string): DocumentFormat | null {
   return null;
 }
 
-function useCachedDocuments() {
-  const [documents, setDocuments] = useState<LockerDocument[]>(CACHED_DOCUMENTS);
-  const [syncing, setSyncing] = useState(true);
-
-  useEffect(() => {
-    setDocuments(CACHED_DOCUMENTS);
-    setSyncing(true);
-
-    const timer = window.setTimeout(() => {
-      setDocuments(FRESH_DOCUMENTS);
-      setSyncing(false);
-    }, 1600);
-
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  return { documents, setDocuments, syncing };
-}
-
-export async function handleFormatConversion(fileId: string, targetFormat: DocumentFormat) {
-  await new Promise((resolve) => window.setTimeout(resolve, 1100));
-
-  const payload = `Kryptes secure conversion stub\nFile ID: ${fileId}\nTarget Format: ${targetFormat.toUpperCase()}\nGenerated At: ${new Date().toISOString()}`;
-  const mimeMap: Record<DocumentFormat, string> = {
-    pdf: "application/pdf",
-    png: "image/png",
-    jpeg: "image/jpeg",
-    webp: "image/webp",
-    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  };
-
-  const blob = new Blob([payload], { type: mimeMap[targetFormat] });
-  return {
-    blob,
-    fileName: `${fileId}.${targetFormat}`,
-    mimeType: mimeMap[targetFormat],
-  };
-}
-
 export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerProps) {
-  const { documents, setDocuments, syncing } = useCachedDocuments();
+  const [documents, setDocuments] = useState<LockerDocument[]>([]);
+  const [syncing, setSyncing] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [activeFolder, setActiveFolder] = useState<string>(DEFAULT_FOLDERS[0]);
   const [folderName, setFolderName] = useState("");
   const [customFolders, setCustomFolders] = useState<string[]>([]);
   const [previewDoc, setPreviewDoc] = useState<LockerDocument | null>(null);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [conversionDoc, setConversionDoc] = useState<LockerDocument | null>(null);
   const [targetFormat, setTargetFormat] = useState<DocumentFormat>("pdf");
   const [converting, setConverting] = useState(false);
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
+  const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewLayout, setViewLayout] = useState<"grid" | "list">("grid");
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -198,6 +161,72 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
 
   const hasUploads = uploads.length > 0;
 
+  useEffect(() => {
+    if (!previewDoc) {
+      if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl);
+      setPreviewBlobUrl(null);
+      setPreviewLoading(false);
+      return;
+    }
+
+    if (!["pdf", "png", "jpeg", "webp"].includes(previewDoc.type)) {
+      if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl);
+      setPreviewBlobUrl(null);
+      setPreviewLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const loadPreview = async () => {
+      setPreviewLoading(true);
+      try {
+        const response = await fetch(
+          `${API_BASE}/api/documents/download?id=${encodeURIComponent(previewDoc.id)}&targetFormat=${encodeURIComponent(previewDoc.type)}`,
+          { credentials: "include" }
+        );
+        if (!response.ok) throw new Error("Preview fetch failed");
+        const blob = await response.blob();
+        if (cancelled) return;
+        if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl);
+        setPreviewBlobUrl(URL.createObjectURL(blob));
+      } finally {
+        if (!cancelled) setPreviewLoading(false);
+      }
+    };
+
+    void loadPreview();
+    return () => {
+      cancelled = true;
+    };
+  }, [previewDoc]);
+
+  useEffect(() => {
+    const loadDocuments = async () => {
+      setSyncing(true);
+      try {
+        const response = await fetch(`${API_BASE}/api/documents`, { credentials: "include" });
+        const data = await response.json();
+        const docs = Array.isArray(data?.documents) ? data.documents : [];
+        setDocuments(
+          docs.map((doc: any) => ({
+            id: doc.id,
+            name: doc.name,
+            size: doc.size,
+            type: doc.type,
+            folder: doc.folder,
+            updatedAt: doc.updatedAt,
+            thumbnailSeed: (doc.name || "").slice(0, 1).toUpperCase() || "D",
+            source: "mega" as const,
+            previewUrl: doc.previewUrl,
+          }))
+        );
+      } finally {
+        setSyncing(false);
+      }
+    };
+    void loadDocuments();
+  }, []);
+
   function createFolder() {
     const trimmed = folderName.trim();
     if (!trimmed) return;
@@ -217,7 +246,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
     setDocuments((prev) => [document, ...prev.filter((doc) => doc.id !== document.id)]);
   }
 
-  function startSimulatedUpload(file: File) {
+  async function startSimulatedUpload(file: File) {
     const extension = normalizedExtension(file.name);
     if (!extension) return;
 
@@ -230,25 +259,38 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
       if (progress >= 100) {
         progress = 100;
         window.clearInterval(interval);
-
-        const uploadedDoc: LockerDocument = {
-          id: crypto.randomUUID(),
-          name: file.name,
-          size: file.size,
-          type: extension,
-          folder: activeFolder,
-          updatedAt: new Date().toISOString(),
-          thumbnailSeed: file.name.slice(0, 1).toUpperCase() || "D",
-          source: "upload",
-        };
-
-        syncDocument(uploadedDoc);
-        setUploads((prev) => prev.filter((item) => item.id !== tempId));
-        return;
       }
 
       setUploads((prev) => prev.map((item) => (item.id === tempId ? { ...item, progress: Math.round(progress) } : item)));
     }, 160);
+
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("folder", activeFolder);
+      const response = await fetch(`${API_BASE}/api/documents/upload`, {
+        method: "POST",
+        body: form,
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.document) throw new Error(data?.error || "Upload failed");
+      const uploadedDoc: LockerDocument = {
+        id: data.document.id,
+        name: data.document.name,
+        size: data.document.size,
+        type: data.document.type,
+        folder: data.document.folder,
+        updatedAt: data.document.updatedAt,
+        thumbnailSeed: data.document.name.slice(0, 1).toUpperCase() || "D",
+        source: "upload",
+        previewUrl: data.document.previewUrl,
+      };
+      syncDocument(uploadedDoc);
+    } finally {
+      window.clearInterval(interval);
+      setUploads((prev) => prev.filter((item) => item.id !== tempId));
+    }
   }
 
   function handleFiles(files: FileList | null) {
@@ -281,17 +323,36 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
     setConverting(true);
     setBusyDocId(conversionDoc.id);
     try {
-      const result = await handleFormatConversion(conversionDoc.id, targetFormat);
-      const url = URL.createObjectURL(result.blob);
+      const url = `${API_BASE}/api/documents/download?id=${encodeURIComponent(conversionDoc.id)}&targetFormat=${encodeURIComponent(targetFormat)}`;
+      const response = await fetch(url, { credentials: "include" });
+      if (!response.ok) throw new Error("Download failed");
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
+      a.href = downloadUrl;
       a.download = `${conversionDoc.name.replace(/\.[^.]+$/, "")}.${targetFormat}`;
       a.click();
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(downloadUrl);
       setConversionDoc(null);
     } finally {
       setConverting(false);
       setBusyDocId(null);
+    }
+  }
+
+  async function deleteDocument(doc: LockerDocument) {
+    setDeletePendingId(doc.id);
+    try {
+      const response = await fetch(`${API_BASE}/api/documents?id=${encodeURIComponent(doc.id)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Delete failed");
+      setDocuments((prev) => prev.filter((item) => item.id !== doc.id));
+      if (previewDoc?.id === doc.id) setPreviewDoc(null);
+      if (conversionDoc?.id === doc.id) setConversionDoc(null);
+    } finally {
+      setDeletePendingId(null);
     }
   }
 
@@ -384,7 +445,11 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
           </div>
 
           {/* Grid View */}
-          {sortedDocuments.length > 0 ? (
+          {syncing ? (
+            <div className="mx-auto flex min-h-[220px] w-full max-w-3xl items-center justify-center rounded-3xl border border-black/5 bg-[#f7f7f7]">
+              <p className="text-xs font-bold uppercase tracking-widest text-black/40">Syncing documents from MEGA...</p>
+            </div>
+          ) : sortedDocuments.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {sortedDocuments.map((doc) => {
                 const thumb = thumbnailForType(doc.type);
@@ -403,8 +468,12 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                     key={doc.id}
                     className="group relative bg-white border border-black/5 rounded-3xl p-6 transition-all hover:shadow-xl hover:shadow-black/5 hover:-translate-y-1"
                   >
-                    <button className="absolute top-4 right-4 p-2 text-black/20 hover:text-black/40 transition-colors">
-                      <MoreVertical className="h-4 w-4" />
+                    <button
+                      onClick={() => void deleteDocument(doc)}
+                      disabled={deletePendingId === doc.id}
+                      className="absolute top-4 right-4 p-2 text-black/20 hover:text-[#FF3300] transition-colors disabled:opacity-40"
+                    >
+                      {deletePendingId === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
                     </button>
 
                     <div className="flex flex-col items-center text-center">
@@ -426,7 +495,9 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                           {fileTypeLabel(doc.type)}
                         </span>
                         <button
-                          onClick={() => setPreviewDoc(doc)}
+                          onClick={() => {
+                            setPreviewDoc(doc);
+                          }}
                           className="text-[10px] font-bold uppercase tracking-widest text-[#FF3B13] hover:underline"
                         >
                           Preview
@@ -497,15 +568,39 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                 </button>
               </div>
               
+              {previewLoading ? (
+                <div className="mb-6 flex h-[360px] items-center justify-center rounded-2xl border border-black/5 bg-black/[0.02]">
+                  <Loader2 className="h-6 w-6 animate-spin text-black/40" />
+                </div>
+              ) : previewBlobUrl && (previewDoc.type === "pdf" || previewDoc.type === "png" || previewDoc.type === "jpeg" || previewDoc.type === "webp") ? (
+                <div className="mb-6 overflow-hidden rounded-2xl border border-black/5 bg-black/[0.02]">
+                  {previewDoc.type === "pdf" ? (
+                    <iframe src={previewBlobUrl} title={previewDoc.name} className="h-[360px] w-full" />
+                  ) : (
+                    <img src={previewBlobUrl} alt={previewDoc.name} className="h-[360px] w-full object-contain bg-white" />
+                  )}
+                </div>
+              ) : (
+                <div className="mb-6 rounded-2xl border border-black/5 bg-black/[0.02] p-6 text-center text-xs text-black/50">
+                  Direct preview is not available for this file type.
+                </div>
+              )}
+
               <div className="flex flex-col gap-3">
                 <button 
                   onClick={() => {
                     setConversionDoc(previewDoc);
-                    runConversion();
                   }}
                   className="w-full h-14 bg-black text-white rounded-2xl font-bold uppercase tracking-widest text-[12px] shadow-lg shadow-black/10 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-3"
                 >
-                  <ArrowDownToLine className="h-5 w-5" /> Download Securely
+                  <ArrowDownToLine className="h-5 w-5" /> Choose Download Format
+                </button>
+                <button
+                  onClick={() => void deleteDocument(previewDoc)}
+                  disabled={deletePendingId === previewDoc.id}
+                  className="w-full h-12 rounded-2xl border border-[#FF3300]/20 text-[#FF3300] text-[11px] font-bold uppercase tracking-widest"
+                >
+                  {deletePendingId === previewDoc.id ? "Deleting..." : "Delete Document"}
                 </button>
                 <div className="flex items-center justify-center gap-4 text-[11px] font-bold uppercase tracking-widest text-black/30 mt-2">
                   <ShieldCheck className="h-4 w-4 text-emerald-500" /> AES-256 Encrypted
