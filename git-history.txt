@@ -10,3 +10,4 @@ refactor: improve cubic-bezier easing for high-fidelity transitions
 fix: resolve z-index stacking order for 'SECURE NOW' button
 feat: add password visibility toggle to login portal
 ui: implement backdrop blur for active authentication states
+feat: add local finance engine dashboard concept
