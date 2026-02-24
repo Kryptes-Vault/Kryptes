@@ -12,3 +12,4 @@ feat: add password visibility toggle to login portal
 ui: implement backdrop blur for active authentication states
 feat: add local finance engine dashboard concept
 ui: style 'FINANCE ENGINE' card with real-time stats
+feat: add 'SMART SCHEDULER' project showcase with context cues
