@@ -39,3 +39,4 @@ feat: implement local SMS sync service prototype in react-native
 ui: add BankSmsTracker screen for mobile companion app
 style: add glowing shadow effect to primary action buttons
 feat: implement rotation origins for door-opening effect
+ui: add 'ZERO-KNOWLEDGE VAULT' service card with description
