@@ -2,7 +2,6 @@ const express = require("express");
 const session = require("express-session");
 const { RedisStore } = require("connect-redis");
 const Redis = require("ioredis");
-const passport = require("passport");
 const cors = require("cors");
 require("dotenv").config();
 
@@ -45,34 +44,36 @@ try {
 const vaultRoutes = require("./routes/vault");
 const webhookRoutes = require("./routes/webhooks");
 const authRoutes = require("./routes/auth");
+const { handleSendEmailHook } = require("./routes/authEmailHook");
+const { corsOptions, getSessionCookieOptions } = require("./config/auth");
 
 const app = express();
 
-// Passport Service initialization
-require("./services/passport")(passport);
+// Behind Render / other reverse proxies — required for secure cookies & correct client IP
+app.set("trust proxy", 1);
 
-// Security Middleware: CORS for Vercel Frontend
-app.use(cors({
-    origin: "https://kryptes.vercel.app",
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-}));
+// Security Middleware — Vercel origin + credentials for session cookies
+app.use(cors(corsOptions));
+
+// Supabase Send Email Hook: raw body required for Standard Webhooks signature verification
+app.post(
+    "/api/auth/send-email-hook",
+    express.raw({
+        type: (req) =>
+            (req.headers["content-type"] || "").includes("application/json"),
+    }),
+    handleSendEmailHook
+);
 
 app.use(express.json());
 
 // Session and Passport initialization
 const sessionConfig = {
+    name: "kryptex.sid",
     secret: process.env.SESSION_SECRET || "kryptex_secret_82346",
     resave: false,
     saveUninitialized: false,
-    proxy: true, // Required for Render/Vercel (behind a proxy)
-    cookie: { 
-        secure: true, // Must be true for sameSite: 'none'
-        sameSite: 'none', // Required for cross-site (Vercel -> Render)
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+    cookie: getSessionCookieOptions(),
 };
 
 // Use RedisStore if available, otherwise fallback to explicit MemoryStore
@@ -91,8 +92,12 @@ app.get("/health", (req, res) => {
 });
 
 app.use(session(sessionConfig));
-app.use(passport.initialize());
-app.use(passport.session());
+app.use((req, res, next) => {
+    if (req.session && req.session.kryptexUser) {
+        req.user = req.session.kryptexUser;
+    }
+    next();
+});
 
 // Routes
 app.use("/api/vault", vaultRoutes);
