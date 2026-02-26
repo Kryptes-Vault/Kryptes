@@ -62,7 +62,7 @@ export function getOAuthRedirectUrl(): string {
 
 // ── Per-Provider OAuth Options ─────────────────────────────────────────────
 
-type OAuthProvider = "google" | "twitter" | "azure" | "linkedin_oidc";
+type OAuthProvider = "google" | "x" | "azure" | "linkedin_oidc";
 
 interface ProviderOAuthOptions {
   queryParams?: Record<string, string>;
@@ -74,7 +74,7 @@ interface ProviderOAuthOptions {
  * and scopes for each supported provider.
  *
  * - **Google**: `access_type=offline` for refresh tokens, `prompt=consent`
- * - **Twitter (X)**: `tweet.read` + `users.read` scopes (OAuth 2.0 PKCE)
+ * - **X (fka Twitter)**: `tweet.read` + `users.read` scopes (OAuth 2.0 PKCE)
  * - **Azure**: default Supabase handling (no extra params needed)
  */
 export function getProviderOptions(provider: OAuthProvider): ProviderOAuthOptions {
@@ -86,11 +86,11 @@ export function getProviderOptions(provider: OAuthProvider): ProviderOAuthOption
           prompt: "consent",
         },
       };
-    case "twitter":
-      // Twitter OAuth 2.0 (X) requires PKCE which Supabase handles.
+    case "x":
+      // X (Twitter) OAuth 2.0 requires PKCE which Supabase handles.
       // Scopes: "tweet.read users.read" (standard for user info/profile)
-      // Note: provider string remains "twitter" in Supabase, but must be 
-      // configured with the OAuth 2.0 Client/Secret in the Dashboard.
+      // Note: provider string is "x" in Supabase for OAuth 2.0, 
+      // but must be configured with the OAuth 2.0 Client/Secret in the Dashboard.
       return {
         scopes: "tweet.read users.read offline.access",
       };

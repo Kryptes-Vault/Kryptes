@@ -23,6 +23,40 @@ const heroReveal = {
   }),
 };
 
+/* ── Split character animation logic ──────────────────────────────── */
+const AnimatedWord = ({ 
+  text, 
+  isAuthVisible, 
+  splitAt, 
+  distance 
+}: { 
+  text: string; 
+  isAuthVisible: boolean; 
+  splitAt: number; 
+  distance: number;
+}) => {
+  return (
+    <>
+      {text.split("").map((char, i) => (
+        <motion.span
+          key={i}
+          animate={{ 
+            x: isAuthVisible ? (i < splitAt ? -distance : distance) : 0, 
+            opacity: isAuthVisible ? 0 : 1 
+          }}
+          transition={{ 
+            duration: 0.8, 
+            ease: [0.16, 1, 0.3, 1],
+            delay: i * 0.04 // Sequential stagger
+          }}
+        >
+          {char}
+        </motion.span>
+      ))}
+    </>
+  );
+};
+
 const Index = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isAuthVisible, setIsAuthVisible] = useState(false);
@@ -123,12 +157,10 @@ const Index = () => {
                       className="text-black max-w-[1000px] flex flex-col items-center tracking-tighter leading-[0.8] font-black uppercase"
                     >
                       <span className="italic font-black scale-x-125 inline-flex origin-center text-[11vw] sm:text-[5rem] lg:text-[7.5rem]">
-                        <motion.span animate={{ x: isAuthVisible ? -100 : 0, opacity: isAuthVisible ? 0 : 1 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}>ZE</motion.span>
-                        <motion.span animate={{ x: isAuthVisible ? 100 : 0, opacity: isAuthVisible ? 0 : 1 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}>RO</motion.span>
+                        <AnimatedWord text="ZERO" isAuthVisible={isAuthVisible} splitAt={2} distance={100} />
                       </span>
                       <span className="italic font-black scale-x-125 inline-flex origin-center mt-2 text-[11vw] sm:text-[5rem] lg:text-[7.5rem] text-[#FF3B13]">
-                        <motion.span animate={{ x: isAuthVisible ? -100 : 0, opacity: isAuthVisible ? 0 : 1 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}>KNOW</motion.span>
-                        <motion.span animate={{ x: isAuthVisible ? 100 : 0, opacity: isAuthVisible ? 0 : 1 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}>LEDGE</motion.span>
+                        <AnimatedWord text="KNOWLEDGE" isAuthVisible={isAuthVisible} splitAt={4} distance={100} />
                       </span>
                     </motion.h1>
                   </div>
@@ -156,12 +188,10 @@ const Index = () => {
                       className="text-black max-w-[1000px] flex flex-col items-center tracking-tighter leading-[0.8] font-black uppercase"
                     >
                       <span className="inline-flex text-[11vw] sm:text-[5rem] lg:text-[7.5rem]">
-                        <motion.span animate={{ x: isAuthVisible ? -150 : 0, opacity: isAuthVisible ? 0 : 1 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}>DIGI</motion.span>
-                        <motion.span animate={{ x: isAuthVisible ? 150 : 0, opacity: isAuthVisible ? 0 : 1 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}>TAL</motion.span>
+                        <AnimatedWord text="DIGITAL" isAuthVisible={isAuthVisible} splitAt={4} distance={150} />
                       </span>
                       <span className="inline-flex mt-2 text-[11vw] sm:text-[5rem] lg:text-[7.5rem]">
-                        <motion.span animate={{ x: isAuthVisible ? -150 : 0, opacity: isAuthVisible ? 0 : 1 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}>ECOSY</motion.span>
-                        <motion.span animate={{ x: isAuthVisible ? 150 : 0, opacity: isAuthVisible ? 0 : 1 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}>STEM</motion.span>
+                        <AnimatedWord text="ECOSYSTEM" isAuthVisible={isAuthVisible} splitAt={4} distance={150} />
                       </span>
                     </motion.h1>
                     <motion.p
