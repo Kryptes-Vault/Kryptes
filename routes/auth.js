@@ -22,24 +22,26 @@ router.post("/send-code", async (req, res) => {
 });
 
 // MULTI-PROVIDER AUTH ENDPOINTS
+const VERCEL_DASHBOARD = "https://kryptes.vercel.app/dashboard";
+
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 router.get("/google/callback", passport.authenticate("google", { failureRedirect: "/login" }), (req, res) => {
-    res.redirect("http://localhost:8081/dashboard");
+    res.redirect(VERCEL_DASHBOARD);
 });
 
 router.get("/microsoft", passport.authenticate("microsoft", { scope: ["user.read"] }));
 router.get("/microsoft/callback", passport.authenticate("microsoft", { failureRedirect: "/login" }), (req, res) => {
-    res.redirect("http://localhost:8081/dashboard");
+    res.redirect(VERCEL_DASHBOARD);
 });
 
 router.get("/twitter", passport.authenticate("twitter"));
 router.get("/twitter/callback", passport.authenticate("twitter", { failureRedirect: "/login" }), (req, res) => {
-    res.redirect("http://localhost:8081/dashboard");
+    res.redirect(VERCEL_DASHBOARD);
 });
 
 router.get("/yahoo", passport.authenticate("yahoo"));
 router.get("/yahoo/callback", passport.authenticate("yahoo", { failureRedirect: "/login" }), (req, res) => {
-    res.redirect("http://localhost:8081/dashboard");
+    res.redirect(VERCEL_DASHBOARD);
 });
 
 module.exports = router;

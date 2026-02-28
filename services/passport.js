@@ -1,76 +1,56 @@
-const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const MicrosoftStrategy = require('passport-microsoft').Strategy;
 const TwitterStrategy = require('passport-twitter-oauth2').Strategy;
 const YahooStrategy = require('passport-yahoo-oauth2').Strategy;
 
 module.exports = function(passport) {
-  // Serialize user: Only store user_id in session for Zero-Knowledge consistency
+  // Session management: Minimal identity storage
   passport.serializeUser((user, done) => {
-    done(null, { id: user.id, provider: user.provider });
+    done(null, { id: user.id, provider: user.provider, email: user.email });
   });
 
   passport.deserializeUser((obj, done) => {
-    // In a real ZK app, we'd fetch the user from a database by ID
-    // but keep sensitive data out of the deserialized object
     done(null, obj);
   });
 
-  // GOOGLE STRATEGY
+  // GOOGLE (OAuth 2.0)
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     passport.use(new GoogleStrategy({
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: "/api/auth/google/callback",
+        callbackURL: "https://kryptes.onrender.com/api/auth/google/callback",
         scope: ['profile', 'email']
       },
       (accessToken, refreshToken, profile, done) => {
-        return done(null, { id: profile.id, provider: 'google', email: profile.emails?.[0]?.value });
+        return done(null, { id: profile.id, provider: 'google', email: profile.emails?.[0]?.value, displayName: profile.displayName });
       }
     ));
   }
 
-  // MICROSOFT STRATEGY
-  if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
-    passport.use(new MicrosoftStrategy({
-        clientID: process.env.MICROSOFT_CLIENT_ID,
-        clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-        callbackURL: "/api/auth/microsoft/callback",
-        scope: ['user.read']
-      },
-      (accessToken, refreshToken, profile, done) => {
-        return done(null, { id: profile.id, provider: 'microsoft', email: profile.emails?.[0]?.value });
-      }
-    ));
-  }
-
-  // TWITTER (X) STRATEGY (OAuth 2.0)
+  // TWITTER / X (OAuth 2.0)
   if (process.env.TWITTER_CLIENT_ID && process.env.TWITTER_CLIENT_SECRET) {
     passport.use(new TwitterStrategy({
         clientID: process.env.TWITTER_CLIENT_ID,
         clientSecret: process.env.TWITTER_CLIENT_SECRET,
-        callbackURL: "/api/auth/twitter/callback",
+        callbackURL: "https://kryptes.onrender.com/api/auth/twitter/callback",
         clientType: 'confidential',
-        scope: ['tweet.read', 'users.read', 'offline.access']
+        scope: ['users.read', 'tweet.read', 'offline.access']
       },
       (accessToken, refreshToken, profile, done) => {
-        return done(null, { id: profile.id, provider: 'twitter', username: profile.username });
+        return done(null, { id: profile.id, provider: 'twitter', email: profile.email, displayName: profile.displayName });
       }
     ));
   }
 
-  // YAHOO STRATEGY
-  if (process.env.YAHOO_CLIENT_ID && 
-      process.env.YAHOO_CLIENT_ID !== 'your_yahoo_id' && 
-      process.env.YAHOO_CLIENT_SECRET && 
-      process.env.YAHOO_CLIENT_SECRET !== 'your_yahoo_secret') {
+  // YAHOO (OAuth 2.0)
+  if (process.env.YAHOO_CLIENT_ID && process.env.YAHOO_CLIENT_SECRET) {
     passport.use(new YahooStrategy({
         clientID: process.env.YAHOO_CLIENT_ID,
         clientSecret: process.env.YAHOO_CLIENT_SECRET,
-        callbackURL: "/api/auth/yahoo/callback"
+        callbackURL: "https://kryptes.onrender.com/api/auth/yahoo/callback"
       },
       (accessToken, refreshToken, profile, done) => {
-        return done(null, { id: profile.id, provider: 'yahoo', email: profile.emails?.[0]?.value });
+        return done(null, { id: profile.id, provider: 'yahoo', email: profile.emails?.[0]?.value, displayName: profile.displayName });
       }
     ));
   }
