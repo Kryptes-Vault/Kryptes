@@ -14,3 +14,4 @@ feat: add local finance engine dashboard concept
 ui: style 'FINANCE ENGINE' card with real-time stats
 feat: add 'SMART SCHEDULER' project showcase with context cues
 ui: remove top navigation bar for immersive landing experience
+style: theme entire landing page to clean white/orange aesthetic
