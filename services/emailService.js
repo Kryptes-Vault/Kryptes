@@ -75,4 +75,40 @@ const sendVerificationEmail = async (toEmail, verificationCode) => {
   }
 };
 
-module.exports = { sendVerificationEmail };
+/**
+ * Supabase Send Email Hook — signup confirmation (HTTPS hook → nodemailer).
+ * Uses the same Gmail OAuth2 transporter as sendVerificationEmail.
+ *
+ * @param {string} toEmail
+ * @param {{ confirmationUrl: string, token: string, siteUrl?: string }} opts
+ */
+const sendSignupConfirmationEmail = async (toEmail, opts) => {
+  const { confirmationUrl, token, siteUrl } = opts;
+  const transporter = await createTransporter();
+  const from =
+    process.env.MAIL_FROM || `"Kryptex Security" <chitkullakshya@gmail.com>`;
+
+  const mailOptions = {
+    from,
+    to: toEmail,
+    subject: "Confirm your Kryptex account",
+    html: `
+        <div style="font-family: sans-serif; padding: 20px; color: #111;">
+          <h2 style="color: #FF3B13;">Kryptex Zero-Knowledge Vault</h2>
+          <p>Confirm your email to activate your vault.</p>
+          <p style="margin: 24px 0;">
+            <a href="${confirmationUrl}" style="display:inline-block;background:#FF3B13;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:bold;">
+              Confirm email
+            </a>
+          </p>
+          <p style="font-size: 13px; color: #444;">Or enter this code: <strong>${token}</strong></p>
+          ${siteUrl ? `<p style="font-size: 12px; color: #666;">Site: ${siteUrl}</p>` : ""}
+          <p style="font-size: 12px; color: #666; margin-top: 20px;">If you did not sign up, ignore this email.</p>
+        </div>
+      `,
+  };
+
+  return transporter.sendMail(mailOptions);
+};
+
+module.exports = { sendVerificationEmail, sendSignupConfirmationEmail };
