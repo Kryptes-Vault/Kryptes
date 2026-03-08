@@ -1,18 +1,13 @@
 /**
- * Server-only: upload bytes to MEGA root (flat) and persist metadata in Supabase.
+ * Server-only: upload bytes to Google Drive (user-scoped folder) and persist metadata in Supabase.
  * Uses the service role so inserts are trusted after you verify `userId` (session/JWT).
  *
- * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, MEGA_EMAIL, MEGA_PASSWORD
+ * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, plus Google Drive vars (see googleDriveStorage.ts).
  */
 import { randomBytes } from "node:crypto";
 import path from "node:path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { initMega, uploadToMega } = require("../megaService.js") as {
-  initMega: () => Promise<import("megajs").Storage>;
-  uploadToMega: (storage: import("megajs").Storage, fileBuffer: Buffer, fileName: string) => Promise<string>;
-};
+import { uploadToDriveVault } from "./googleDriveStorage";
 
 const CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 
@@ -62,9 +57,13 @@ export type UploadAndLinkResult = {
   megaFileLink: string;
 };
 
+function driveViewerUrl(fileId: string): string {
+  return `https://drive.google.com/file/d/${fileId}/view`;
+}
+
 /**
- * Streams `fileBuffer` to MEGA root with an opaque filename derived from `unique_file_code`,
- * then inserts a row into `vault_files` linked to `targetFolderCode`.
+ * Streams `fileBuffer` to Google Drive with an opaque filename derived from `unique_file_code`,
+ * then inserts a row into `vault_files` linked to `targetFolderCode` (column `mega_file_link` stores a Drive viewer URL).
  *
  * Security: call only after authenticating the user and confirming `userId` matches that session.
  */
@@ -99,8 +98,8 @@ export async function uploadAndLinkFile(
     const uniqueFileCode = generateUniqueFileCode(fileName);
     const megaStorageName = `${uniqueFileCode}${ext}`;
 
-    const storage = await initMega();
-    const megaFileLink = await uploadToMega(storage, fileBuffer, megaStorageName);
+    const driveFileId = await uploadToDriveVault(userId.trim(), fileBuffer, megaStorageName);
+    const megaFileLink = driveViewerUrl(driveFileId);
 
     const { data: inserted, error: insertError } = await supabase
       .from("vault_files")
@@ -126,7 +125,7 @@ export async function uploadAndLinkFile(
 
     const code = (insertError as { code?: string })?.code;
     if (code === "23505") {
-      // unique_file_code collision — retry with a new code; orphan blob may remain on MEGA (garbage-collect separately if needed)
+      // unique_file_code collision — retry with a new code; orphan blob may remain on Drive (garbage-collect separately if needed)
       continue;
     }
 
