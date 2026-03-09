@@ -11,6 +11,7 @@
 | [06_custom_smtp_integration.md](./06_custom_smtp_integration.md) | Supabase Custom SMTP (Gmail 465 SSL), App Password, dashboard templates |
 | [08_vault_database_schema.md](./08_vault_database_schema.md) | `vault_items` ciphertext schema, RLS, zero-knowledge guarantees |
 | [08_vercel_env_sync_architecture.md](./08_vercel_env_sync_architecture.md) | Supabase↔Vercel integration, `VITE_` prefix, Render manual secrets, deprecations |
+| [09_ephemeral_sharing_technical_spec.md](./09_ephemeral_sharing_technical_spec.md) | Burn-on-read `shared_secrets`, `get_and_burn_secret`, URL fragment, limitations |
 
 ## Checklists
 
