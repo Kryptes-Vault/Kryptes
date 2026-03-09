@@ -10,6 +10,7 @@
 | [06_email_auth_hook_integration.md](./06_email_auth_hook_integration.md) | Send Email HTTPS hook, webhook verification, signup mail via nodemailer |
 | [06_custom_smtp_integration.md](./06_custom_smtp_integration.md) | Supabase Custom SMTP (Gmail 465 SSL), App Password, dashboard templates |
 | [08_vault_database_schema.md](./08_vault_database_schema.md) | `vault_items` ciphertext schema, RLS, zero-knowledge guarantees |
+| [08_vercel_env_sync_architecture.md](./08_vercel_env_sync_architecture.md) | Supabase↔Vercel integration, `VITE_` prefix, Render manual secrets, deprecations |
 
 ## Checklists
 
