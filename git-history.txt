@@ -44,3 +44,4 @@ docs: update project README with architectural overview
 chore: update tailwind configuration for custom scale-x-125
 test: verify build stability after major layout overhaul
 feat: add 'Zero-Knowledge Entry' sub-label to login header
+ui: implement horizontal syllable splitting for mobile viewports
