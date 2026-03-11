@@ -202,7 +202,6 @@ function useCachedDocuments() {
 }
 
 export async function handleFormatConversion(fileId: string, targetFormat: DocumentFormat) {
-  // Simulates a backend Edge Function that decrypts, converts, and returns the file.
   await new Promise((resolve) => window.setTimeout(resolve, 1100));
 
   const payload = `Kryptes secure conversion stub\nFile ID: ${fileId}\nTarget Format: ${targetFormat.toUpperCase()}\nGenerated At: ${new Date().toISOString()}`;
@@ -258,11 +257,6 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
   );
 
   const hasUploads = uploads.length > 0;
-  const uploadSummary = hasUploads
-    ? uploads.every((u) => u.progress >= 100)
-      ? "Processing files..."
-      : `${uploads.length} file${uploads.length > 1 ? "s" : ""} uploading`
-    : "";
 
   function createFolder() {
     const trimmed = folderName.trim();
@@ -288,10 +282,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
     if (!extension) return;
 
     const tempId = `upload-${crypto.randomUUID()}`;
-    setUploads((prev) => [
-      ...prev,
-      { id: tempId, name: file.name, progress: 0, type: extension },
-    ]);
+    setUploads((prev) => [...prev, { id: tempId, name: file.name, progress: 0, type: extension }]);
 
     let progress = 0;
     const interval = window.setInterval(() => {
@@ -316,15 +307,12 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
         return;
       }
 
-      setUploads((prev) =>
-        prev.map((item) => (item.id === tempId ? { ...item, progress: Math.round(progress) } : item))
-      );
+      setUploads((prev) => prev.map((item) => (item.id === tempId ? { ...item, progress: Math.round(progress) } : item)));
     }, 160);
   }
 
   function handleFiles(files: FileList | null) {
     if (!files?.length) return;
-
     Array.from(files).forEach((file) => {
       const extension = normalizedExtension(file.name);
       if (!extension) return;
@@ -357,24 +345,14 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
     }
   }
 
-  const fileCount = sortedDocuments.length;
-
   return (
     <div className="min-h-screen bg-white text-black dark:bg-[#090909] dark:text-white">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-black/30 dark:text-white/25">
-              Kryptes Standard
-            </p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-              Document Locker
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm text-black/45 dark:text-white/40">
-              Zero-knowledge storage with fast Redis-backed cache hydration and background Supabase sync.
-            </p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-black/30 dark:text-white/25">Kryptes Standard</p>
+            <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Document Locker</h1>
           </div>
-
           <div className="flex flex-col items-end gap-2 text-right">
             <AnimatePresence>
               {syncing && (
@@ -382,16 +360,14 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
-                  className="inline-flex items-center gap-2 rounded-full border border-black/5 bg-black/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-black/45 dark:border-white/10 dark:bg-white/5 dark:text-white/50"
+                  className="inline-flex items-center gap-2 rounded-full border border-black/5 bg-black/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-black/45"
                 >
                   <span className="h-2 w-2 animate-pulse rounded-full bg-[#FF3300]" />
                   Syncing securely...
                 </motion.div>
               )}
             </AnimatePresence>
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/25 dark:text-white/25">
-              {fileCount} documents
-            </p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/25">{sortedDocuments.length} documents</p>
           </div>
         </div>
 
@@ -403,22 +379,15 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
           onDragLeave={() => setDragActive(false)}
           onDrop={handleDrop}
           className={`mb-8 rounded-3xl border-2 border-dashed px-5 py-6 transition-all sm:px-6 ${
-            dragActive
-              ? "border-[#FF3300] bg-[#FF3300]/5"
-              : "border-black/10 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.03]"
+            dragActive ? "border-[#FF3300] bg-[#FF3300]/5" : "border-black/10 bg-black/[0.02]"
           }`}
         >
-          <div className="mb-5 rounded-2xl border border-black/5 bg-white p-4 dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="mb-5 rounded-2xl border border-black/5 bg-white p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/35 dark:text-white/30">
-                  Document Folders
-                </p>
-                <p className="mt-1 text-xs text-black/40 dark:text-white/35">
-                  Create your own folders (Education, Government, Vehicle, Certificates, or custom).
-                </p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/35">Document Folders</p>
+                <p className="mt-1 text-xs text-black/40">Create your own folders (Education, Government, Vehicle, Certificates, or custom).</p>
               </div>
-
               <div className="flex w-full gap-2 lg:w-auto">
                 <input
                   value={folderName}
@@ -431,44 +400,31 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                   }}
                   className="h-10 w-full rounded-xl border border-black/10 bg-white px-3 text-xs outline-none transition focus:border-[#FF3300]/30 lg:w-56"
                 />
-                <button
-                  type="button"
-                  onClick={createFolder}
-                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-black px-4 text-[10px] font-bold uppercase tracking-widest text-white hover:bg-[#FF3300]"
-                >
-                  <FolderPlus className="h-4 w-4" />
-                  Add
+                <button type="button" onClick={createFolder} className="inline-flex h-10 items-center gap-2 rounded-xl bg-black px-4 text-[10px] font-bold uppercase tracking-widest text-white hover:bg-[#FF3300]">
+                  <FolderPlus className="h-4 w-4" /> Add
                 </button>
               </div>
             </div>
-
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setActiveFolder("all")}
                 className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] transition ${
-                  activeFolder === "all"
-                    ? "border-[#FF3300] bg-[#FF3300] text-white"
-                    : "border-black/10 bg-black/[0.02] text-black/45 hover:border-[#FF3300]/30 hover:text-[#FF3300]"
+                  activeFolder === "all" ? "border-[#FF3300] bg-[#FF3300] text-white" : "border-black/10 bg-black/[0.02] text-black/45"
                 }`}
               >
-                <FolderOpen className="h-3.5 w-3.5" />
-                All Folders
+                <FolderOpen className="h-3.5 w-3.5" /> All Folders
               </button>
-
               {folderOptions.map((folder) => (
                 <button
                   key={folder}
                   type="button"
                   onClick={() => setActiveFolder(folder)}
                   className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] transition ${
-                    activeFolder === folder
-                      ? "border-[#FF3300] bg-[#FF3300] text-white"
-                      : "border-black/10 bg-black/[0.02] text-black/45 hover:border-[#FF3300]/30 hover:text-[#FF3300]"
+                    activeFolder === folder ? "border-[#FF3300] bg-[#FF3300] text-white" : "border-black/10 bg-black/[0.02] text-black/45"
                   }`}
                 >
-                  <FolderOpen className="h-3.5 w-3.5" />
-                  {folder}
+                  <FolderOpen className="h-3.5 w-3.5" /> {folder}
                 </button>
               ))}
             </div>
@@ -476,69 +432,40 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
 
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-white/5">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
                 <CloudUpload className="h-6 w-6 text-[#FF3300]" />
               </div>
               <div>
-                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-black/70 dark:text-white/80">
-                  Upload Zone
-                </h2>
-                <p className="mt-1 text-xs text-black/40 dark:text-white/35">
-                  PDF, PNG, JPEG, WEBP, DOCX — drop files or browse securely.
-                </p>
+                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-black/70">Upload Zone</h2>
+                <p className="mt-1 text-xs text-black/40">PDF, PNG, JPEG, WEBP, DOCX — drop files or browse securely.</p>
               </div>
             </div>
-
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => inputRef.current?.click()}
-                className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#FF3300] px-4 text-[10px] font-bold uppercase tracking-widest text-white transition-all hover:scale-[1.01]"
-              >
-                <HardDriveDownload className="h-4 w-4" />
-                Browse Files
+              <button type="button" onClick={() => inputRef.current?.click()} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#FF3300] px-4 text-[10px] font-bold uppercase tracking-widest text-white">
+                <HardDriveDownload className="h-4 w-4" /> Browse Files
               </button>
-              <input
-                ref={inputRef}
-                type="file"
-                multiple
-                accept=".pdf,.png,.jpg,.jpeg,.webp,.docx"
-                className="hidden"
-                onChange={(e) => handleFiles(e.target.files)}
-              />
+              <input ref={inputRef} type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.docx" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
             </div>
           </div>
 
           <div className="mt-5 space-y-3">
             {uploads.map((upload) => (
-              <div
-                key={upload.id}
-                className="rounded-2xl border border-black/5 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.03]"
-              >
+              <div key={upload.id} className="rounded-2xl border border-black/5 bg-white p-3 shadow-sm">
                 <div className="mb-2 flex items-center justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="truncate text-xs font-bold text-black/75 dark:text-white/80">{upload.name}</p>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-black/30 dark:text-white/25">
-                      {fileTypeLabel(upload.type)}
-                    </p>
+                    <p className="truncate text-xs font-bold text-black/75">{upload.name}</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-black/30">{fileTypeLabel(upload.type)}</p>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/35 dark:text-white/35">
-                    {upload.progress}%
-                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/35">{upload.progress}%</span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-black/5 dark:bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-[#FF3300] transition-all duration-150"
-                    style={{ width: `${upload.progress}%` }}
-                  />
+                <div className="h-2 overflow-hidden rounded-full bg-black/5">
+                  <div className="h-full rounded-full bg-[#FF3300] transition-all duration-150" style={{ width: `${upload.progress}%` }} />
                 </div>
               </div>
             ))}
-
             {!hasUploads && (
-              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-black/25 dark:text-white/20">
-                <ShieldCheck className="h-4 w-4 text-[#FF3300]" />
-                Zero-knowledge upload handling
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-black/25">
+                <ShieldCheck className="h-4 w-4 text-[#FF3300]" /> Zero-knowledge upload handling
               </div>
             )}
           </div>
@@ -548,36 +475,22 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
           {sortedDocuments.map((doc) => {
             const thumb = thumbnailForType(doc.type);
             const ThumbIcon = thumb.icon;
-
             return (
-              <div
-                key={doc.id}
-                className="group mb-4 break-inside-avoid overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg dark:border-white/10 dark:bg-white/[0.03]"
-              >
+              <div key={doc.id} className="group mb-4 break-inside-avoid overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
                 <div className={`relative flex min-h-[180px] items-center justify-center ${thumb.bg}`}>
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/[0.12] opacity-0 transition-opacity group-hover:opacity-100 dark:to-black/30" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/[0.12] opacity-0 transition-opacity group-hover:opacity-100" />
                   <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/85 shadow-sm backdrop-blur dark:bg-black/40">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/85 shadow-sm backdrop-blur">
                       <ThumbIcon className={`h-8 w-8 ${thumb.accent}`} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/35 dark:text-white/35">
-                        {fileTypeLabel(doc.type)}
-                      </p>
-                      <p className="mt-1 text-[11px] font-mono text-black/50 dark:text-white/45">
-                        {doc.thumbnailSeed}
-                      </p>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/35">{fileTypeLabel(doc.type)}</p>
+                      <p className="mt-1 text-[11px] font-mono text-black/50">{doc.thumbnailSeed}</p>
                     </div>
                   </div>
-
-                  <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 opacity-0 backdrop-blur-[1px] transition-all duration-200 group-hover:bg-black/35 group-hover:opacity-100">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewDoc(doc)}
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white transition-all hover:bg-white/20"
-                    >
-                      <Eye className="h-4 w-4" />
-                      Preview
+                  <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/35 group-hover:opacity-100">
+                    <button type="button" onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white">
+                      <Eye className="h-4 w-4" /> Preview
                     </button>
                     <button
                       type="button"
@@ -585,33 +498,23 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                         setConversionDoc(doc);
                         setTargetFormat(doc.type);
                       }}
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#FF3300] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white transition-all hover:brightness-110"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#FF3300] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white"
                     >
-                      <ArrowDownToLine className="h-4 w-4" />
-                      Download
+                      <ArrowDownToLine className="h-4 w-4" /> Download
                     </button>
                   </div>
                 </div>
-
                 <div className="space-y-2 px-4 py-4">
                   <div>
-                    <h3 className="truncate text-sm font-bold text-black dark:text-white">{doc.name}</h3>
-                    <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-black/30 dark:text-white/25">
-                      {formatBytes(doc.size)} · {formatDate(doc.updatedAt)}
-                    </p>
-                    <p className="mt-2 inline-flex items-center rounded-full bg-black/[0.04] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-black/45 dark:bg-white/[0.06] dark:text-white/40">
-                      {doc.folder}
-                    </p>
+                    <h3 className="truncate text-sm font-bold text-black">{doc.name}</h3>
+                    <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-black/30">{formatBytes(doc.size)} · {formatDate(doc.updatedAt)}</p>
+                    <p className="mt-2 inline-flex items-center rounded-full bg-black/[0.04] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-black/45">{doc.folder}</p>
                   </div>
-
-                  <div className="flex items-center justify-between border-t border-black/5 pt-3 dark:border-white/10">
-                    <span className="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-black/35 dark:text-white/30">
-                      <Lock className="h-3.5 w-3.5 text-[#FF3300]" />
-                      Encrypted
+                  <div className="flex items-center justify-between border-t border-black/5 pt-3">
+                    <span className="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-black/35">
+                      <Lock className="h-3.5 w-3.5 text-[#FF3300]" /> Encrypted
                     </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-black/[0.03] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-black/40 dark:bg-white/5 dark:text-white/35">
-                      {doc.source}
-                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-black/[0.03] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">{doc.source}</span>
                   </div>
                 </div>
               </div>
@@ -622,40 +525,20 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
 
       <AnimatePresence>
         {previewDoc && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4 py-6 backdrop-blur-sm"
-            onClick={() => setPreviewDoc(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.96, y: 16 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.96, y: 16 }}
-              transition={{ type: "spring", stiffness: 220, damping: 22 }}
-              className="w-full max-w-xl rounded-3xl border border-white/10 bg-white p-6 shadow-2xl dark:bg-[#0d0d0d]"
-              onClick={(e) => e.stopPropagation()}
-            >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4 py-6 backdrop-blur-sm" onClick={() => setPreviewDoc(null)}>
+            <motion.div initial={{ scale: 0.96, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.96, y: 16 }} transition={{ type: "spring", stiffness: 220, damping: 22 }} className="w-full max-w-xl rounded-3xl border border-white/10 bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="mb-5 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/35 dark:text-white/30">
-                    Preview
-                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/35">Preview</p>
                   <h3 className="mt-1 text-xl font-bold">{previewDoc.name}</h3>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setPreviewDoc(null)}
-                  className="rounded-full p-2 text-black/40 transition hover:bg-black/5 hover:text-black dark:text-white/35 dark:hover:bg-white/5 dark:hover:text-white"
-                >
+                <button type="button" onClick={() => setPreviewDoc(null)} className="rounded-full p-2 text-black/40 transition hover:bg-black/5 hover:text-black">
                   <X className="h-5 w-5" />
                 </button>
               </div>
-
-              <div className="rounded-3xl border border-black/5 bg-black/[0.02] p-6 dark:border-white/10 dark:bg-white/[0.03]">
+              <div className="rounded-3xl border border-black/5 bg-black/[0.02] p-6">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white shadow-sm dark:bg-white/5">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white shadow-sm">
                     {(() => {
                       const Thumb = thumbnailForType(previewDoc.type).icon;
                       return <Thumb className={`h-10 w-10 ${thumbnailForType(previewDoc.type).accent}`} />;
@@ -663,22 +546,10 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-[#FF3300]">{fileTypeLabel(previewDoc.type)}</p>
-                    <p className="truncate text-xs text-black/45 dark:text-white/40">{previewDoc.name}</p>
-                    <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-black/30 dark:text-white/25">
-                      {formatBytes(previewDoc.size)} · {formatDate(previewDoc.updatedAt)}
-                    </p>
+                    <p className="truncate text-xs text-black/45">{previewDoc.name}</p>
+                    <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-black/30">{formatBytes(previewDoc.size)} · {formatDate(previewDoc.updatedAt)}</p>
                   </div>
                 </div>
-              </div>
-
-              <div className="mt-5 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setPreviewDoc(null)}
-                  className="rounded-xl border border-black/5 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-black/50 transition hover:border-[#FF3300]/20 hover:text-[#FF3300] dark:border-white/10 dark:text-white/45"
-                >
-                  Close
-                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -687,103 +558,46 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
 
       <AnimatePresence>
         {conversionDoc && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[110] flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-md"
-            onClick={() => !converting && setConversionDoc(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.96, y: 16 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.96, y: 16 }}
-              transition={{ type: "spring", stiffness: 220, damping: 22 }}
-              className="w-full max-w-2xl rounded-3xl border border-white/10 bg-white p-6 shadow-2xl dark:bg-[#0d0d0d]"
-              onClick={(e) => e.stopPropagation()}
-            >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-md" onClick={() => !converting && setConversionDoc(null)}>
+            <motion.div initial={{ scale: 0.96, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.96, y: 16 }} transition={{ type: "spring", stiffness: 220, damping: 22 }} className="w-full max-w-2xl rounded-3xl border border-white/10 bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="mb-6 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/35 dark:text-white/30">
-                    Conversion Modal
-                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/35">Conversion Modal</p>
                   <h3 className="mt-1 text-2xl font-bold tracking-tight">Decrypt & Download</h3>
-                  <p className="mt-2 text-sm text-black/45 dark:text-white/40">
-                    Choose the target format before decrypting and downloading the secure file.
-                  </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => !converting && setConversionDoc(null)}
-                  className="rounded-full p-2 text-black/40 transition hover:bg-black/5 hover:text-black dark:text-white/35 dark:hover:bg-white/5 dark:hover:text-white"
-                >
+                <button type="button" onClick={() => !converting && setConversionDoc(null)} className="rounded-full p-2 text-black/40 transition hover:bg-black/5 hover:text-black">
                   <X className="h-5 w-5" />
                 </button>
               </div>
-
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/30 dark:text-white/30">
-                    Original Format
-                  </p>
+                <div className="rounded-2xl border border-black/5 bg-black/[0.02] p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/30">Original Format</p>
                   <div className="mt-2 flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white dark:bg-white/5">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white">
                       <FileImage className="h-6 w-6 text-[#FF3300]" />
                     </div>
                     <div>
                       <p className="text-sm font-bold">{fileTypeLabel(conversionDoc.type)}</p>
-                      <p className="text-xs text-black/40 dark:text-white/35">{conversionDoc.name}</p>
+                      <p className="text-xs text-black/40">{conversionDoc.name}</p>
                     </div>
                   </div>
                 </div>
-
-                <div className="rounded-2xl border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/30 dark:text-white/30">
-                    Target Format
-                  </p>
+                <div className="rounded-2xl border border-black/5 bg-black/[0.02] p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/30">Target Format</p>
                   <div className="relative mt-2">
-                    <select
-                      value={targetFormat}
-                      onChange={(e) => setTargetFormat(e.target.value as DocumentFormat)}
-                      className="w-full appearance-none rounded-xl border border-black/5 bg-white px-4 py-3 pr-10 text-sm outline-none transition focus:border-[#FF3300]/30 dark:border-white/10 dark:bg-[#111]"
-                    >
+                    <select value={targetFormat} onChange={(e) => setTargetFormat(e.target.value as DocumentFormat)} className="w-full appearance-none rounded-xl border border-black/5 bg-white px-4 py-3 pr-10 text-sm outline-none transition focus:border-[#FF3300]/30">
                       {getAllowedTargets(conversionDoc.type).map((format) => (
-                        <option key={format} value={format}>
-                          {format.toUpperCase()}
-                        </option>
+                        <option key={format} value={format}>{format.toUpperCase()}</option>
                       ))}
                     </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/25 dark:text-white/30" />
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/25" />
                   </div>
                 </div>
               </div>
-
-              <div className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-black/5 bg-black/[0.02] px-4 py-3 dark:border-white/10 dark:bg-white/[0.03]">
-                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-black/35 dark:text-white/35">
-                  <ShieldCheck className="h-4 w-4 text-[#FF3300]" />
-                  Conversion happens in a secure Edge Function stub
-                </div>
-                <p className="text-[10px] font-mono text-black/35 dark:text-white/35">
-                  {busyDocId === conversionDoc.id ? "Preparing file..." : "Ready"}
-                </p>
-              </div>
-
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  onClick={() => !converting && setConversionDoc(null)}
-                  className="rounded-xl border border-black/5 px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-black/50 transition hover:border-black/15 hover:text-black dark:border-white/10 dark:text-white/40"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void runConversion()}
-                  disabled={converting}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#FF3300] px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {converting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowDownToLine className="h-4 w-4" />}
-                  Decrypt & Download
+                <button type="button" onClick={() => !converting && setConversionDoc(null)} className="rounded-xl border border-black/5 px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-black/50">Cancel</button>
+                <button type="button" onClick={() => void runConversion()} disabled={converting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#FF3300] px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white">
+                  {converting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowDownToLine className="h-4 w-4" />} Decrypt & Download
                 </button>
               </div>
             </motion.div>
