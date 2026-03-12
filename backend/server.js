@@ -44,6 +44,7 @@ try {
 const vaultRoutes = require("./routes/vault");
 const webhookRoutes = require("./routes/webhooks");
 const authRoutes = require("./routes/auth");
+const { handleSendEmailHook } = require("./routes/authEmailHook");
 const { corsOptions, getSessionCookieOptions } = require("./config/auth");
 
 const app = express();
@@ -53,6 +54,17 @@ app.set("trust proxy", 1);
 
 // Security Middleware — Vercel origin + credentials for session cookies
 app.use(cors(corsOptions));
+
+// Supabase Send Email Hook: raw body required for Standard Webhooks signature verification
+app.post(
+    "/api/auth/send-email-hook",
+    express.raw({
+        type: (req) =>
+            (req.headers["content-type"] || "").includes("application/json"),
+    }),
+    handleSendEmailHook
+);
+
 app.use(express.json());
 
 // Session and Passport initialization
