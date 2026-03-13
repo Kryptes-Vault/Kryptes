@@ -14,3 +14,4 @@
 [24-10-2025 12:55:01] Auth: Firebase integration for user onboarding
 [06-12-2025 17:11:01] Verify: Gmail verification code flow
 [27-10-2025 14:38:01] Vault: Bitwarden API integration for secrets
+[18-11-2025 15:16:01] Cache: Redis write-through cache for vault data
