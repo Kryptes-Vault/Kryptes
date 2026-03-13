@@ -12,3 +12,4 @@
 [19-11-2025 15:05:01] Security: AES-256 local encryption on frontend
 [30-12-2025 16:18:01] Logic: Secure Now interaction handler
 [24-10-2025 12:55:01] Auth: Firebase integration for user onboarding
+[06-12-2025 17:11:01] Verify: Gmail verification code flow
