@@ -142,7 +142,7 @@ const Dashboard = () => {
         <div className="flex items-center gap-6 lg:gap-10">
           <div className="flex items-center gap-2">
             <span className="text-2xl font-bold tracking-tight text-[#111] flex items-center gap-2">
-              Kryptes<span className="h-2 w-2 rounded-full bg-[#0066FF]" />
+              Kryptes<span className="h-2 w-2 rounded-full bg-[#FF3B13]" />
             </span>
           </div>
         </div>
@@ -197,7 +197,7 @@ const Dashboard = () => {
                   setSidebarOpen(false);
                 }}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                  viewMode === item.id ? "bg-[#0066FF] text-white shadow-md shadow-[#0066FF]/20" : "text-black/30 hover:bg-black/5 hover:text-black/60"
+                  viewMode === item.id ? "bg-[#FF3B13] text-white shadow-md shadow-[#FF3B13]/20" : "text-black/30 hover:bg-black/5 hover:text-black/60"
                 }`}
               >
                 <item.icon className="w-5 h-5" />
@@ -226,8 +226,8 @@ const Dashboard = () => {
                         }}
                         className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
                           active
-                            ? "bg-white text-[#0066FF] shadow-sm font-bold" 
-                            : "text-black/50 hover:bg-white/50 hover:text-black"
+                            ? "bg-white text-[#FF3B13] shadow-sm font-bold" 
+                            : "text-black/50 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13]"
                         }`}
                       >
                         <item.icon className="w-5 h-5 shrink-0" />
@@ -245,8 +245,8 @@ const Dashboard = () => {
                         }}
                         className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
                           active
-                            ? "bg-white text-[#0066FF] shadow-sm font-bold" 
-                            : "text-black/50 hover:bg-white/50 hover:text-black"
+                            ? "bg-white text-[#FF3B13] shadow-sm font-bold" 
+                            : "text-black/50 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13]"
                         }`}
                       >
                         <item.icon className="w-5 h-5 shrink-0" />
@@ -272,8 +272,8 @@ const Dashboard = () => {
                       }}
                       className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
                         viewMode === item.id 
-                          ? "bg-white text-[#0066FF] shadow-sm font-bold" 
-                          : "text-black/50 hover:bg-white/50 hover:text-black"
+                          ? "bg-white text-[#FF3B13] shadow-sm font-bold" 
+                          : "text-black/50 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13]"
                       }`}
                     >
                       <item.icon className="w-5 h-5 shrink-0" />
