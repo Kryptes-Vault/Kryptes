@@ -26,8 +26,28 @@ function getOAuthFailureRedirect() {
   return `${FRONTEND_URL.replace(/\/$/, "")}/login`;
 }
 
+/**
+ * CORS: Allow both production (Vercel) and local dev origins.
+ * Supabase handles the OAuth redirect, but the session sync call from the
+ * browser to Render needs CORS. Without localhost in the allow-list, the
+ * /api/auth/supabase/sync call silently fails → "Completing sign-in…" stuck.
+ */
+const allowedOrigins = [
+  FRONTEND_URL,
+  "http://localhost:5173",
+  "http://localhost:4173", // Vite preview
+];
+
 const corsOptions = {
-  origin: FRONTEND_URL,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (e.g., server-to-server, curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS] Blocked origin: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
