@@ -36,7 +36,7 @@ function idIndexKey(id) {
  * Minimal persisted user record ("shell") for zero-knowledge onboarding.
  * Stores provider identity + non-secret profile fields only.
  */
-async function ensureShellUser({ provider, providerId, email, displayName }) {
+async function ensureShellUser({ provider, providerId, email, displayName, avatarUrl }) {
   const id = opaqueUserId(provider, providerId);
   const record = {
     id,
@@ -44,6 +44,7 @@ async function ensureShellUser({ provider, providerId, email, displayName }) {
     providerId: String(providerId),
     email: email || null,
     displayName: displayName || null,
+    avatarUrl: avatarUrl || null,
     updatedAt: new Date().toISOString(),
   };
 
