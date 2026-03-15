@@ -1,16 +1,12 @@
 import { ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, Lock, Shield, Smartphone, Zap, User, Key, Eye, EyeOff, Mail, Phone, CheckCircle2 } from "lucide-react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { getOAuthRedirectUrl, getProviderOptions } from "../lib/oauthRedirect";
 import { toast } from "sonner";
 
 const apiBase = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
-
-/** OAuth return URL: always matches the current origin (localhost:5173, Vercel, etc.) — never a hardcoded port. */
-function getOAuthRedirectUrl(): string {
-  return `${window.location.origin}/auth/callback`;
-}
 
 async function syncApiSession(accessToken: string) {
   const res = await fetch(`${apiBase}/api/auth/supabase/sync`, {
@@ -119,16 +115,35 @@ const Index = () => {
     }
   };
 
+  /**
+   * Multi-provider OAuth handler.
+   * Each provider gets its own query params and scopes via getProviderOptions().
+   *
+   * "Unsupported provider" error? → Enable the provider in Supabase Dashboard:
+   *   Authentication → Providers → Twitter → Toggle ON → Paste Client ID & Secret
+   *   Callback URL (shown on that page) must be added to Twitter Developer Portal.
+   */
   const signInWithProvider = async (provider: "google" | "azure" | "twitter") => {
     setOauthLoading(provider);
     try {
+      const providerOpts = getProviderOptions(provider);
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: getOAuthRedirectUrl(),
+          ...providerOpts,
         },
       });
-      if (error) toast.error(error.message);
+      if (error) {
+        // Surface actionable guidance for common errors
+        if (error.message?.includes("Unsupported provider") || error.message?.includes("Provider not enabled")) {
+          toast.error(
+            `${provider.charAt(0).toUpperCase() + provider.slice(1)} is not enabled. Enable it in Supabase Dashboard → Authentication → Providers.`
+          );
+        } else {
+          toast.error(error.message);
+        }
+      }
     } finally {
       setOauthLoading(null);
     }
@@ -136,16 +151,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-white text-[#111111] font-sans selection:bg-[#FF3B13] selection:text-white overflow-x-hidden">
-      {/* Navigation / Header */}
-      <header className="fixed top-0 left-0 right-0 z-[110] px-6 sm:px-12 py-6 bg-white/10 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tighter uppercase italic">KRYPTEX</span>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-6 sm:px-12 pt-12 sm:pt-24">
+      <main className="mx-auto max-w-7xl px-6 sm:px-12 pt-8 sm:pt-16">
         {/* Hero Section */}
         <section className="relative pb-20 pt-16">
           <div className="hidden lg:flex absolute left-[-40px] top-12 flex-col items-center text-[10px] text-[#FF3B13] uppercase tracking-[0.18em] font-medium">
@@ -233,30 +239,45 @@ const Index = () => {
                         {/* SOCIAL AUTH OPTIONS */}
                         <div className="grid grid-cols-3 gap-3 mb-6">
                           <button
+                            id="oauth-google"
                             type="button"
                             disabled={!!oauthLoading}
                             onClick={() => signInWithProvider("google")}
-                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
+                            className="relative flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
                           >
-                            <img src="https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png" className="w-5 h-5 transition-all" alt="Google" />
+                            {oauthLoading === "google" ? (
+                              <div className="w-5 h-5 border-2 border-[#FF3B13] border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <img src="https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png" className="w-5 h-5 transition-all" alt="Google" />
+                            )}
                           </button>
                           <button
+                            id="oauth-azure"
                             type="button"
                             disabled={!!oauthLoading}
                             onClick={() => signInWithProvider("azure")}
-                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
+                            className="relative flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
                           >
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" className="w-5 h-5 transition-all" alt="Microsoft" />
+                            {oauthLoading === "azure" ? (
+                              <div className="w-5 h-5 border-2 border-[#FF3B13] border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" className="w-5 h-5 transition-all" alt="Microsoft" />
+                            )}
                           </button>
                           <button
+                            id="oauth-twitter"
                             type="button"
                             disabled={!!oauthLoading}
                             onClick={() => signInWithProvider("twitter")}
-                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
+                            className="relative flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
                           >
-                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-black transition-all" aria-hidden>
-                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                            </svg>
+                            {oauthLoading === "twitter" ? (
+                              <div className="w-5 h-5 border-2 border-[#FF3B13] border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-black transition-all" aria-hidden>
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                              </svg>
+                            )}
                           </button>
                         </div>
                         <p className="text-[9px] text-center text-black/35 mb-2 font-medium uppercase tracking-wide">
@@ -416,6 +437,24 @@ const Index = () => {
            </div>
         </div>
       </section>
+      <footer className="mx-auto max-w-7xl px-6 sm:px-12 py-12 border-t border-black/5 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#FF3B13] flex items-center justify-center">
+            <Shield className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-xs font-bold tracking-widest uppercase italic">KRYPTEX</span>
+        </div>
+        
+        <div className="flex items-center gap-8 text-[10px] font-bold uppercase tracking-widest text-black/40">
+          <Link to="/privacy" className="hover:text-[#FF3B13] transition-colors">Privacy Policy</Link>
+          <Link to="/terms" className="hover:text-[#FF3B13] transition-colors">Terms of Service</Link>
+          <a href="mailto:support@kryptes.com" className="hover:text-[#FF3B13] transition-colors">Support</a>
+        </div>
+
+        <p className="text-[10px] font-bold uppercase tracking-widest text-black/20">
+          © 2026 Kryptex protocol
+        </p>
+      </footer>
     </div>
   );
 };

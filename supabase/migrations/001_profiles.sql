@@ -21,3 +21,17 @@ create policy "profiles_insert_own"
 create policy "profiles_update_own"
   on public.profiles for update
   using (auth.uid() = id);
+
+-- Trigger to automatically create a profile for every new user
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, display_name)
+  values (new.id, new.raw_user_meta_data->>'full_name');
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
