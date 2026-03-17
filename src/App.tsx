@@ -18,6 +18,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/privacy" element={<div dangerouslySetInnerHTML={{ __html: `<iframe src="/privacy.html" style="width:100%; height:100vh; border:none;"></iframe>` }} />} />
+          <Route path="/terms" element={<div dangerouslySetInnerHTML={{ __html: `<iframe src="/terms.html" style="width:100%; height:100vh; border:none;"></iframe>` }} />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
