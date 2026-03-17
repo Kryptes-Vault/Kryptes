@@ -2,7 +2,7 @@
  * Kryptex Dashboard — Zero-Knowledge Vault
  *
  * Redesigned to match the landing page's white + #FF3B13 design system.
- * Features: vault grid, PBKDF2 unlock, add secret, burn share, audit log.
+ * Features: vault grid, password vault, PBKDF2 unlock, add secret, burn share, audit log.
  */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -13,6 +13,7 @@ import {
   EyeOff,
   Flame,
   Key,
+  KeyRound,
   LayoutGrid,
   Loader2,
   Lock,
@@ -24,8 +25,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AddSecretModal } from "@/components/kryptex/AddSecretModal";
+import { AddPasswordModal } from "@/components/kryptex/AddPasswordModal";
 import { AuditLogView } from "@/components/kryptex/AuditLogView";
 import { BurnShareModal } from "@/components/kryptex/BurnShareModal";
+import { PasswordGrid } from "@/components/kryptex/PasswordGrid";
 import { SecureVaultView } from "@/components/kryptex/SecureVaultView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +40,7 @@ import { ENCRYPTION_VERSION_V2_PBKDF2 } from "@/lib/crypto/vaultCrypto";
 import { unlockVaultWithPassword } from "@/lib/kryptexVaultService";
 import { supabase } from "@/lib/supabase";
 
-type Tab = "vault" | "audit";
+type Tab = "vault" | "passwords" | "audit";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -48,6 +51,7 @@ const Dashboard = () => {
 
   const [tab, setTab] = useState<Tab>("vault");
   const [addOpen, setAddOpen] = useState(false);
+  const [addPasswordOpen, setAddPasswordOpen] = useState(false);
   const [burnItem, setBurnItem] = useState<VaultItemRow | null>(null);
   const [pbkdfDerivedKey, setPbkdfDerivedKey] = useState<CryptoKey | null>(null);
   const [unlockPassword, setUnlockPassword] = useState("");
@@ -141,6 +145,7 @@ const Dashboard = () => {
             <nav className="flex items-center gap-1">
               {([
                 { id: "vault" as Tab, label: "Vault", icon: LayoutGrid },
+                { id: "passwords" as Tab, label: "Passwords", icon: KeyRound },
                 { id: "audit" as Tab, label: "Log", icon: ScrollText },
               ] as const).map((item) => {
                 const active = tab === item.id;
@@ -216,10 +221,10 @@ const Dashboard = () => {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-xl font-bold uppercase tracking-tighter italic">
-                {tab === "vault" ? "Secure Vault" : "Audit Log"}
+                {tab === "vault" ? "Secure Vault" : tab === "passwords" ? "Password Vault" : "Audit Log"}
               </h1>
               <p className="text-[10px] text-black/30 font-bold uppercase tracking-[0.2em] mt-1">
-                {tab === "vault" ? "AES-256-GCM · Client-Side" : "Share History · Zero-Knowledge"}
+                {tab === "vault" ? "AES-256-GCM · Client-Side" : tab === "passwords" ? "Zero-Knowledge · Encrypted Credentials" : "Share History · Zero-Knowledge"}
               </p>
             </div>
           </div>
@@ -360,6 +365,15 @@ const Dashboard = () => {
             </>
           )}
 
+          {tab === "passwords" && user && (
+            <PasswordGrid
+              items={items}
+              userId={user.id}
+              pbkdfDerivedKey={pbkdfDerivedKey}
+              onAddClick={() => setAddPasswordOpen(true)}
+            />
+          )}
+
           {tab === "audit" && (
             <AuditLogView
               rows={historyRows}
@@ -404,6 +418,13 @@ const Dashboard = () => {
         legacySessionKey={legacySessionKey}
         pbkdfDerivedKey={pbkdfDerivedKey}
         onShared={() => void reloadVault()}
+      />
+
+      <AddPasswordModal
+        open={addPasswordOpen}
+        onOpenChange={setAddPasswordOpen}
+        userId={user.id}
+        onCreated={() => void reloadVault()}
       />
     </div>
   );
