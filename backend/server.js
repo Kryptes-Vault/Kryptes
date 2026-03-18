@@ -51,8 +51,14 @@ const app = express();
 // Passport Service initialization
 require("./services/passport")(passport);
 
-// Security Middleware
-app.use(cors());
+// Security Middleware: CORS for Vercel Frontend
+app.use(cors({
+    origin: "https://kryptes.vercel.app",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
 
 // Session and Passport initialization
@@ -60,8 +66,11 @@ const sessionConfig = {
     secret: process.env.SESSION_SECRET || "kryptex_secret_82346",
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Required for Render/Vercel (behind a proxy)
     cookie: { 
-        secure: process.env.NODE_ENV === "production",
+        secure: true, // Must be true for sameSite: 'none'
+        sameSite: 'none', // Required for cross-site (Vercel -> Render)
+        httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 };
