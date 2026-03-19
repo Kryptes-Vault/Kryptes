@@ -139,6 +139,8 @@ const Dashboard = () => {
       ? passwordSections
       : [];
 
+  const showMainSidebar = viewMode === "documents" || viewMode === "passwords";
+
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -198,6 +200,7 @@ const Dashboard = () => {
       </aside>
 
       {/* ── Dashboard Sidebar (Main Sidebar) ─────────────────────────────── */}
+      {showMainSidebar && (
       <aside
         className={`fixed inset-y-0 left-16 z-50 w-64 border-r border-black/5 bg-white transition-all duration-300 lg:static ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -252,9 +255,10 @@ const Dashboard = () => {
           </button>
         </div>
       </aside>
+      )}
 
       {/* Sidebar overlay (mobile) */}
-      {sidebarOpen && (
+      {showMainSidebar && sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
