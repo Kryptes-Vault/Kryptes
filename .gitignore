@@ -28,3 +28,6 @@ backend/.env
 *.njsproj
 *.sln
 *.sw?
+
+# Ephemeral clone for syncing `docs/` to the MD-archive repo
+.md-archive-sync
