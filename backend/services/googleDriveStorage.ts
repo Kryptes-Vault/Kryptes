@@ -146,6 +146,11 @@ export function isGoogleDriveConfigured(): boolean {
   return resolveCredentialsPath() !== null;
 }
 
+/** Credentials + master folder — required for document vault list/upload. */
+export function isDriveDocumentVaultConfigured(): boolean {
+  return isGoogleDriveConfigured() && Boolean(process.env.GDRIVE_MASTER_FOLDER_ID?.trim());
+}
+
 /**
  * Verifies JWT auth and a lightweight Drive API round-trip at startup.
  * On failure, logs the critical error and exits the process unless `GDRIVE_STARTUP_FAIL_FAST=false`.
@@ -154,9 +159,9 @@ export async function verifyDriveConnection(driveClient: drive_v3.Drive, authCli
   try {
     await authClient.authorize();
     await driveClient.about.get({ fields: "user" });
-    console.log("✅ Google Drive API: Connected and Authorized!");
+    console.log("[Storage] ✅ Google Drive API: Connected and Authorized!");
   } catch (error) {
-    console.error("❌ CRITICAL: Failed to connect to Google Drive API.", error);
+    console.error("[Storage] ❌ CRITICAL: Failed to connect to Google Drive API.", error);
     if (process.env.GDRIVE_STARTUP_FAIL_FAST !== "false") {
       process.exit(1);
     }
@@ -227,6 +232,55 @@ function bufferToUploadBody(buf: Buffer): Readable {
 /**
  * Uploads an encrypted blob to the user’s isolated folder. Returns the Drive `file.id` for DB storage.
  */
+/** List opaque blobs in a user folder (by filename prefix, e.g. `kryptesdocs`). */
+export async function listUserFolderBinaryFiles(
+  userId: string,
+  namePrefix: string
+): Promise<Array<{ id: string; name: string; size: number; modifiedTime?: string | null }>> {
+  const drive = getDriveClient();
+  const parentId = await getOrCreateUserFolder(userId);
+  const res = await drive.files.list({
+    q: `'${parentId}' in parents and trashed = false and mimeType = '${BLOB_MIME}'`,
+    fields: "files(id, name, size, modifiedTime)",
+    pageSize: 200,
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+  });
+  const files = res.data.files ?? [];
+  return files
+    .filter((f): f is { id: string; name: string; size?: string | null; modifiedTime?: string | null } =>
+      Boolean(f.id && typeof f.name === "string" && f.name.startsWith(namePrefix))
+    )
+    .map((f) => ({
+      id: f.id,
+      name: f.name,
+      size: Number(f.size ?? 0),
+      modifiedTime: f.modifiedTime,
+    }));
+}
+
+export async function getDriveFileMetadata(fileId: string): Promise<{ name?: string | null; size?: string | null }> {
+  const drive = getDriveClient();
+  const res = await drive.files.get({
+    fileId,
+    fields: "name,size",
+    supportsAllDrives: true,
+  });
+  return { name: res.data.name, size: res.data.size };
+}
+
+/** Download file bytes (service account must have access). */
+export async function downloadDriveFileBuffer(fileId: string): Promise<Buffer> {
+  const drive = getDriveClient();
+  const res = await drive.files.get({ fileId, alt: "media" }, { responseType: "arraybuffer" });
+  return Buffer.from(res.data as ArrayBuffer);
+}
+
+export async function deleteDriveFile(fileId: string): Promise<void> {
+  const drive = getDriveClient();
+  await drive.files.delete({ fileId, supportsAllDrives: true });
+}
+
 export async function uploadToDriveVault(
   userId: string,
   fileBuffer: Buffer,
