@@ -97,7 +97,7 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
     }
   };
 
-  const signInWithProvider = async (provider: "google" | "azure" | "twitter" | "linkedin_oidc") => {
+  const signInWithProvider = async (provider: "google" | "azure" | "x" | "linkedin_oidc") => {
     setOauthLoading(provider);
     try {
       const providerOpts = getProviderOptions(provider);
@@ -188,10 +188,10 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
                       id="oauth-twitter"
                       type="button"
                       disabled={!!oauthLoading}
-                      onClick={() => signInWithProvider("twitter")}
+                      onClick={() => signInWithProvider("x")}
                       className="relative flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
                     >
-                      {oauthLoading === "twitter" ? (
+                      {oauthLoading === "x" ? (
                         <div className="w-5 h-5 border-2 border-[#FF3B13] border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <svg viewBox="0 0 24 24" className="w-4 h-4 fill-black transition-all" aria-hidden>
