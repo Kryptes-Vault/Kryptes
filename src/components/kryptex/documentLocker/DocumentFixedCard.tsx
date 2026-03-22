@@ -79,6 +79,7 @@ export function DocumentFixedCard({
           </div>
           <button
             type="button"
+            aria-label={`Download ${doc.name}`}
             onClick={(e) => {
               e.stopPropagation();
               onDownload();

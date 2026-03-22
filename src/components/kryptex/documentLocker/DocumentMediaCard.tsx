@@ -73,6 +73,7 @@ export function DocumentMediaCard({
             alt=""
             className="h-full w-full object-cover"
             loading="lazy"
+            decoding="async"
             draggable={false}
             onLoad={onImageLoad}
           />
@@ -99,6 +100,7 @@ export function DocumentMediaCard({
           </div>
           <button
             type="button"
+            aria-label={`Download ${doc.name}`}
             onClick={(e) => {
               e.stopPropagation();
               onDownload();
