@@ -1,4 +1,4 @@
-import type { SyntheticEvent } from "react";
+import type { KeyboardEvent, SyntheticEvent } from "react";
 import { motion } from "framer-motion";
 import { Download, Loader2, X } from "lucide-react";
 
@@ -39,6 +39,13 @@ export function DocumentMediaCard({
 }: Props) {
   const active = hoveredId === doc.id;
 
+  function handlePreviewKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onPreview();
+    }
+  }
+
   return (
     <motion.article
       layout
@@ -62,7 +69,13 @@ export function DocumentMediaCard({
         {deletePending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
       </button>
 
-      <button type="button" className="relative block h-full w-full text-left" onClick={onPreview}>
+      <div
+        role="button"
+        tabIndex={0}
+        className="relative block h-full w-full cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-black/20"
+        onClick={onPreview}
+        onKeyDown={handlePreviewKeyDown}
+      >
         {isThumbLoading ? (
           <div className="flex h-full w-full items-center justify-center bg-black/[0.03]">
             <Loader2 className="h-6 w-6 animate-spin text-black/25" />
@@ -111,7 +124,7 @@ export function DocumentMediaCard({
             Download
           </button>
         </motion.div>
-      </button>
+      </div>
     </motion.article>
   );
 }
