@@ -49,6 +49,13 @@ const { corsOptions, getSessionCookieOptions } = require("./config/auth");
 
 const app = express();
 
+// ── Ultra-lightweight ping for cron-job.org / uptime monitors ──────────────
+// Placed BEFORE any middleware so it has zero overhead (no CORS, no session,
+// no body parsing). Render health checks and cron pings hit this only.
+app.get("/ping", (_req, res) => {
+  res.status(200).setHeader("Cache-Control", "no-store").send("pong");
+});
+
 // Behind Render / other reverse proxies — required for secure cookies & correct client IP
 app.set("trust proxy", 1);
 
@@ -153,7 +160,26 @@ const server = app.listen(PORT, BIND_HOST, () => {
     console.log(
         `[Kryptex Backend] Listening on http://${BIND_HOST}:${PORT} (NODE_ENV=${process.env.NODE_ENV || "undefined"})`
     );
-    console.log(`[Status] Redis: Connecting... | Bitwarden: Ready | Google Workspace: Ready | OAuth2 Mail: Active`);
+
+    // ── Security audit: verify critical secrets at startup ──────────────
+    const hookSecret = process.env.SUPABASE_HOOK_SECRET;
+    const hookStatus = hookSecret && hookSecret.startsWith("v1,whsec_")
+        ? "✓ configured"
+        : hookSecret
+            ? "⚠ set but missing v1,whsec_ prefix"
+            : "✗ NOT SET — auth hooks will fail signature verification";
+
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseStatus = supabaseUrl ? "✓ configured" : "✗ NOT SET";
+
+    const twitterId = process.env.TWITTER_CLIENT_ID;
+    const twitterStatus = twitterId ? "✓ configured" : "○ not set (enable in Supabase Dashboard)";
+
+    console.log(`[Status] Redis: ${redisClient?.status === "ready" ? "Connected" : "Connecting..."}`);
+    console.log(`[Status] SUPABASE_HOOK_SECRET: ${hookStatus}`);
+    console.log(`[Status] SUPABASE_URL: ${supabaseStatus}`);
+    console.log(`[Status] Twitter OAuth: ${twitterStatus}`);
+    console.log(`[Status] Bind: ${BIND_HOST}:${PORT} | Proxy trust: enabled`);
 });
 
 // Prevent immediate crash on unhandled errors during startup
@@ -164,3 +190,26 @@ server.on('error', (e) => {
         console.error("Server error:", e);
     }
 });
+
+// ── Graceful shutdown (Render sends SIGTERM when cycling instances) ─────────
+function gracefulShutdown(signal) {
+    console.log(`[Kryptex] Received ${signal}. Closing HTTP server…`);
+    server.close(() => {
+        console.log("[Kryptex] HTTP server closed.");
+        if (redisClient && redisClient.status !== "end") {
+            redisClient.quit().then(() => {
+                console.log("[Kryptex] Redis disconnected.");
+                process.exit(0);
+            }).catch(() => process.exit(0));
+        } else {
+            process.exit(0);
+        }
+    });
+    // Force exit after 10s if connections don't close
+    setTimeout(() => {
+        console.error("[Kryptex] Forced exit after timeout.");
+        process.exit(1);
+    }, 10_000).unref();
+}
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
