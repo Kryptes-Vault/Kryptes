@@ -5,6 +5,10 @@
 | [architecture_update.md](./architecture_update.md) | Firebase → Supabase migration, schema, RLS, redirect URLs |
 | [session_redis_supabase.md](./session_redis_supabase.md) | Redis session + `/api/auth/supabase/sync` flow |
 | [env_template.md](./env_template.md) | Environment variables (no secrets) |
+| [03_google_oauth_supabase.md](./03_google_oauth_supabase.md) | Google OAuth via Supabase (vs Passport), redirects, JWT → Redis flow |
+| [05_env_cleanup_and_security.md](./05_env_cleanup_and_security.md) | Remove provider secrets from hosts; required env vars; JWT validation model |
+| [06_email_auth_hook_integration.md](./06_email_auth_hook_integration.md) | Send Email HTTPS hook, webhook verification, signup mail via nodemailer |
+| [06_custom_smtp_integration.md](./06_custom_smtp_integration.md) | Supabase Custom SMTP (Gmail 465 SSL), App Password, dashboard templates |
 
 ## Checklists
 
