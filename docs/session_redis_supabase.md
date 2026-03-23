@@ -40,3 +40,4 @@ Do not set service role keys in `VITE_*` variables.
 ## Related documentation (email branch)
 
 - [Google OAuth via Supabase](./03_google_oauth_supabase.md)
+- [Environment cleanup and security](./05_env_cleanup_and_security.md)
