@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import { toast } from "sonner";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import {
   Archive,
@@ -316,7 +317,17 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
       setSyncing(true);
       try {
         const response = await fetch(`${API_BASE}/api/documents`, { credentials: "include" });
-        const data = (await response.json()) as { documents?: unknown };
+        let data: { documents?: unknown; error?: string };
+        try {
+          data = (await response.json()) as { documents?: unknown; error?: string };
+        } catch {
+          if (!response.ok) toast.error(`Could not load documents (${response.status}).`);
+          return;
+        }
+        if (!response.ok) {
+          toast.error(typeof data.error === "string" ? data.error : `Could not load documents (${response.status}).`);
+          return;
+        }
         const raw = Array.isArray(data?.documents) ? data.documents : [];
         setDocuments(
           raw.map((row) => {
@@ -334,6 +345,8 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
             };
           })
         );
+      } catch (e) {
+        toast.error(networkFetchToastMessage(e));
       } finally {
         setSyncing(false);
       }
