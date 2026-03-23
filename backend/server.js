@@ -181,21 +181,6 @@ const server = app.listen(PORT, BIND_HOST, () => {
     console.log(`[Status] Twitter OAuth: ${twitterStatus}`);
     console.log(`[Status] Bind: ${BIND_HOST}:${PORT} | Proxy trust: enabled`);
 
-    // MEGA: connect once at startup so logs show (upload paths reuse initMega()).
-    if (process.env.MEGA_EMAIL?.trim() && process.env.MEGA_PASSWORD) {
-        void (async () => {
-            try {
-                const { initMega } = require("./megaService.js");
-                await initMega();
-            } catch (e) {
-                const msg = e instanceof Error ? e.message : String(e);
-                console.error("[Status] MEGA: startup connection error:", msg);
-            }
-        })();
-    } else {
-        console.log("[Status] MEGA: skipped (MEGA_EMAIL / MEGA_PASSWORD not set)");
-    }
-
     // Trigger Supabase Admin Check
     try {
         const { getSupabaseAdmin } = require("./services/supabaseAdmin.js");
