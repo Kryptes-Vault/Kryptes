@@ -1,31 +1,12 @@
-const { Storage } = require('megajs');
+const { initializeMegaVault } = require("./services/megaVaultConnection_impl.js");
 
 /**
- * Initializes a connection to MEGA.nz using credentials from environment variables.
- * @returns {Promise<Storage>} A logged-in MEGA storage instance.
+ * Delegates to `initializeMegaVault()` in `services/megaVaultConnection_impl.js`
+ * (plain Node + tsx; avoids importing `.ts` from `node server.js`).
+ * @returns {Promise<import("megajs").Storage>} A logged-in MEGA storage instance.
  */
 async function initMega() {
-    return new Promise((resolve, reject) => {
-        const storage = new Storage({
-            email: process.env.MEGA_EMAIL,
-            password: process.env.MEGA_PASSWORD,
-            userAgent: 'Kryptes-Vault-Service/1.0'
-        }, (error) => {
-            if (error) {
-                console.error('❌ MEGA Login Failed:', error);
-                return reject(error);
-            }
-            
-            storage.getAccountInfo((err, info) => {
-                if (!err) {
-                    const used = (info.spaceUsed / 1024 / 1024 / 1024).toFixed(2);
-                    const total = (info.spaceTotal / 1024 / 1024 / 1024).toFixed(2);
-                    console.log(`✅ MEGA Connected: ${used}GB / ${total}GB used`);
-                }
-                resolve(storage);
-            });
-        });
-    });
+    return initializeMegaVault();
 }
 
 /**

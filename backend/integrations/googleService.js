@@ -1,13 +1,19 @@
 const { google } = require("googleapis");
 const { getCachedVault, setCachedVault } = require("../services/redisService");
 
-// Initialization of Service Account Auth
-const serviceAccountAuth = new google.auth.JWT(
-  process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-  null,
-  process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-  ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/gmail.readonly"]
-);
+const googlePrivateKey = process.env.GOOGLE_PRIVATE_KEY;
+const googleServiceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+const hasGoogleServiceConfig = Boolean(googleServiceAccountEmail && googlePrivateKey);
+
+// Initialization of Service Account Auth (optional in local/dev)
+const serviceAccountAuth = hasGoogleServiceConfig
+  ? new google.auth.JWT(
+      googleServiceAccountEmail,
+      null,
+      googlePrivateKey.replace(/\\n/g, "\n"),
+      ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/gmail.readonly"]
+    )
+  : null;
 
 // OAuth2 Client (for user-specific actions if needed, but we use Service Account as requested)
 const oauth2Client = new google.auth.OAuth2(
@@ -20,6 +26,9 @@ const oauth2Client = new google.auth.OAuth2(
  * Log new user to Google Sheets using Service Account
  */
 const logUserToSheet = async (userData) => {
+  if (!serviceAccountAuth) {
+    return;
+  }
   try {
     const sheets = google.sheets({ version: "v4", auth: serviceAccountAuth });
     const { name, userId, email } = userData;
@@ -44,12 +53,15 @@ const logUserToSheet = async (userData) => {
  * Note: Service account must have Domain-Wide Delegation for this to work on any user email.
  */
 const startGmailWatch = async (userEmail) => {
+  if (!hasGoogleServiceConfig) {
+    throw new Error("Google Service Account is not configured.");
+  }
   try {
     // We impersonate the user using domain-wide delegation if configured
     const delegatedAuth = new google.auth.JWT(
       process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
       null,
-      process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      googlePrivateKey.replace(/\\n/g, "\n"),
       ["https://www.googleapis.com/auth/gmail.readonly"],
       userEmail
     );
@@ -74,11 +86,14 @@ const startGmailWatch = async (userEmail) => {
  * Fetch and process banking emails using Service Account delegation
  */
 const processNewEmails = async (userEmail, historyId) => {
+  if (!hasGoogleServiceConfig) {
+    return;
+  }
   try {
     const delegatedAuth = new google.auth.JWT(
       process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
       null,
-      process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      googlePrivateKey.replace(/\\n/g, "\n"),
       ["https://www.googleapis.com/auth/gmail.readonly"],
       userEmail
     );
