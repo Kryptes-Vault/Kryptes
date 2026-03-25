@@ -7,6 +7,7 @@ const multer = require("multer") as any;
 const sharp = require("sharp") as any;
 const { PDFDocument } = require("pdf-lib") as any;
 const dotenv = require("dotenv") as any;
+const { Storage } = require("megajs") as any;
 
 const vaultRoutes = require("./routes/vault");
 const webhookRoutes = require("./routes/webhooks");
@@ -48,7 +49,35 @@ type ConvertResult = {
   fileName: string;
 };
 
+type MegaNode = {
+  name?: string;
+  size?: number;
+  timestamp?: number;
+  directory?: boolean;
+  children?: MegaNode[];
+  upload?: (...args: any[]) => any;
+  link?: (cb: (err: any, link?: string) => void) => void;
+  delete?: (permanent: boolean, cb: (err?: any) => void) => void;
+};
+
+type MegaStorage = {
+  root: MegaNode;
+};
+
+type DocumentRecord = {
+  id: string;
+  storedName: string;
+  name: string;
+  folder: string;
+  size: number;
+  updatedAt: string;
+  type: "pdf" | "png" | "jpeg" | "webp" | "docx";
+  previewUrl: string;
+};
+
 const IMAGE_FORMATS = new Set<SupportedImageFormat>(["png", "jpeg", "webp"]);
+const DOCUMENT_PREFIX = "kryptesdocs";
+const SAFE_DOC_EXTENSIONS = new Set(["pdf", "png", "jpg", "jpeg", "webp", "docx"]);
 
 let redisClient: any;
 let redisStore: any;
@@ -101,6 +130,80 @@ function extensionFor(format: SupportedTargetFormat): string {
 
 function scrubBuffer(buffer: Buffer | null | undefined) {
   if (buffer) buffer.fill(0);
+}
+
+function normalizeDocExtension(name: string): "pdf" | "png" | "jpeg" | "webp" | "docx" | null {
+  const raw = name.split(".").pop()?.toLowerCase();
+  if (!raw) return null;
+  const normalized = raw === "jpg" ? "jpeg" : raw;
+  if (SAFE_DOC_EXTENSIONS.has(normalized)) return normalized as "pdf" | "png" | "jpeg" | "webp" | "docx";
+  return null;
+}
+
+function toStoredName(folder: string, originalName: string) {
+  return `${DOCUMENT_PREFIX}__${encodeURIComponent(folder)}__${Date.now()}__${encodeURIComponent(originalName)}`;
+}
+
+function parseStoredName(storedName: string) {
+  const parts = storedName.split("__");
+  if (parts.length < 4 || parts[0] !== DOCUMENT_PREFIX) return null;
+  const folder = decodeURIComponent(parts[1]);
+  const ts = Number.parseInt(parts[2], 10);
+  const name = decodeURIComponent(parts.slice(3).join("__"));
+  if (!folder || !name || Number.isNaN(ts)) return null;
+  return { folder, name, ts };
+}
+
+function initMegaStorage(): Promise<MegaStorage> {
+  return new Promise((resolve, reject) => {
+    const email = process.env.MEGA_EMAIL;
+    const password = process.env.MEGA_PASSWORD;
+    if (!email || !password) return reject(new Error("MEGA credentials are not configured on the backend."));
+
+    const storage = new Storage(
+      { email, password, userAgent: "Kryptes-Document-Service/1.0" },
+      (error: Error | null) => {
+        if (error) return reject(error);
+        resolve(storage as MegaStorage);
+      }
+    );
+  });
+}
+
+async function uploadBufferToMega(storage: MegaStorage, fileBuffer: Buffer, storedName: string) {
+  return new Promise<MegaNode>((resolve, reject) => {
+    const uploadStream = storage.root.upload({ name: storedName, size: fileBuffer.length }, (err: any, file: MegaNode) => {
+      if (err) return reject(err);
+      resolve(file);
+    });
+    uploadStream.end(fileBuffer);
+  });
+}
+
+async function makeNodePublicLink(node: MegaNode): Promise<string> {
+  return new Promise((resolve, reject) => {
+    node.link?.((err: any, link?: string) => {
+      if (err || !link) return reject(err || new Error("Failed to create MEGA link."));
+      resolve(link);
+    });
+  });
+}
+
+function rootFiles(storage: MegaStorage): MegaNode[] {
+  return Array.isArray(storage.root.children) ? storage.root.children.filter((n) => !n.directory && typeof n.name === "string") : [];
+}
+
+function findNodeByStoredName(storage: MegaStorage, storedName: string): MegaNode | null {
+  return rootFiles(storage).find((node) => node.name === storedName) || null;
+}
+
+async function deleteNode(node: MegaNode) {
+  return new Promise<void>((resolve, reject) => {
+    node.delete?.(true, (err?: any) => {
+      if (err) return reject(err);
+      resolve();
+    });
+  });
 }
 
 async function convertImageToImage(buffer: Buffer, targetFormat: SupportedImageFormat): Promise<Buffer> {
@@ -288,6 +391,157 @@ app.post("/api/convert", upload.single("file"), async (req: KryptexRequest, res:
     return res.status(error instanceof Error && error.message.startsWith("Unsupported conversion") ? 400 : 500).json({
       error: error instanceof Error ? error.message : "Conversion failed.",
     });
+  }
+});
+
+app.get("/api/documents", async (_req: any, res: any) => {
+  try {
+    const storage = await initMegaStorage();
+    const files = rootFiles(storage).filter((node) => node.name?.startsWith(`${DOCUMENT_PREFIX}__`));
+
+    const docs: DocumentRecord[] = [];
+    for (const file of files) {
+      const storedName = file.name as string;
+      const parsed = parseStoredName(storedName);
+      if (!parsed) continue;
+      const type = normalizeDocExtension(parsed.name);
+      if (!type) continue;
+      const previewUrl = await makeNodePublicLink(file);
+      docs.push({
+        id: storedName,
+        storedName,
+        name: parsed.name,
+        folder: parsed.folder,
+        size: Number(file.size || 0),
+        updatedAt: new Date(parsed.ts).toISOString(),
+        type,
+        previewUrl,
+      });
+    }
+
+    return res.status(200).json({ documents: docs.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt)) });
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : "Failed to list documents." });
+  }
+});
+
+app.post("/api/documents/upload", upload.single("file"), async (req: any, res: any) => {
+  const file = req.file;
+  const folder = typeof req.body?.folder === "string" && req.body.folder.trim() ? req.body.folder.trim() : "General";
+
+  if (!file) return res.status(400).json({ error: "File is required." });
+  const type = normalizeDocExtension(file.originalname);
+  if (!type) return res.status(400).json({ error: "Unsupported file type." });
+
+  const sourceBuffer = Buffer.from(file.buffer);
+  scrubBuffer(file.buffer);
+
+  try {
+    const storage = await initMegaStorage();
+    const storedName = toStoredName(folder, file.originalname);
+    const uploadedNode = await uploadBufferToMega(storage, sourceBuffer, storedName);
+    const previewUrl = await makeNodePublicLink(uploadedNode);
+    scrubBuffer(sourceBuffer);
+
+    return res.status(201).json({
+      document: {
+        id: storedName,
+        storedName,
+        name: file.originalname,
+        folder,
+        size: Number(file.size || 0),
+        updatedAt: new Date().toISOString(),
+        type,
+        previewUrl,
+      },
+    });
+  } catch (error) {
+    scrubBuffer(sourceBuffer);
+    return res.status(500).json({ error: error instanceof Error ? error.message : "Upload failed." });
+  }
+});
+
+app.get("/api/documents/download", async (req: any, res: any) => {
+  const storedName = typeof req.query?.id === "string" ? req.query.id : "";
+  const targetRaw = normalizeFormat(req.query?.targetFormat);
+  if (!storedName) return res.status(400).json({ error: "Document id is required." });
+
+  try {
+    const storage = await initMegaStorage();
+    const node = findNodeByStoredName(storage, storedName);
+    if (!node || !node.name) return res.status(404).json({ error: "Document not found." });
+
+    const parsed = parseStoredName(node.name);
+    if (!parsed) return res.status(404).json({ error: "Document metadata not found." });
+    const sourceFormat = normalizeDocExtension(parsed.name);
+    if (!sourceFormat) return res.status(400).json({ error: "Unsupported source document type." });
+
+    const megaLink = await makeNodePublicLink(node);
+    const response = await fetch(megaLink);
+    if (!response.ok) return res.status(502).json({ error: "Failed to fetch file from MEGA." });
+    const sourceBuffer = Buffer.from(await response.arrayBuffer());
+
+    const requestedTarget = targetRaw ?? sourceFormat;
+    if (!isTargetFormat(requestedTarget)) {
+      scrubBuffer(sourceBuffer);
+      return res.status(400).json({ error: "Unsupported target format." });
+    }
+
+    if (sourceFormat === "docx") {
+      if (requestedTarget !== "pdf") {
+        return res
+          .status(200)
+          .setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+          .setHeader("Content-Disposition", `attachment; filename="${parsed.name}"`)
+          .setHeader("Cache-Control", "no-store")
+          .send(sourceBuffer);
+      }
+      scrubBuffer(sourceBuffer);
+      return res.status(400).json({ error: "DOCX conversion is limited to original download currently." });
+    }
+
+    let outputBuffer: Buffer | null = null;
+    try {
+      const result = await convertBuffer({
+        buffer: sourceBuffer,
+        sourceFormat,
+        targetFormat: requestedTarget,
+      });
+      outputBuffer = result.buffer;
+      const baseName = parsed.name.replace(/\.[^.]+$/, "");
+      const fileName = `${baseName}.${extensionFor(requestedTarget)}`;
+      res.on("finish", () => {
+        scrubBuffer(sourceBuffer);
+        scrubBuffer(outputBuffer);
+      });
+      return res
+        .status(200)
+        .setHeader("Content-Type", contentTypeFor(requestedTarget))
+        .setHeader("Content-Disposition", `attachment; filename="${fileName}"`)
+        .setHeader("Cache-Control", "no-store")
+        .send(outputBuffer);
+    } catch {
+      scrubBuffer(sourceBuffer);
+      scrubBuffer(outputBuffer);
+      return res.status(400).json({ error: "Requested conversion is not supported for this file type." });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : "Download failed." });
+  }
+});
+
+app.delete("/api/documents", async (req: any, res: any) => {
+  const storedName = typeof req.query?.id === "string" ? req.query.id : "";
+  if (!storedName) return res.status(400).json({ error: "Document id is required." });
+
+  try {
+    const storage = await initMegaStorage();
+    const node = findNodeByStoredName(storage, storedName);
+    if (!node) return res.status(404).json({ error: "Document not found." });
+    await deleteNode(node);
+    return res.status(200).json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : "Delete failed." });
   }
 });
 
