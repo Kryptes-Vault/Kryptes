@@ -55,7 +55,7 @@ export function PasswordCard({
         metadata: { title: item.title },
       });
     } catch {
-      toast.error("Decryption failed — wrong Master Password?");
+      toast.error("Decryption failed ï¿½ wrong Master Password?");
     } finally {
       setDecrypting(false);
     }
@@ -87,12 +87,12 @@ export function PasswordCard({
         metadata: { title: item.title },
       });
     } catch {
-      toast.error("Could not copy — decryption failed");
+      toast.error("Could not copy ï¿½ decryption failed");
     }
   }
 
   const categoryColors: Record<string, string> = {
-    social: "bg-blue-50 text-blue-600 border-blue-100",
+    social: "bg-[#FF3B13]/5 text-[#FF3B13] border-[#FF3B13]/10",
     work: "bg-violet-50 text-violet-600 border-violet-100",
     shopping: "bg-amber-50 text-amber-600 border-amber-100",
     finance: "bg-green-50 text-green-600 border-green-100",
@@ -143,13 +143,13 @@ export function PasswordCard({
         <div className="rounded-xl bg-[#f8f8f8] border border-black/[0.03] px-3 py-2.5">
           <p className="text-[8px] font-bold uppercase tracking-widest text-black/25 mb-1">Username</p>
           <p className="text-[11px] font-bold text-black/50 font-mono truncate">
-            {locked ? "••••••••••" : revealed && decryptedUsername ? decryptedUsername : "••••••••••"}
+            {locked ? "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" : revealed && decryptedUsername ? decryptedUsername : "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"}
           </p>
         </div>
         <div className="rounded-xl bg-[#f8f8f8] border border-black/[0.03] px-3 py-2.5">
           <p className="text-[8px] font-bold uppercase tracking-widest text-black/25 mb-1">Password</p>
           <p className="text-[11px] font-bold text-black/50 font-mono truncate">
-            {locked ? "••••••••••••" : revealed && decryptedPassword ? decryptedPassword : "••••••••••••"}
+            {locked ? "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" : revealed && decryptedPassword ? decryptedPassword : "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"}
           </p>
         </div>
       </div>
@@ -176,7 +176,7 @@ export function PasswordCard({
       </div>
 
       <div className="mt-3 flex items-center justify-between">
-        <span className="text-[8px] font-bold uppercase tracking-widest text-black/10">PBKDF2 · AES-GCM</span>
+        <span className="text-[8px] font-bold uppercase tracking-widest text-black/10">PBKDF2 ï¿½ AES-GCM</span>
         <span className="text-[8px] font-bold text-black/10">{new Date(item.created_at).toLocaleDateString()}</span>
       </div>
     </article>
