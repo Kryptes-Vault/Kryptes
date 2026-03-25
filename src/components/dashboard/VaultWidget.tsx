@@ -4,7 +4,7 @@ import { Shield, Fingerprint, Eye, EyeOff, ChevronRight, Lock } from "lucide-rea
 const credentials = [
   { id: 1, name: "Netflix", user: "john@email.com", icon: "🎬", color: "bg-red-500/15 text-red-400" },
   { id: 2, name: "Proton VPN", user: "j.doe@proton.me", icon: "🛡️", color: "bg-green-500/15 text-green-400" },
-  { id: 3, name: "Google", user: "johndoe@gmail.com", icon: "🔍", color: "bg-blue-500/15 text-blue-400" },
+  { id: 3, name: "Google", user: "johndoe@gmail.com", icon: "🔍", color: "bg-[#FF3B13]/15 text-[#FF3B13]" },
   { id: 4, name: "GitHub", user: "johndoe", icon: "🐙", color: "bg-purple-500/15 text-purple-400" },
 ];
 
