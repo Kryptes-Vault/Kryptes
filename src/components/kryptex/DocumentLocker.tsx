@@ -34,7 +34,7 @@ export type LockerDocument = {
   folder: string;
   updatedAt: string;
   thumbnailSeed: string;
-  source: "mega" | "upload";
+  source: "drive" | "upload";
   previewUrl?: string;
 };
 
@@ -340,7 +340,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
               folder: String(doc.folder ?? ""),
               updatedAt: String(doc.updatedAt ?? ""),
               thumbnailSeed: String(doc.name || "").slice(0, 1).toUpperCase() || "D",
-              source: "mega" as const,
+              source: "drive" as const,
               previewUrl: typeof doc.previewUrl === "string" ? doc.previewUrl : undefined,
             };
           })
