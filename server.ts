@@ -149,6 +149,25 @@ function documentPreviewUrl(req: { get: (name: string) => string | undefined; pr
   return `${proto}://${host}/api/documents/download?id=${encodeURIComponent(fileId)}&targetFormat=${encodeURIComponent(docType)}`;
 }
 
+type GDriveModule = typeof import("./services/googleDriveStorage");
+
+function sendDriveJsonError(res: any, gdrive: GDriveModule, error: unknown, fallback: string) {
+  const d = gdrive.getDriveApiErrorDetails(error);
+  const status = d.isQuotaOrSaStorage
+    ? 507
+    : d.httpStatus && d.httpStatus >= 400 && d.httpStatus <= 499
+      ? d.httpStatus
+      : 500;
+  const body: { error: string; code?: string; hint?: string } = {
+    error: d.message || fallback,
+  };
+  if (d.isQuotaOrSaStorage) {
+    body.code = "DRIVE_STORAGE_QUOTA";
+    body.hint = gdrive.DRIVE_QUOTA_HINT;
+  }
+  return res.status(status).json(body);
+}
+
 async function convertImageToImage(buffer: Buffer, targetFormat: SupportedImageFormat): Promise<Buffer> {
   const pipeline = sharp(buffer, { failOn: "none" });
 
@@ -365,7 +384,7 @@ app.get("/api/documents", async (req: any, res: any) => {
 
     return res.status(200).json({ documents: docs.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt)) });
   } catch (error) {
-    return res.status(500).json({ error: error instanceof Error ? error.message : "Failed to list documents." });
+    return sendDriveJsonError(res, gdrive, error, "Failed to list documents.");
   }
 });
 
@@ -405,7 +424,7 @@ app.post("/api/documents/upload", upload.single("file"), async (req: any, res: a
     });
   } catch (error) {
     scrubBuffer(sourceBuffer);
-    return res.status(500).json({ error: error instanceof Error ? error.message : "Upload failed." });
+    return sendDriveJsonError(res, gdrive, error, "Upload failed.");
   }
 });
 
@@ -474,7 +493,7 @@ app.get("/api/documents/download", async (req: any, res: any) => {
       return res.status(400).json({ error: "Requested conversion is not supported for this file type." });
     }
   } catch (error) {
-    return res.status(500).json({ error: error instanceof Error ? error.message : "Download failed." });
+    return sendDriveJsonError(res, gdrive, error, "Download failed.");
   }
 });
 
@@ -491,7 +510,7 @@ app.delete("/api/documents", async (req: any, res: any) => {
     await gdrive.deleteDriveFile(fileId);
     return res.status(200).json({ ok: true });
   } catch (error) {
-    return res.status(500).json({ error: error instanceof Error ? error.message : "Delete failed." });
+    return sendDriveJsonError(res, gdrive, error, "Delete failed.");
   }
 });
 
@@ -537,7 +556,11 @@ const server = app.listen(PORT, BIND_HOST, () => {
       const drive = gdrive.getDriveClient();
       const auth = gdrive.getDriveAuthClient();
       await gdrive.verifyDriveConnection(drive, auth);
-      if (!process.env.GDRIVE_MASTER_FOLDER_ID?.trim()) {
+      const masterFolderIdRaw = process.env.GDRIVE_MASTER_FOLDER_ID?.trim();
+      if (masterFolderIdRaw) {
+        const masterId = gdrive.parseDriveFolderId(masterFolderIdRaw);
+        await gdrive.verifyDrivePermissions(drive, masterId);
+      } else {
         console.warn("[Storage] Google Drive: GDRIVE_MASTER_FOLDER_ID is empty — document vault uploads will fail until set.");
       }
     } catch (e) {
