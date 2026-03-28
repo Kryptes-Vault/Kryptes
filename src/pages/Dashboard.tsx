@@ -136,7 +136,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex h-screen w-full bg-white text-[#111] font-sans selection:bg-[#0066FF] selection:text-white overflow-hidden flex-col">
+    <div className="flex h-screen w-full bg-white text-[#111] font-sans selection:bg-[#FF3B13] selection:text-white overflow-hidden flex-col">
       {/* Full-Width Navigation Bar */}
       <header className="h-20 bg-white flex items-center justify-between px-6 lg:px-8 shrink-0 z-50">
         <div className="flex items-center gap-6 lg:gap-10">
@@ -150,7 +150,7 @@ const Dashboard = () => {
         <div className="flex items-center gap-4 lg:gap-6">
           <div className="hidden lg:flex flex-1 max-w-sm relative">
              <div className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-black/20">📍</div>
-             <input type="text" placeholder="Search here" className="h-10 w-full pl-10 pr-4 rounded-full border border-black/5 bg-[#FAFAFB] text-[12px] outline-none transition-all focus:border-[#0066FF]/20 focus:ring-4 focus:ring-[#0066FF]/5" />
+             <input type="text" placeholder="Search here" className="h-10 w-full pl-10 pr-4 rounded-full border border-black/5 bg-[#FAFAFB] text-[12px] outline-none transition-all focus:border-[#FF3B13]/20 focus:ring-4 focus:ring-[#FF3B13]/5" />
           </div>
 
           <div className="flex items-center gap-4">
@@ -171,7 +171,7 @@ const Dashboard = () => {
               {avatarUrl ? (
                 <img src={avatarUrl} className="h-10 w-10 rounded-xl object-cover ring-2 ring-black/5" />
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0066FF]/10 font-bold text-[#0066FF] text-[12px] border border-[#0066FF]/5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF3B13]/10 font-bold text-[#FF3B13] text-[12px] border border-[#FF3B13]/5">
                   {initials}
                 </div>
               )}
