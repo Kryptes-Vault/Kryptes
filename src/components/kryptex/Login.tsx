@@ -43,12 +43,39 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
   const [formData, setFormData] = useState({
     identifier: "",
     password: "",
     confirmPassword: ""
   });
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setVerifyingOtp(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: formData.identifier,
+        token: otpCode,
+        type: "signup",
+      });
+
+      if (error) {
+        toast.error(error.message);
+      } else if (data.session) {
+        await syncApiSession(data.session.access_token);
+        toast.success("Account verified successfully!");
+        onClose();
+        navigate("/dashboard");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "OTP verification failed");
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +124,7 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
     }
   };
 
-  const signInWithProvider = async (provider: "google" | "azure" | "twitter" | "linkedin_oidc") => {
+  const signInWithProvider = async (provider: "google" | "azure" | "x" | "linkedin_oidc") => {
     setOauthLoading(provider);
     try {
       const providerOpts = getProviderOptions(provider);
@@ -142,11 +169,40 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
             className="bg-white rounded-[2rem] sm:rounded-[2.5rem] border border-black/10 shadow-[0_40px_100px_rgba(0,0,0,0.2)] p-6 sm:p-12 w-full max-w-md relative z-10"
           >
             {emailSent ? (
-              <div className="text-center py-8">
+              <div className="text-center py-4">
                  <CheckCircle2 className="w-16 h-16 text-[#FF3B13] mx-auto mb-6" />
-                 <h2 className="text-2xl font-bold text-black uppercase mb-2">Check Your Email</h2>
-                 <p className="text-sm text-black/50 mb-8">We have sent a verification link to your inbox. Please verify to activate your Kryptex vault.</p>
-                 <button onClick={onClose} className="w-full bg-black text-white py-4 rounded-xl font-bold text-xs tracking-widest uppercase">GOT IT</button>
+                 <h2 className="text-2xl font-bold text-black uppercase mb-2">Verify Account</h2>
+                 <p className="text-sm text-black/50 mb-8">We sent a 6-digit code to <strong>{formData.identifier}</strong>. Enter it below to activate your vault.</p>
+                 
+                 <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <div className="relative group text-left">
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-[#FF3B13] ml-4 mb-2 block">Verification Code</label>
+                    <input 
+                      required
+                      type="text" 
+                      maxLength={6}
+                      placeholder="ENTER 6-DIGIT CODE"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                      className="w-full bg-[#f8f8f8] border border-black/5 rounded-xl py-4 px-6 text-center text-xl font-bold tracking-[0.5em] focus:outline-none focus:border-[#FF3B13] transition-all"
+                    />
+                  </div>
+
+                  <button 
+                    disabled={verifyingOtp || otpCode.length < 6}
+                    type="submit" 
+                    className="w-full bg-black text-white py-4 rounded-xl font-bold text-xs tracking-widest uppercase flex items-center justify-center hover:bg-[#FF3B13] transition-all disabled:opacity-50"
+                  >
+                    {verifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : "VERIFY & PROCEED"}
+                  </button>
+                 </form>
+
+                 <button 
+                  onClick={() => setEmailSent(false)} 
+                  className="mt-6 text-[10px] font-bold text-black/30 hover:text-black uppercase tracking-widest transition-colors"
+                >
+                  Back to Sign Up
+                </button>
               </div>
             ) : (
               <form onSubmit={handleAuth} className="space-y-6">
@@ -188,10 +244,10 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
                       id="oauth-twitter"
                       type="button"
                       disabled={!!oauthLoading}
-                      onClick={() => signInWithProvider("twitter")}
+                      onClick={() => signInWithProvider("x")}
                       className="relative flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
                     >
-                      {oauthLoading === "twitter" ? (
+                      {oauthLoading === "x" ? (
                         <div className="w-5 h-5 border-2 border-[#FF3B13] border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <svg viewBox="0 0 24 24" className="w-4 h-4 fill-black transition-all" aria-hidden>
