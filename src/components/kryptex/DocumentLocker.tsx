@@ -359,85 +359,92 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
   }
 
   return (
-    <div className="bg-[#FAFAFB] text-black min-h-full">
-      <div className="mx-auto max-w-7xl">
-        {/* Design Refresh: Header Controls */}
-        <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 items-center gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-black/20" />
+    <>
+    <div className="bg-white text-black min-h-full">
+      <div className="w-full flex flex-col md:flex-row">
+        {/* Left Sidebar for Folders */}
+        <aside className="w-full md:w-64 flex flex-col pt-8 px-6 border-r border-black/5 min-h-screen bg-[#f7f7f7]">
+          <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">Vault Categories</p>
+          <nav className="flex flex-col gap-1">
+            {folderOptions.map((folder) => (
+              <button
+                key={folder}
+                type="button"
+                onClick={() => setActiveFolder(folder)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                  activeFolder === folder 
+                    ? "bg-white text-[#0066FF] shadow-sm font-bold" 
+                    : "text-black/40 hover:bg-black/5 hover:text-black"
+                }`}
+              >
+                <FolderOpen className="h-4 w-4 shrink-0" />
+                <span className="text-[13px] font-medium">{folder}</span>
+              </button>
+            ))}
+          </nav>
+          
+          <div className="mt-8 px-4">
+            <div className="flex flex-col gap-2">
               <input
-                type="text"
-                placeholder="Search here"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-12 w-full pl-12 pr-4 rounded-xl border border-black/5 bg-white text-[13px] outline-none transition-all focus:border-[#0066FF]/20 focus:ring-4 focus:ring-[#0066FF]/5"
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
+                placeholder="New folder..."
+                className="h-9 w-full rounded-xl border border-black/5 bg-white px-3 text-[11px] outline-none"
               />
-            </div>
-            
-            <div className="flex items-center gap-2 bg-white border border-black/5 rounded-xl h-12 px-4 shadow-sm">
-              <span className="text-[12px] font-medium text-black/40">Show:</span>
-              <button className="flex items-center gap-2 text-[12px] font-bold">
-                All Files <ChevronDown className="h-4 w-4 text-black/20" />
+              <button onClick={createFolder} className="text-[10px] font-bold uppercase tracking-widest text-[#0066FF] hover:underline text-left px-1">
+                + Add Folder
               </button>
             </div>
           </div>
+        </aside>
 
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 h-12 px-4 bg-white border border-black/5 rounded-xl text-[12px] font-medium text-black/60 shadow-sm hover:bg-black/[0.02] transition-colors">
-              <ArrowUpDown className="h-4 w-4" /> Aesc
-            </button>
-            <button className="flex items-center gap-2 h-12 px-4 bg-white border border-black/5 rounded-xl text-[12px] font-medium text-black/60 shadow-sm hover:bg-black/[0.02] transition-colors">
-              <Filter className="h-4 w-4" /> Filter
-            </button>
-            
-            <div className="flex items-center border border-black/5 rounded-xl bg-white overflow-hidden shadow-sm h-12">
-              <button 
-                onClick={() => setViewLayout("list")}
-                className={`flex h-12 w-12 items-center justify-center transition-colors ${viewLayout === "list" ? "bg-[#0066FF]/5 text-[#0066FF]" : "text-black/30 hover:bg-black/[0.02]"}`}
-              >
-                <List className="h-4 w-4" />
-              </button>
-              <div className="w-[1px] h-6 bg-black/5" />
-              <button 
-                onClick={() => setViewLayout("grid")}
-                className={`flex h-12 w-12 items-center justify-center transition-colors ${viewLayout === "grid" ? "bg-[#0066FF]/5 text-[#0066FF]" : "text-black/30 hover:bg-black/[0.02]"}`}
-              >
-                <Grid className="h-4 w-4" />
-              </button>
+        {/* Main Content Area */}
+        <div className="flex-1 py-8 px-4">
+          {/* Header Controls */}
+          <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-1 items-center gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-black/20" />
+                <input
+                  type="text"
+                  placeholder="Search here"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-12 w-full pl-12 pr-4 rounded-xl border border-black/5 bg-[#f7f7f7] text-[13px] outline-none shadow-sm"
+                />
+              </div>
             </div>
 
-            <button 
-              onClick={() => inputRef.current?.click()}
-              className="flex items-center gap-2 h-12 px-6 bg-[#0066FF] text-white rounded-xl text-[13px] font-bold shadow-lg shadow-[#0066FF]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-            >
-              <CloudUpload className="h-4 w-4" /> Upload button
-            </button>
-            <input ref={inputRef} type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.docx" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+            <div className="flex items-center gap-3">
+              <div className="flex items-center border border-black/5 rounded-xl bg-white overflow-hidden shadow-sm h-12">
+                <button 
+                  onClick={() => setViewLayout("list")}
+                  className={`flex h-12 w-12 items-center justify-center transition-colors ${viewLayout === "list" ? "bg-[#0066FF]/5 text-[#0066FF]" : "text-black/30 hover:bg-black/[0.02]"}`}
+                >
+                  <List className="h-4 w-4" />
+                </button>
+                <div className="w-[1px] h-6 bg-black/5" />
+                <button 
+                  onClick={() => setViewLayout("grid")}
+                  className={`flex h-12 w-12 items-center justify-center transition-colors ${viewLayout === "grid" ? "bg-[#0066FF]/5 text-[#0066FF]" : "text-black/30 hover:bg-black/[0.02]"}`}
+                >
+                  <Grid className="h-4 w-4" />
+                </button>
+              </div>
+
+              <button 
+                onClick={() => inputRef.current?.click()}
+                className="flex items-center gap-2 h-12 px-6 bg-[#0066FF] text-white rounded-xl text-[13px] font-bold shadow-lg shadow-[#0066FF]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                <CloudUpload className="h-4 w-4" /> Upload button
+              </button>
+              <input ref={inputRef} type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.docx" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+            </div>
           </div>
-        </div>
 
-        {/* Folder Selection (mini sidebar preserved logic but redesigned) */}
-        <div className="mb-8 flex flex-wrap gap-2">
-          {folderOptions.map((folder) => (
-            <button
-              key={folder}
-              type="button"
-              onClick={() => setActiveFolder(folder)}
-              className={`inline-flex items-center gap-2.5 rounded-xl px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest transition-all ${
-                activeFolder === folder 
-                  ? "bg-[#0066FF] text-white shadow-md shadow-[#0066FF]/20" 
-                  : "bg-white border border-black/5 text-black/40 hover:bg-black/[0.02]"
-              }`}
-            >
-              <FolderOpen className="h-3.5 w-3.5" /> {folder}
-            </button>
-          ))}
-        </div>
-
-        {/* Grid View */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {sortedDocuments.map((doc) => {
+          {/* Grid View */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {sortedDocuments.map((doc) => {
             const thumb = thumbnailForType(doc.type);
             const ThumbIcon = thumb.icon;
             const isBlue = doc.type === "docx";
@@ -508,6 +515,8 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
           </div>
         )}
       </div>
+    </div>
+</div>
 
       <AnimatePresence>
         {previewDoc && (
@@ -599,6 +608,6 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }
