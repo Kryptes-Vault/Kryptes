@@ -155,7 +155,7 @@ function thumbnailForType(type: DocumentFormat) {
     case "pdf":
       return { icon: FileText, accent: "text-[#FF3300]", bg: "bg-[#FF3300]/10" };
     case "docx":
-      return { icon: FileType2, accent: "text-blue-500", bg: "bg-blue-500/10" };
+      return { icon: FileType2, accent: "text-[#FF3B13]", bg: "bg-[#FF3B13]/10" };
     case "png":
     case "jpeg":
     case "webp":
@@ -411,14 +411,14 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
               <div className="flex items-center border border-black/5 rounded-xl bg-white overflow-hidden shadow-sm h-12">
                 <button 
                   onClick={() => setViewLayout("list")}
-                  className={`flex h-12 w-12 items-center justify-center transition-colors ${viewLayout === "list" ? "bg-[#0066FF]/5 text-[#0066FF]" : "text-black/30 hover:bg-black/[0.02]"}`}
+                  className={`flex h-12 w-12 items-center justify-center transition-colors ${viewLayout === "list" ? "bg-[#FF3B13]/5 text-[#FF3B13]" : "text-black/30 hover:bg-black/[0.02]"}`}
                 >
                   <List className="h-4 w-4" />
                 </button>
                 <div className="w-[1px] h-6 bg-black/5" />
                 <button 
                   onClick={() => setViewLayout("grid")}
-                  className={`flex h-12 w-12 items-center justify-center transition-colors ${viewLayout === "grid" ? "bg-[#0066FF]/5 text-[#0066FF]" : "text-black/30 hover:bg-black/[0.02]"}`}
+                  className={`flex h-12 w-12 items-center justify-center transition-colors ${viewLayout === "grid" ? "bg-[#FF3B13]/5 text-[#FF3B13]" : "text-black/30 hover:bg-black/[0.02]"}`}
                 >
                   <Grid className="h-4 w-4" />
                 </button>
@@ -426,7 +426,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
 
               <button 
                 onClick={() => inputRef.current?.click()}
-                className="flex items-center gap-2 h-12 px-6 bg-[#0066FF] text-white rounded-xl text-[13px] font-bold shadow-lg shadow-[#0066FF]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="flex items-center gap-2 h-12 px-6 bg-[#FF3B13] text-white rounded-xl text-[13px] font-bold shadow-lg shadow-[#FF3B13]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 <CloudUpload className="h-4 w-4" /> Upload button
               </button>
@@ -444,7 +444,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
             const isGreen = doc.type === "png" || doc.type === "jpeg" || doc.type === "webp" || doc.folder === "Certificates";
             
             let colorClass = "text-gray-500";
-            if (isBlue) colorClass = "text-[#0066FF]";
+            if (isBlue) colorClass = "text-[#FF3B13]";
             if (isRed) colorClass = "text-[#FF3300]";
             if (isGreen) colorClass = "text-[#10B981]";
 
@@ -477,7 +477,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                     </span>
                     <button 
                       onClick={() => setPreviewDoc(doc)}
-                      className="text-[10px] font-bold uppercase tracking-widest text-[#0066FF] hover:underline"
+                      className="text-[10px] font-bold uppercase tracking-widest text-[#FF3B13] hover:underline"
                     >
                       Preview
                     </button>
@@ -493,13 +493,13 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {uploads.map((upload) => (
               <div key={upload.id} className="bg-white border border-black/5 rounded-2xl p-4 flex items-center gap-4">
-                <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#0066FF]/5 text-[#0066FF]">
+                <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#FF3B13]/5 text-[#FF3B13]">
                   <Loader2 className="h-5 w-5 animate-spin" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[12px] font-bold text-black truncate">{upload.name}</p>
                   <div className="mt-1.5 h-1.5 w-full bg-black/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#0066FF] transition-all duration-300" style={{ width: `${upload.progress}%` }} />
+                    <div className="h-full bg-[#FF3B13] transition-all duration-300" style={{ width: `${upload.progress}%` }} />
                   </div>
                 </div>
               </div>
@@ -544,7 +544,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                 </button>
                 <div className="flex items-center justify-center gap-4 text-[11px] font-bold uppercase tracking-widest text-black/30 mt-2">
                   <ShieldCheck className="h-4 w-4 text-emerald-500" /> AES-256 Encrypted
-                  <Lock className="h-4 w-4 text-[#0066FF]" /> Zero-Knowledge
+                  <Lock className="h-4 w-4 text-[#FF3B13]" /> Zero-Knowledge
                 </div>
               </div>
             </motion.div>
