@@ -6,10 +6,13 @@
  * - Share `GDRIVE_MASTER_FOLDER_ID` with the service account email (Editor or Content manager).
  * - Credentials: set `GDRIVE_CLIENT_EMAIL` + `GDRIVE_PRIVATE_KEY`, or point to `kryptes-storage-bot.json`
  *   via `GDRIVE_CREDENTIALS_PATH` / auto-discovery (repo root or `backend/` parent).
+<<<<<<< HEAD
  *
  * Storage / quota: uploads into a personal “My Drive” folder often fail with “Service Accounts do not have
  * storage quota”. Use a **Shared drive** (Team Drive) folder and add the service account as a member, or use
  * a Google Workspace setup where the folder lives in storage the API can write to.
+=======
+>>>>>>> e8715624721645242fe7c831993979066bea9673
  */
 
 import * as fs from "node:fs";
@@ -21,6 +24,7 @@ import type { drive_v3 } from "googleapis";
 
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
 
+<<<<<<< HEAD
 /** Parsed from `googleapis` / Gaxios failures so API routes can return useful JSON (not generic 500). */
 export type DriveApiErrorDetails = {
   message: string;
@@ -49,6 +53,8 @@ export function getDriveApiErrorDetails(err: unknown): DriveApiErrorDetails {
   return { message, httpStatus: status, isQuotaOrSaStorage };
 }
 
+=======
+>>>>>>> e8715624721645242fe7c831993979066bea9673
 /** Folder MIME type in Drive */
 const FOLDER_MIME = "application/vnd.google-apps.folder";
 /** Opaque binary — avoids Drive “preview” semantics for ciphertext */
@@ -144,6 +150,7 @@ export function loadServiceAccountCredentials(): ServiceAccountCredentials {
   return readJsonCredentials(jsonPath);
 }
 
+<<<<<<< HEAD
 /**
  * Drive v3 expects a bare file/folder id. Users often paste a full browser URL instead.
  */
@@ -166,6 +173,14 @@ function getMasterFolderId(): string {
     throw new Error("GDRIVE_MASTER_FOLDER_ID is not set.");
   }
   return parseDriveFolderId(raw);
+=======
+function getMasterFolderId(): string {
+  const id = process.env.GDRIVE_MASTER_FOLDER_ID?.trim();
+  if (!id) {
+    throw new Error("GDRIVE_MASTER_FOLDER_ID is not set.");
+  }
+  return id;
+>>>>>>> e8715624721645242fe7c831993979066bea9673
 }
 
 function getJwtClient(): JWT {
@@ -216,6 +231,7 @@ export async function verifyDriveConnection(driveClient: drive_v3.Drive, authCli
   }
 }
 
+<<<<<<< HEAD
 /**
  * Verifies that the bot has explicit access and permissions for the Master Folder.
  * Attempts to fetch metadata with minimal fields; exits on 404/403.
@@ -240,6 +256,8 @@ export async function verifyDrivePermissions(driveClient: drive_v3.Drive, master
   }
 }
 
+=======
+>>>>>>> e8715624721645242fe7c831993979066bea9673
 /** Lazily constructs `google.drive({ version: 'v3', auth })` with service-account JWT. */
 export function getDriveClient(): drive_v3.Drive {
   if (driveSingleton) return driveSingleton;
@@ -363,6 +381,7 @@ export async function uploadToDriveVault(
   }
 
   const drive = getDriveClient();
+<<<<<<< HEAD
   const body = bufferToUploadBody(fileBuffer);
   const MASTER_FOLDER_ID = "1ph_hpnwGbKALdJay6RFILGJ_lpWukgJU";
 
@@ -399,6 +418,32 @@ export async function uploadToDriveVault(
 export const DRIVE_QUOTA_HINT =
   "Google blocked this upload: service accounts have no personal Drive quota. Put GDRIVE_MASTER_FOLDER_ID inside a Shared drive (Team Drive) and add your service account as Content manager (or Manager), then try again.";
 
+=======
+  const parentId = await getOrCreateUserFolder(userId);
+  const body = bufferToUploadBody(fileBuffer);
+
+  const created = await drive.files.create({
+    requestBody: {
+      name: uniqueFileCode,
+      parents: [parentId],
+      mimeType: BLOB_MIME,
+    },
+    media: {
+      mimeType: BLOB_MIME,
+      body,
+    },
+    fields: "id",
+    supportsAllDrives: true,
+  });
+
+  const fileId = created.data.id;
+  if (!fileId) {
+    throw new Error("Drive did not return a file id after upload.");
+  }
+  return fileId;
+}
+
+>>>>>>> e8715624721645242fe7c831993979066bea9673
 /** Clears cached clients (e.g. after credential rotation in long-running tests). */
 export function resetDriveClientCache(): void {
   jwtSingleton = null;
