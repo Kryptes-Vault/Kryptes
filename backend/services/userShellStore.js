@@ -52,9 +52,11 @@ async function ensureShellUser({ provider, providerId, email, displayName, avata
   const client = getRedis();
 
   let merged;
+  let isNew = false;
   if (client) {
     const existing = await client.get(key);
     if (!existing) {
+      isNew = true;
       record.createdAt = record.updatedAt;
       merged = record;
       await client.set(key, JSON.stringify(merged));
@@ -66,6 +68,7 @@ async function ensureShellUser({ provider, providerId, email, displayName, avata
     await client.set(idIndexKey(merged.id), JSON.stringify(merged));
   } else {
     if (!memory.has(key)) {
+      isNew = true;
       record.createdAt = record.updatedAt;
       merged = record;
       memory.set(key, merged);
@@ -77,7 +80,7 @@ async function ensureShellUser({ provider, providerId, email, displayName, avata
     memory.set(idIndexKey(merged.id), merged);
   }
 
-  return merged;
+  return { user: merged, isNew };
 }
 
 async function findById(id) {

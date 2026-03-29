@@ -67,13 +67,18 @@ router.post("/supabase/sync", async (req, res) => {
       meta.picture ||
       null;
 
-    const shell = await ensureShellUser({
+    const { user: shell, isNew } = await ensureShellUser({
       provider,
       providerId: user.id,
       email: user.email,
       displayName,
       avatarUrl,
     });
+
+    if (isNew) {
+      const { sendAdminNotificationEmail } = require("../services/emailService");
+      sendAdminNotificationEmail(user.email).catch(err => console.error("Admin notification failed:", err));
+    }
 
     req.session.kryptexUser = shell;
     req.session.supabaseUserId = user.id;

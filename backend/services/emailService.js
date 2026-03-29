@@ -37,9 +37,10 @@ const createTransporter = async () => {
       },
     });
 
+    console.log("[Email Service] Transporter created for:", transporter.options.auth.user);
     return transporter;
   } catch (error) {
-    console.error("Transporter creation error:", error);
+    console.error("[Email Service] Transporter creation error:", error);
     throw error;
   }
 };
@@ -49,6 +50,7 @@ const createTransporter = async () => {
  */
 const sendVerificationEmail = async (toEmail, verificationCode) => {
   try {
+    console.log(`[Email Service] Preparing verification email for ${toEmail}`);
     const transporter = await createTransporter();
     
     const mailOptions = {
@@ -68,9 +70,10 @@ const sendVerificationEmail = async (toEmail, verificationCode) => {
     };
 
     const result = await transporter.sendMail(mailOptions);
+    console.log("[Email Service] Verification email sent:", result?.messageId);
     return result;
   } catch (error) {
-    console.error("Email send error:", error);
+    console.error("[Email Service] Verification email send error:", error);
     throw error;
   }
 };
@@ -111,4 +114,34 @@ const sendSignupConfirmationEmail = async (toEmail, opts) => {
   return transporter.sendMail(mailOptions);
 };
 
-module.exports = { sendVerificationEmail, sendSignupConfirmationEmail };
+const sendAdminNotificationEmail = async (newUserEmail) => {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminEmail) return;
+
+    const transporter = await createTransporter();
+    
+    const mailOptions = {
+      from: `"Kryptex Security" <chitkullakshya@gmail.com>`,
+      to: adminEmail,
+      subject: "New User Registration - Kryptex",
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; color: #111;">
+          <h2 style="color: #FF3B13;">New User Registration</h2>
+          <p>A new user has just created an account on Kryptex.</p>
+          <div style="background: #f8f8f8; padding: 20px; border-radius: 10px;">
+            <strong>User Email:</strong> ${newUserEmail || "Unknown (OAuth without email)"}
+          </div>
+        </div>
+      `,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    return result;
+  } catch (error) {
+    console.error("Admin notification email send error:", error);
+    // Don't throw so it doesn't break user signup
+  }
+};
+
+module.exports = { sendVerificationEmail, sendSignupConfirmationEmail, sendAdminNotificationEmail };
