@@ -317,27 +317,17 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
       setSyncing(true);
       try {
         const response = await fetch(`${API_BASE}/api/documents`, { credentials: "include" });
-<<<<<<< HEAD
         let data: { documents?: unknown; error?: string; hint?: string };
         try {
           data = (await response.json()) as { documents?: unknown; error?: string; hint?: string };
-=======
-        let data: { documents?: unknown; error?: string };
-        try {
-          data = (await response.json()) as { documents?: unknown; error?: string };
->>>>>>> e8715624721645242fe7c831993979066bea9673
         } catch {
           if (!response.ok) toast.error(`Could not load documents (${response.status}).`);
           return;
         }
         if (!response.ok) {
-<<<<<<< HEAD
           const msg = typeof data.error === "string" ? data.error : `Could not load documents (${response.status}).`;
           const hint = typeof data.hint === "string" ? data.hint : "";
           toast.error(hint ? `${msg}\n\n${hint}` : msg);
-=======
-          toast.error(typeof data.error === "string" ? data.error : `Could not load documents (${response.status}).`);
->>>>>>> e8715624721645242fe7c831993979066bea9673
           return;
         }
         const raw = Array.isArray(data?.documents) ? data.documents : [];
@@ -412,27 +402,17 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
         body: form,
         credentials: "include",
       });
-<<<<<<< HEAD
       let data: { document?: unknown; error?: string; hint?: string };
       try {
         data = (await response.json()) as { document?: unknown; error?: string; hint?: string };
-=======
-      let data: { document?: unknown; error?: string };
-      try {
-        data = (await response.json()) as { document?: unknown; error?: string };
->>>>>>> e8715624721645242fe7c831993979066bea9673
       } catch {
         toast.error(`Upload failed (${response.status}).`);
         return;
       }
       if (!response.ok || !data?.document) {
-<<<<<<< HEAD
         const msg = typeof data?.error === "string" ? data.error : `Upload failed (${response.status}).`;
         const hint = typeof data?.hint === "string" ? data.hint : "";
         toast.error(hint ? `${msg}\n\n${hint}` : msg);
-=======
-        toast.error(typeof data?.error === "string" ? data.error : `Upload failed (${response.status}).`);
->>>>>>> e8715624721645242fe7c831993979066bea9673
         return;
       }
       const uploadedDoc: LockerDocument = {
