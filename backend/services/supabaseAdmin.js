@@ -33,4 +33,40 @@ function getSupabaseAdmin() {
   return singleton;
 }
 
-module.exports = { getSupabaseAdmin };
+/**
+ * Checks if a user has any data in their vault via the Gatekeeper flag.
+ */
+async function getUserVaultStatus(userId) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("has_vault_data")
+    .eq("id", userId)
+    .single();
+
+  if (error) {
+    console.error(`[Gatekeeper] DB Error checking status for ${userId}:`, error.message);
+    return true; // Fail open to allow standard fetch logic if DB is acting up
+  }
+  return data?.has_vault_data || false;
+}
+
+/**
+ * Sets the has_vault_data flag to true for a user.
+ */
+async function setUserVaultActive(userId) {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ has_vault_data: true })
+    .eq("id", userId);
+
+  if (error) {
+    console.error(`[Gatekeeper] Failed to update vault status for ${userId}:`, error.message);
+  } else {
+    console.log(`[Gatekeeper] User ${userId} vault now marked as ACTIVE.`);
+  }
+}
+
+module.exports = { getSupabaseAdmin, getUserVaultStatus, setUserVaultActive };
+
