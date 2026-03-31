@@ -100,9 +100,9 @@ flowchart LR
   end
   subgraph api [Express API]
     Session[express-session + Redis]
-    VaultRT[/api/vault]
-    DocsRT[/api/documents]
-    AuthRT[/api/auth]
+    VaultRT["/api/vault"]
+    DocsRT["/api/documents"]
+    AuthRT["/api/auth"]
   end
   subgraph providers [Providers]
     SB[(Supabase Auth + Postgres RLS)]
@@ -324,13 +324,36 @@ Backend: `cd backend && npm run dev` / `npm start` (see `backend/package.json`).
 
 ---
 
-## Contributors
+## Collaborators
 
-| Name | Role | GitHub |
-|------|------|--------|
-| **Thanmayee Reddy Kotha** | **Project Lead** | [@thanmayeereddykotha](https://github.com/thanmayeereddykotha) |
-| **Chitkul Lakshya** | **Backend Developer & API Integration** | [@ChitkulLakshya](https://github.com/ChitkulLakshya) |
-| **Eeshitha Gone** | **Graphic Design & Frontend** | [@eesha264](https://github.com/eesha264) |
+<p align="center">
+  <a href="https://github.com/thanmayeereddykotha">
+    <img src="https://github.com/thanmayeereddykotha.png?size=100" width="80" height="80" style="border-radius:50%" alt="Thanmayee Reddy Kotha" />
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://github.com/ChitkulLakshya">
+    <img src="https://github.com/ChitkulLakshya.png?size=100" width="80" height="80" style="border-radius:50%" alt="Chitkul Lakshya" />
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://github.com/eesha264">
+    <img src="https://github.com/eesha264.png?size=100" width="80" height="80" style="border-radius:50%" alt="Eeshitha Gone" />
+  </a>
+</p>
+
+<p align="center">
+  <strong>Thanmayee Reddy Kotha</strong><br/>
+  <em>Project Lead</em>
+</p>
+
+<p align="center">
+  <strong>Chitkul Lakshya</strong><br/>
+  <em>Backend Developer & API Integration</em>
+</p>
+
+<p align="center">
+  <strong>Eeshitha Gone</strong><br/>
+  <em>Graphic Design & Frontend</em>
+</p>
 
 ---
 
