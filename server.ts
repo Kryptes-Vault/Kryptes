@@ -17,6 +17,7 @@ const { handleSendEmailHook } = require("./routes/authEmailHook");
 const { corsOptions, getSessionCookieOptions } = require("./config/auth");
 import { logBitwardenStartupStatus } from "./services/bitwardenService";
 const supportRoutes = require("./routes/support");
+const otpRoutes = require("./routes/otp");
 
 const app = express();
 const upload = multer({

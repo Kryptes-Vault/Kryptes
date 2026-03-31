@@ -166,7 +166,6 @@ function getMasterFolderId(): string {
   }
   return parseDriveFolderId(raw);
 }
-}
 
 function getJwtClient(): JWT {
   if (jwtSingleton) return jwtSingleton;
