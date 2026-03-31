@@ -58,6 +58,34 @@ export async function logBitwardenStartupStatus(): Promise<void> {
 /**
  * Saves a generic secret (Secure Note) to Bitwarden Vault.
  */
+/**
+ * Fetches secure-note vault payloads for a user from Bitwarden (type 2, name `Kryptex Vault - {userId}`).
+ */
+export async function fetchFromBitwarden(userId: string): Promise<string[]> {
+  try {
+    const token = await fetchBitwardenToken();
+    const response = await axios.get(`${BITWARDEN_API_URL}/public/items`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Bitwarden-Client-Version": "2024.1.0",
+      },
+    });
+    const rows = response.data?.data || [];
+    const items = rows.filter(
+      (item: any) => item.type === 2 && item.name === `Kryptex Vault - ${userId}`,
+    );
+    const payloads: string[] = [];
+    for (const item of items) {
+      const field = item.fields?.find((f: any) => f.name === "Payload");
+      if (field?.value) payloads.push(field.value);
+    }
+    return payloads;
+  } catch (error: any) {
+    console.error("Bitwarden Fetch Failed:", error.response?.data || error.message);
+    return [];
+  }
+}
+
 export async function saveToBitwarden(userId: string, encryptedData: string, referenceId: string): Promise<any> {
   try {
     const token = await fetchBitwardenToken();
