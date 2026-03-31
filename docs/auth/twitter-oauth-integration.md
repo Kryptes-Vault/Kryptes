@@ -320,7 +320,7 @@ The `SUPABASE_HOOK_SECRET` is validated at two points:
 | `backend/services/userShellStore.js` | Added `avatarUrl` field to shell user record |
 | `backend/server.js` | Hook secret validation + provider status at startup |
 | `supabase/migrations/004_multi_provider_profiles.sql` | **NEW** — avatar_url, auth_provider columns; universal trigger |
-| `docs/34_twitter_oauth_integration.md` | **NEW** — This document |
+| `docs/auth/twitter-oauth-integration.md` | **NEW** — This document |
 
 ---
 
@@ -331,6 +331,6 @@ The `SUPABASE_HOOK_SECRET` is validated at two points:
 | Twitter OAuth 2.0 PKCE | https://developer.x.com/en/docs/authentication/oauth-2-0/authorization-code |
 | Supabase: Twitter Provider | https://supabase.com/docs/guides/auth/social-login/auth-twitter |
 | Supabase: Auth Hooks | https://supabase.com/docs/guides/auth/auth-hooks |
-| In-repo: OAuth branding | `docs/24_branding_and_handshake_architecture.md` |
-| In-repo: Auth debugging | `docs/23_production_auth_debugging.md` |
+| In-repo: OAuth branding | `docs/frontend/branding-handshake.md` |
+| In-repo: Auth debugging | `docs/auth/production-auth-debugging.md` |
 | In-repo: OAuth redirect logic | `src/lib/oauthRedirect.ts` |

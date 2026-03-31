@@ -89,4 +89,4 @@ Do **not** store API keys, JWT secrets, or service-role keys in source control. 
 
 ---
 
-*Related doc: `docs/session_redis_supabase.md` (session sync and env vars for this migration).*
+*Related doc: `docs/auth/session-redis-supabase.md` (session sync and env vars for this migration).*

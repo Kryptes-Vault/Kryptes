@@ -44,4 +44,4 @@ So: **Google → Supabase → JWT**; **Vercel** holds the Supabase session and f
 
 ---
 
-*See also: `architecture_update.md`, `session_redis_supabase.md`, and `env_template.md`.*
+*See also: `docs/platform/supabase-migration-firebase.md`, `docs/auth/session-redis-supabase.md`, and `docs/platform/env-template.md`.*

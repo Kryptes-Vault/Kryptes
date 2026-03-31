@@ -13,7 +13,7 @@
  *
  * Point Auth → Hooks → Send Email to this function URL.
  *
- * @see docs/24_branding_and_handshake_architecture.md
+ * @see docs/frontend/branding-handshake.md
  */
 import { Webhook } from "npm:standardwebhooks@1.0.0";
 

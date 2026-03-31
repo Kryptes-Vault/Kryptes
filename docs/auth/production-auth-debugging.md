@@ -114,4 +114,4 @@ If the browser still shows **8080**, you are likely opening the app on **8080** 
 
 - Render: [Web services — port binding](https://render.com/docs/web-services#port-binding)
 - Supabase: [Send Email Auth Hook](https://supabase.com/docs/guides/auth/auth-hooks/send-email-hook)
-- In-repo: `docs/env_template.md`, `backend/routes/authEmailHook.js`, `backend/server.js`
+- In-repo: `docs/platform/env-template.md`, `backend/routes/authEmailHook.js`, `backend/server.js`
