@@ -326,34 +326,39 @@ Backend: `cd backend && npm run dev` / `npm start` (see `backend/package.json`).
 
 ## Collaborators
 
-<p align="center">
-  <a href="https://github.com/thanmayeereddykotha">
-    <img src="https://github.com/thanmayeereddykotha.png?size=100" width="80" height="80" style="border-radius:50%" alt="Thanmayee Reddy Kotha" />
-  </a>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="https://github.com/ChitkulLakshya">
-    <img src="https://github.com/ChitkulLakshya.png?size=100" width="80" height="80" style="border-radius:50%" alt="Chitkul Lakshya" />
-  </a>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="https://github.com/eesha264">
-    <img src="https://github.com/eesha264.png?size=100" width="80" height="80" style="border-radius:50%" alt="Eeshitha Gone" />
-  </a>
-</p>
-
-<p align="center">
-  <strong>Thanmayee Reddy Kotha</strong><br/>
-  <em>Project Lead</em>
-</p>
-
-<p align="center">
-  <strong>Chitkul Lakshya</strong><br/>
-  <em>Backend Developer & API Integration</em>
-</p>
-
-<p align="center">
-  <strong>Eeshitha Gone</strong><br/>
-  <em>Graphic Design & Frontend</em>
-</p>
+<div align="center">
+  <table border="0" cellspacing="0" cellpadding="0" style="border-collapse: collapse; border: none;">
+    <tr>
+      <td align="center" style="padding: 0 40px; border: none;">
+        <a href="https://github.com/ChitkulLakshya">
+          <img src="https://github.com/ChitkulLakshya.png?size=100" width="100" height="100" style="border-radius: 50%; border: 3px solid #f0f0f0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" alt="Chitkul Lakshya" />
+        </a>
+        <br />
+        <br />
+        <strong>Chitkul Lakshya</strong><br />
+        <em>Backend & API Integration</em>
+      </td>
+      <td align="center" style="padding: 0 40px; border: none;">
+        <a href="https://github.com/thanmayeereddykotha">
+          <img src="https://github.com/thanmayeereddykotha.png?size=100" width="100" height="100" style="border-radius: 50%; border: 3px solid #FF3B13; box-shadow: 0 4px 12px rgba(255,59,19,0.2);" alt="Thanmayee Reddy Kotha" />
+        </a>
+        <br />
+        <br />
+        <strong>Thanmayee Reddy Kotha</strong><br />
+        <em>Project Lead</em>
+      </td>
+      <td align="center" style="padding: 0 40px; border: none;">
+        <a href="https://github.com/eesha264">
+          <img src="https://github.com/eesha264.png?size=100" width="100" height="100" style="border-radius: 50%; border: 3px solid #f0f0f0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" alt="Eeshitha Gone" />
+        </a>
+        <br />
+        <br />
+        <strong>Eeshitha Gone</strong><br />
+        <em>Design & Frontend</em>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ---
 
