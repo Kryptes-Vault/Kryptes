@@ -38,3 +38,4 @@ ui: add ghost button styles for 'Cancel' and 'Trouble Logging in'
 feat: implement local SMS sync service prototype in react-native
 ui: add BankSmsTracker screen for mobile companion app
 style: add glowing shadow effect to primary action buttons
+feat: implement rotation origins for door-opening effect
