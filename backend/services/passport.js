@@ -17,51 +17,61 @@ module.exports = function(passport) {
   });
 
   // GOOGLE STRATEGY
-  passport.use(new GoogleStrategy({
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/api/auth/google/callback",
-      scope: ['profile', 'email']
-    },
-    (accessToken, refreshToken, profile, done) => {
-      // Zero-Knowledge: Only pass identifying info, tokens remain temporary
-      return done(null, { id: profile.id, provider: 'google', email: profile.emails[0].value });
-    }
-  ));
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    passport.use(new GoogleStrategy({
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: "/api/auth/google/callback",
+        scope: ['profile', 'email']
+      },
+      (accessToken, refreshToken, profile, done) => {
+        return done(null, { id: profile.id, provider: 'google', email: profile.emails?.[0]?.value });
+      }
+    ));
+  }
 
   // MICROSOFT STRATEGY
-  passport.use(new MicrosoftStrategy({
-      clientID: process.env.MICROSOFT_CLIENT_ID,
-      clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-      callbackURL: "/api/auth/microsoft/callback",
-      scope: ['user.read']
-    },
-    (accessToken, refreshToken, profile, done) => {
-      return done(null, { id: profile.id, provider: 'microsoft', email: profile.emails[0].value });
-    }
-  ));
+  if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
+    passport.use(new MicrosoftStrategy({
+        clientID: process.env.MICROSOFT_CLIENT_ID,
+        clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
+        callbackURL: "/api/auth/microsoft/callback",
+        scope: ['user.read']
+      },
+      (accessToken, refreshToken, profile, done) => {
+        return done(null, { id: profile.id, provider: 'microsoft', email: profile.emails?.[0]?.value });
+      }
+    ));
+  }
 
   // TWITTER (X) STRATEGY (OAuth 2.0)
-  passport.use(new TwitterStrategy({
-      clientID: process.env.TWITTER_CLIENT_ID,
-      clientSecret: process.env.TWITTER_CLIENT_SECRET,
-      callbackURL: "/api/auth/twitter/callback",
-      clientType: 'confidential',
-      scope: ['tweet.read', 'users.read', 'offline.access']
-    },
-    (accessToken, refreshToken, profile, done) => {
-      return done(null, { id: profile.id, provider: 'twitter', username: profile.username });
-    }
-  ));
+  if (process.env.TWITTER_CLIENT_ID && process.env.TWITTER_CLIENT_SECRET) {
+    passport.use(new TwitterStrategy({
+        clientID: process.env.TWITTER_CLIENT_ID,
+        clientSecret: process.env.TWITTER_CLIENT_SECRET,
+        callbackURL: "/api/auth/twitter/callback",
+        clientType: 'confidential',
+        scope: ['tweet.read', 'users.read', 'offline.access']
+      },
+      (accessToken, refreshToken, profile, done) => {
+        return done(null, { id: profile.id, provider: 'twitter', username: profile.username });
+      }
+    ));
+  }
 
   // YAHOO STRATEGY
-  passport.use(new YahooStrategy({
-      clientID: process.env.YAHOO_CLIENT_ID,
-      clientSecret: process.env.YAHOO_CLIENT_SECRET,
-      callbackURL: "/api/auth/yahoo/callback"
-    },
-    (accessToken, refreshToken, profile, done) => {
-      return done(null, { id: profile.id, provider: 'yahoo', email: profile.emails[0].value });
-    }
-  ));
+  if (process.env.YAHOO_CLIENT_ID && 
+      process.env.YAHOO_CLIENT_ID !== 'your_yahoo_id' && 
+      process.env.YAHOO_CLIENT_SECRET && 
+      process.env.YAHOO_CLIENT_SECRET !== 'your_yahoo_secret') {
+    passport.use(new YahooStrategy({
+        clientID: process.env.YAHOO_CLIENT_ID,
+        clientSecret: process.env.YAHOO_CLIENT_SECRET,
+        callbackURL: "/api/auth/yahoo/callback"
+      },
+      (accessToken, refreshToken, profile, done) => {
+        return done(null, { id: profile.id, provider: 'yahoo', email: profile.emails?.[0]?.value });
+      }
+    ));
+  }
 };
