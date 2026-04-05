@@ -176,6 +176,49 @@ const Index = () => {
                       </div>
 
                       <div className="space-y-4">
+                        {/* SOCIAL AUTH OPTIONS */}
+                        <div className="grid grid-cols-4 gap-3 mb-6">
+                          <a 
+                            href="http://localhost:4000/api/auth/google" 
+                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm"
+                          >
+                            <img src="https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png" className="w-5 h-5 transition-all" alt="Google" />
+                          </a>
+                          <a 
+                            href="http://localhost:4000/api/auth/microsoft" 
+                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm"
+                          >
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" className="w-5 h-5 transition-all" alt="Microsoft" />
+                          </a>
+                          <a 
+                            href="http://localhost:4000/api/auth/twitter" 
+                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm"
+                          >
+                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-black transition-all">
+                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            </svg>
+                          </a>
+                          <a 
+                            href="http://localhost:4000/api/auth/yahoo" 
+                            className="flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm"
+                          >
+                            <img 
+                              src="https://www.vectorlogo.zone/logos/yahoo/yahoo-ar21.svg" 
+                              className="w-10 h-6 transition-all object-contain pointer-events-none" 
+                              alt="Yahoo"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.parentElement!.innerHTML = '<span class="text-[10px] font-black text-[#6001d2]">YAHOO!</span>';
+                              }}
+                            />
+                          </a>
+                        </div>
+
+                        <div className="relative mb-6">
+                          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-black/5"></div></div>
+                          <div className="relative flex justify-center text-[8px] font-bold uppercase tracking-widest"><span className="bg-white px-2 text-black/30">OR CONTINUE WITH</span></div>
+                        </div>
+
                         <div className="space-y-1.5">
                           <label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-[#FF3B13] ml-4">Email or Phone Number</label>
                           <div className="relative group">
