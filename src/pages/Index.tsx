@@ -110,7 +110,7 @@ const Index = () => {
                   className="bg-white rounded-[2.5rem] border border-black/10 shadow-[0_40px_100px_rgba(0,0,0,0.2)] p-8 sm:p-12 w-full max-w-md relative z-10"
                 >
                     <div className="text-center mb-8">
-                      <h2 className="text-2xl font-bold tracking-tight text-black uppercase">Authentication</h2>
+                      <h2 className="text-2xl font-bold tracking-tight text-black uppercase">Kryptex</h2>
                       <p className="text-xs text-black/40 mt-2 font-bold uppercase tracking-widest">Zero-Knowledge Entry</p>
                     </div>
 
