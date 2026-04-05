@@ -11,7 +11,7 @@ export const isSupabaseConfigured = Boolean(envUrl?.trim() && envKey?.trim());
  * Supabase JS throws if URL or key are empty. When env is missing (e.g. fresh clone),
  * we use placeholders so the app boots; API/auth calls fail until `.env` is filled.
  */
-const url = isSupabaseConfigured ? envUrl!.trim() : "https://kryptex-placeholder.supabase.co";
+const url = isSupabaseConfigured ? envUrl!.trim() : "https://yhnonhusmdqeiefherbx.supabase.co";
 const anonKey = isSupabaseConfigured ? envKey!.trim() : "sb-placeholder-anon-key-not-for-production";
 
 if (!isSupabaseConfigured) {
@@ -23,6 +23,7 @@ if (!isSupabaseConfigured) {
 export const supabase = createClient(url, anonKey, {
   auth: {
     flowType: "pkce",
+    autoRefreshToken: true,
     detectSessionInUrl: true,
     persistSession: true,
     storage: typeof window !== "undefined" ? window.localStorage : undefined,
