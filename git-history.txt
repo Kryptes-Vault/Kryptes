@@ -32,3 +32,4 @@ feat: implement 'Initiate Sync' button with group hover states
 ui: add 'The Problem' statement with fragmented ecosystem styling
 style: highlight 'UNIFIED DASHBOARD' as active solution item
 feat: add 'ON-DEVICE AUTOMATION' service list entry
+ui: improve contrast for secondary text items in dark mode
