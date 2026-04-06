@@ -45,3 +45,4 @@ Do not set service role keys in `VITE_*` variables.
 - [Custom SMTP integration](./06_custom_smtp_integration.md)
 - [Architecture update (Firebase to Supabase)](./architecture_update.md)
 - [Environment variable template](./env_template.md)
+- [Documentation index](./README.md)
