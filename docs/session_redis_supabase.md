@@ -36,3 +36,7 @@
 | `API_BASE_URL` | `https://kryptes.onrender.com` |
 
 Do not set service role keys in `VITE_*` variables.
+
+## Related documentation (email branch)
+
+- [Google OAuth via Supabase](./03_google_oauth_supabase.md)
