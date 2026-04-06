@@ -26,7 +26,8 @@
     "passport-google-oauth20": "^2.0.0",
     "passport-microsoft": "^2.1.0",
     "passport-twitter-oauth2": "^2.1.1",
-    "passport-yahoo-oauth2": "^0.2.6"
+    "passport-yahoo-oauth2": "^0.2.6",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
