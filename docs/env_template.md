@@ -2,6 +2,8 @@
 
 **Do not commit real keys.** Copy values from the Supabase dashboard and your host settings.
 
+Local dev: Vite runs on **port 5173** by default — add `http://localhost:5173/**` to Supabase redirect URLs (see `docs/16_vault_and_crypto_implementation.md`).
+
 ## Vercel (Vite frontend)
 
 | Name | Description |
