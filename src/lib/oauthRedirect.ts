@@ -62,7 +62,7 @@ export function getOAuthRedirectUrl(): string {
 
 // ── Per-Provider OAuth Options ─────────────────────────────────────────────
 
-type OAuthProvider = "google" | "twitter" | "azure";
+type OAuthProvider = "google" | "twitter" | "azure" | "linkedin_oidc";
 
 interface ProviderOAuthOptions {
   queryParams?: Record<string, string>;
@@ -96,6 +96,12 @@ export function getProviderOptions(provider: OAuthProvider): ProviderOAuthOption
       };
     case "azure":
       return {};
+    case "linkedin_oidc":
+      // LinkedIn OIDC (2026 Standard)
+      // Scopes: openid (identity), profile (name/picture), email
+      return {
+        scopes: "openid profile email",
+      };
     default:
       return {};
   }
