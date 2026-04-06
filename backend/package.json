@@ -29,8 +29,8 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-microsoft": "^2.1.0",
+    "passport-oauth2": "^1.8.0",
     "passport-twitter-oauth2": "^2.1.1",
-    "passport-yahoo-oauth2": "^0.2.6",
     "redis": "^5.11.0",
     "zod": "^4.3.6"
   },
