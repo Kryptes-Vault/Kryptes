@@ -7,6 +7,11 @@ import { toast } from "sonner";
 
 const apiBase = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
+/** OAuth return URL: always matches the current origin (localhost:5173, Vercel, etc.) — never a hardcoded port. */
+function getOAuthRedirectUrl(): string {
+  return `${window.location.origin}/auth/callback`;
+}
+
 async function syncApiSession(accessToken: string) {
   const res = await fetch(`${apiBase}/api/auth/supabase/sync`, {
     method: "POST",
@@ -83,7 +88,7 @@ const Index = () => {
           email: formData.identifier,
           password: formData.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: getOAuthRedirectUrl(),
           },
         });
         if (error) {
@@ -120,7 +125,7 @@ const Index = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getOAuthRedirectUrl(),
         },
       });
       if (error) toast.error(error.message);
