@@ -48,3 +48,4 @@ Do not set service role keys in `VITE_*` variables.
 - [Documentation index](./README.md)
 - [Post-deploy checklist](./checklists/post-deploy.md)
 - [Supabase dashboard checklist](./checklists/supabase-dashboard.md)
+- [Ephemeral sharing (burn-on-read)](./09_ephemeral_sharing_technical_spec.md)
