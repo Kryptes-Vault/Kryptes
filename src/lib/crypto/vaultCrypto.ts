@@ -1,6 +1,7 @@
 /**
  * Client-only AES-GCM helpers for Kryptex vault payloads.
  * Master key material never leaves the browser (sessionStorage for this demo — use passphrase + PBKDF2 in production).
+ * Public API barrel: `src/lib/kryptexVaultService.ts` (PBKDF2 100k, base64 ciphertext/iv/salt).
  */
 
 const MASTER_KEY_STORAGE = "kryptex_mk_v1";
