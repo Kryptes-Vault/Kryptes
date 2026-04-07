@@ -4,8 +4,6 @@ import {
   Shield, 
   Settings2, 
   Database, 
-  LogOut, 
-  ChevronRight, 
   AlertTriangle,
   Lock,
   Eye,
@@ -281,53 +279,46 @@ const SettingsView = ({ user, onSignOut }: SettingsProps) => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-[600px] h-full bg-white dark:bg-[#0a0a0a] text-[#111] dark:text-white font-sans overflow-hidden">
-      
-      {/* ── Settings Sidebar ────────────────────────────────────────────── */}
-      <aside className="w-full lg:w-80 bg-[#fafafa] dark:bg-[#0f0f0f] border-r border-black/5 dark:border-white/5 flex flex-col p-8 lg:p-10">
-        <div className="mb-12">
-          <h2 className="text-lg font-bold tracking-tight mb-1">Vault Control</h2>
-          <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-black/30 dark:text-white/20">Configuration Node</p>
-        </div>
+    <div className="min-h-[600px] h-full bg-white dark:bg-[#0a0a0a] text-[#111] dark:text-white font-sans overflow-hidden">
+      <main className="h-full overflow-y-auto p-6 lg:p-12">
+        <div className="mx-auto max-w-5xl space-y-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-bold tracking-tight">Vault Control</h2>
+              <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-black/30 dark:text-white/20">Configuration Node</p>
+            </div>
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="rounded-xl border border-black/10 px-5 py-2.5 text-[10px] font-bold uppercase tracking-widest text-black/50 transition hover:border-[#FF3300]/30 hover:text-[#FF3300]"
+            >
+              Sign Out
+            </button>
+          </div>
 
-        <nav className="flex-1 space-y-2">
-          {menuItems.map((item) => {
-            const active = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id as SettingsTab)}
-                className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
-                  active 
-                    ? "bg-white dark:bg-white/5 text-[#FF3300] shadow-xl shadow-black/5 dark:shadow-none border border-black/5 dark:border-white/10" 
-                    : "text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white"
-                }`}
-              >
-                <item.icon className={`w-4 h-4 ${active ? "text-[#FF3300]" : ""}`} />
-                {item.label}
-                {active && <ChevronRight className="ml-auto w-3 h-3" />}
-              </button>
-            );
-          })}
-        </nav>
+          <nav className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {menuItems.map((item) => {
+              const active = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id as SettingsTab)}
+                  className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                    active
+                      ? "bg-[#FF3300] text-white shadow-lg shadow-[#FF3300]/20"
+                      : "bg-[#f8f8f8] text-black/50 hover:text-black dark:bg-white/5 dark:text-white/40"
+                  }`}
+                >
+                  <item.icon className="w-4 h-4" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
 
-        {/* Global Action: Sign Out */}
-        <div className="mt-10 pt-10 border-t border-black/5 dark:border-white/5">
-          <button 
-            type="button"
-            onClick={onSignOut}
-            className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-black/5 dark:bg-white/5 text-black/40 dark:text-white/40 text-[10px] font-bold uppercase tracking-widest hover:bg-[#FF3300] hover:text-white transition-all duration-300"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign Out & Disconnect
-          </button>
-        </div>
-      </aside>
-
-      {/* ── Main Content Area ──────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto p-8 lg:p-20">
-        <div className="max-w-2xl mx-auto">
-          {renderContent()}
+          <div className="max-w-3xl">
+            {renderContent()}
+          </div>
         </div>
       </main>
     </div>
