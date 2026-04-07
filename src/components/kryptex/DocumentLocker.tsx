@@ -429,7 +429,6 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                       createFolder();
                     }
                   }}
-                  placeholder="Create folder"
                   className="h-10 w-full rounded-xl border border-black/10 bg-white px-3 text-xs outline-none transition focus:border-[#FF3300]/30 lg:w-56"
                 />
                 <button
