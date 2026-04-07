@@ -2,27 +2,17 @@
 import { useNavigate } from "react-router-dom";
 import {
   FileText,
-  FileImage,
-  Image,
-  FileType2,
-  Archive,
   Briefcase,
   Key,
   KeyRound,
   LayoutGrid,
   LogOut,
-  Plus,
-  ScrollText,
   Shield,
   Lock,
-  Flame,
   User,
-  Layout,
   Receipt,
   Settings,
   QrCode,
-  Menu,
-  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AddSecretModal } from "@/components/kryptex/AddSecretModal";
@@ -38,7 +28,6 @@ import { Input } from "@/components/ui/input";
 import { SecureVaultView } from "@/components/kryptex/SecureVaultView";
 import { PasswordGrid } from "@/components/kryptex/PasswordGrid";
 import type { CategoryFilter } from "@/hooks/usePasswordVault";
-import type { DocumentFormat } from "@/components/kryptex/DocumentLocker";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useVaultItems, type VaultItemRow } from "@/hooks/useVaultItems";
 import { useVaultMasterKey } from "@/hooks/useVaultMasterKey";
@@ -54,7 +43,6 @@ const Dashboard = () => {
   const legacySessionKey = useVaultMasterKey();
   const { items, loading: vaultLoading, error: vaultError, reload: reloadVault } = useVaultItems(user?.id ?? null);
   const [viewMode, setViewMode] = useState<ViewMode>("documents");
-  const [documentFormat, setDocumentFormat] = useState<DocumentFormat | "all">("all");
   const [passwordCategory, setPasswordCategory] = useState<CategoryFilter>("all");
   const [addNodeOpen, setAddNodeOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -115,15 +103,6 @@ const Dashboard = () => {
     user?.app_metadata?.provider ||
     "email";
 
-  const documentTypes = [
-    { id: "all" as const, label: "All Documents", icon: LayoutGrid },
-    { id: "pdf" as const, label: "PDF", icon: FileText },
-    { id: "png" as const, label: "PNG", icon: FileImage },
-    { id: "jpeg" as const, label: "JPEG", icon: Image },
-    { id: "webp" as const, label: "WEBP", icon: Image },
-    { id: "docx" as const, label: "DOCX", icon: FileType2 },
-  ];
-
   const passwordSections = [
     { id: "all" as const, label: "All Credentials", icon: LayoutGrid },
     { id: "social" as const, label: "Social", icon: User },
@@ -132,14 +111,9 @@ const Dashboard = () => {
     { id: "finance" as const, label: "Finance", icon: Shield },
   ];
 
-  const activeSidebarItems =
-    viewMode === "documents"
-      ? documentTypes
-      : viewMode === "passwords"
-      ? passwordSections
-      : [];
+  const activeSidebarItems = viewMode === "passwords" ? passwordSections : [];
 
-  const showMainSidebar = viewMode === "documents" || viewMode === "passwords";
+  const showMainSidebar = viewMode === "passwords";
 
   if (authLoading || !user) {
     return (
@@ -218,17 +192,13 @@ const Dashboard = () => {
 
         <nav className="mt-6 flex-1 space-y-1 px-3">
           {activeSidebarItems.map((item) => {
-            const active = viewMode === "documents" ? documentFormat === item.id : passwordCategory === item.id;
+            const active = passwordCategory === item.id;
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => {
-                  if (viewMode === "documents") {
-                    setDocumentFormat(item.id as DocumentFormat | "all");
-                  } else {
-                    setPasswordCategory(item.id as CategoryFilter);
-                  }
+                  setPasswordCategory(item.id as CategoryFilter);
                   setSidebarOpen(false);
                 }}
                 className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[11px] font-bold uppercase tracking-widest transition-all ${
@@ -269,7 +239,7 @@ const Dashboard = () => {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-[1200px] mx-auto">
-            {viewMode === "documents" && <DocumentLocker activeFormat={documentFormat} />}
+            {viewMode === "documents" && <DocumentLocker />}
 
             {viewMode === "passwords" && (
               <div className="space-y-6">

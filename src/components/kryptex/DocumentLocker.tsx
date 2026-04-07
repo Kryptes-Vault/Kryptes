@@ -14,6 +14,8 @@ import {
   Loader2,
   Lock,
   ShieldCheck,
+  FolderPlus,
+  FolderOpen,
   X,
 } from "lucide-react";
 
@@ -24,6 +26,7 @@ export type LockerDocument = {
   name: string;
   size: number;
   type: DocumentFormat;
+  folder: string;
   updatedAt: string;
   thumbnailSeed: string;
   source: "cache" | "fresh" | "upload";
@@ -48,6 +51,7 @@ const CACHED_DOCUMENTS: LockerDocument[] = [
     name: "Passport_Scan.pdf",
     size: 2_431_122,
     type: "pdf",
+    folder: "Government",
     updatedAt: "2026-04-08T10:14:00Z",
     thumbnailSeed: "P",
     source: "cache",
@@ -57,6 +61,7 @@ const CACHED_DOCUMENTS: LockerDocument[] = [
     name: "Bank_Statement_Q1.docx",
     size: 614_200,
     type: "docx",
+    folder: "Education",
     updatedAt: "2026-04-07T13:22:00Z",
     thumbnailSeed: "B",
     source: "cache",
@@ -66,6 +71,7 @@ const CACHED_DOCUMENTS: LockerDocument[] = [
     name: "Tax_Receipt_2025.png",
     size: 892_001,
     type: "png",
+    folder: "Certificates",
     updatedAt: "2026-04-06T18:03:00Z",
     thumbnailSeed: "T",
     source: "cache",
@@ -75,6 +81,7 @@ const CACHED_DOCUMENTS: LockerDocument[] = [
     name: "KYC_Selfie.webp",
     size: 1_020_445,
     type: "webp",
+    folder: "Government",
     updatedAt: "2026-04-05T09:58:00Z",
     thumbnailSeed: "K",
     source: "cache",
@@ -84,6 +91,7 @@ const CACHED_DOCUMENTS: LockerDocument[] = [
     name: "Insurance_Certificate.pdf",
     size: 3_118_941,
     type: "pdf",
+    folder: "Vehicle",
     updatedAt: "2026-04-04T11:45:00Z",
     thumbnailSeed: "I",
     source: "cache",
@@ -97,6 +105,7 @@ const FRESH_DOCUMENTS: LockerDocument[] = [
     name: "Employment_Contract.pdf",
     size: 4_802_119,
     type: "pdf",
+    folder: "Education",
     updatedAt: "2026-04-09T08:11:00Z",
     thumbnailSeed: "E",
     source: "fresh",
@@ -106,11 +115,14 @@ const FRESH_DOCUMENTS: LockerDocument[] = [
     name: "Travel_ID.webp",
     size: 1_304_554,
     type: "webp",
+    folder: "Government",
     updatedAt: "2026-04-09T08:13:00Z",
     thumbnailSeed: "T",
     source: "fresh",
   },
 ];
+
+const DEFAULT_FOLDERS = ["Education", "Government", "Vehicle", "Certificates"];
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -214,6 +226,9 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
   const { documents, setDocuments, syncing } = useCachedDocuments();
   const [dragActive, setDragActive] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
+  const [activeFolder, setActiveFolder] = useState<string>("all");
+  const [folderName, setFolderName] = useState("");
+  const [customFolders, setCustomFolders] = useState<string[]>([]);
   const [previewDoc, setPreviewDoc] = useState<LockerDocument | null>(null);
   const [conversionDoc, setConversionDoc] = useState<LockerDocument | null>(null);
   const [targetFormat, setTargetFormat] = useState<DocumentFormat>("pdf");
@@ -221,9 +236,20 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const filteredDocuments = useMemo(
+  const folderOptions = useMemo(() => {
+    const seen = new Set<string>([...DEFAULT_FOLDERS, ...customFolders]);
+    documents.forEach((doc) => seen.add(doc.folder));
+    return Array.from(seen);
+  }, [documents, customFolders]);
+
+  const filteredByFormat = useMemo(
     () => (activeFormat === "all" ? documents : documents.filter((doc) => doc.type === activeFormat)),
     [documents, activeFormat]
+  );
+
+  const filteredDocuments = useMemo(
+    () => (activeFolder === "all" ? filteredByFormat : filteredByFormat.filter((doc) => doc.folder === activeFolder)),
+    [filteredByFormat, activeFolder]
   );
 
   const sortedDocuments = useMemo(
@@ -237,6 +263,21 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
       ? "Processing files..."
       : `${uploads.length} file${uploads.length > 1 ? "s" : ""} uploading`
     : "";
+
+  function createFolder() {
+    const trimmed = folderName.trim();
+    if (!trimmed) return;
+    const exists = folderOptions.some((folder) => folder.toLowerCase() === trimmed.toLowerCase());
+    if (exists) {
+      setActiveFolder(folderOptions.find((folder) => folder.toLowerCase() === trimmed.toLowerCase()) || "all");
+      setFolderName("");
+      return;
+    }
+
+    setCustomFolders((prev) => [...prev, trimmed]);
+    setActiveFolder(trimmed);
+    setFolderName("");
+  }
 
   function syncDocument(document: LockerDocument) {
     setDocuments((prev) => [document, ...prev.filter((doc) => doc.id !== document.id)]);
@@ -264,6 +305,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
           name: file.name,
           size: file.size,
           type: extension,
+          folder: activeFolder === "all" ? "Unsorted" : activeFolder,
           updatedAt: new Date().toISOString(),
           thumbnailSeed: file.name.slice(0, 1).toUpperCase() || "D",
           source: "upload",
@@ -366,6 +408,73 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
               : "border-black/10 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.03]"
           }`}
         >
+          <div className="mb-5 rounded-2xl border border-black/5 bg-white p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/35 dark:text-white/30">
+                  Document Folders
+                </p>
+                <p className="mt-1 text-xs text-black/40 dark:text-white/35">
+                  Create your own folders (Education, Government, Vehicle, Certificates, or custom).
+                </p>
+              </div>
+
+              <div className="flex w-full gap-2 lg:w-auto">
+                <input
+                  value={folderName}
+                  onChange={(e) => setFolderName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      createFolder();
+                    }
+                  }}
+                  placeholder="Create folder"
+                  className="h-10 w-full rounded-xl border border-black/10 bg-white px-3 text-xs outline-none transition focus:border-[#FF3300]/30 lg:w-56"
+                />
+                <button
+                  type="button"
+                  onClick={createFolder}
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-black px-4 text-[10px] font-bold uppercase tracking-widest text-white hover:bg-[#FF3300]"
+                >
+                  <FolderPlus className="h-4 w-4" />
+                  Add
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveFolder("all")}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] transition ${
+                  activeFolder === "all"
+                    ? "border-[#FF3300] bg-[#FF3300] text-white"
+                    : "border-black/10 bg-black/[0.02] text-black/45 hover:border-[#FF3300]/30 hover:text-[#FF3300]"
+                }`}
+              >
+                <FolderOpen className="h-3.5 w-3.5" />
+                All Folders
+              </button>
+
+              {folderOptions.map((folder) => (
+                <button
+                  key={folder}
+                  type="button"
+                  onClick={() => setActiveFolder(folder)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] transition ${
+                    activeFolder === folder
+                      ? "border-[#FF3300] bg-[#FF3300] text-white"
+                      : "border-black/10 bg-black/[0.02] text-black/45 hover:border-[#FF3300]/30 hover:text-[#FF3300]"
+                  }`}
+                >
+                  <FolderOpen className="h-3.5 w-3.5" />
+                  {folder}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-white/5">
@@ -490,6 +599,9 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                     <h3 className="truncate text-sm font-bold text-black dark:text-white">{doc.name}</h3>
                     <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-black/30 dark:text-white/25">
                       {formatBytes(doc.size)} · {formatDate(doc.updatedAt)}
+                    </p>
+                    <p className="mt-2 inline-flex items-center rounded-full bg-black/[0.04] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-black/45 dark:bg-white/[0.06] dark:text-white/40">
+                      {doc.folder}
                     </p>
                   </div>
 
