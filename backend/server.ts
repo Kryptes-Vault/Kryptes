@@ -1,3 +1,6 @@
+const dotenv = require("dotenv") as any;
+dotenv.config();
+
 const express = require("express") as any;
 const session = require("express-session") as any;
 const { RedisStore } = require("connect-redis") as any;
@@ -6,7 +9,6 @@ const cors = require("cors") as any;
 const multer = require("multer") as any;
 const sharp = require("sharp") as any;
 const { PDFDocument } = require("pdf-lib") as any;
-const dotenv = require("dotenv") as any;
 const { Storage } = require("megajs") as any;
 
 const vaultRoutes = require("./routes/vault");
@@ -15,7 +17,6 @@ const authRoutes = require("./routes/auth");
 const { handleSendEmailHook } = require("./routes/authEmailHook");
 const { corsOptions, getSessionCookieOptions } = require("./config/auth");
 
-dotenv.config();
 
 const app = express();
 const upload = multer({
@@ -558,6 +559,20 @@ const BIND_HOST = process.env.BIND_HOST || "0.0.0.0";
 
 const server = app.listen(PORT, BIND_HOST, () => {
   console.log(`[Kryptex Backend] Listening on http://${BIND_HOST}:${PORT} (NODE_ENV=${process.env.NODE_ENV || "undefined"})`);
+
+  if (process.env.MEGA_EMAIL?.trim() && process.env.MEGA_PASSWORD) {
+    void (async () => {
+      try {
+        const { initMega } = require("./megaService.js") as { initMega: () => Promise<unknown> };
+        await initMega();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error("[Status] MEGA: startup connection error:", msg);
+      }
+    })();
+  } else {
+    console.log("[Status] MEGA: skipped (MEGA_EMAIL / MEGA_PASSWORD not set)");
+  }
 });
 
 server.on("error", (err: NodeJS.ErrnoException) => {
