@@ -22,6 +22,7 @@ import {
   Store,
   CreditCard,
   Target,
+  Database,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AddSecretModal } from "@/components/kryptex/AddSecretModal";
@@ -110,6 +111,17 @@ const Dashboard = () => {
   ];
 
   const activeSidebarItems = viewMode === "passwords" ? passwordSections : [];
+  const [settingsTab, setSettingsTab] = useState("identity");
+
+  const settingsSections = [
+    { id: "identity", label: "Identity Profile", icon: User },
+    { id: "account", label: "Account & Identity", icon: User },
+    { id: "security", label: "Security & Access", icon: Shield },
+    { id: "vault", label: "Vault Preferences", icon: Settings },
+    { id: "categories", label: "Vault Categories", icon: LayoutGrid },
+    { id: "data", label: "Data Management", icon: Database },
+  ];
+
   const showMainSidebar = viewMode === "passwords" || viewMode === "settings";
 
   if (authLoading || !user) {
@@ -124,50 +136,29 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex h-screen w-full bg-white text-[#111] font-sans selection:bg-[#0066FF] selection:text-white overflow-hidden flex-col">
+    <div className="flex h-screen w-full bg-white text-[#111] font-sans selection:bg-[#FF3B13] selection:text-white overflow-hidden flex-col">
       {/* Full-Width Navigation Bar */}
       <header className="h-20 bg-white flex items-center justify-between px-6 lg:px-8 shrink-0 z-50">
         <div className="flex items-center gap-6 lg:gap-10">
           <div className="flex items-center gap-2">
             <span className="text-2xl font-bold tracking-tight text-[#111] flex items-center gap-2">
-              Kryptes<span className="h-2 w-2 rounded-full bg-[#0066FF]" />
+              Kryptes<span className="h-2 w-2 rounded-full bg-[#FF3B13]" />
             </span>
           </div>
-          <div className="hidden lg:flex items-center gap-1 bg-[#2D2D33] text-white px-3 py-1.5 rounded-full text-[10px] font-bold">
-            Seller <div className="w-3 h-3 rounded-full bg-white shadow-sm" />
-          </div>
-          
-          <nav className="hidden md:flex items-center gap-6 ml-4">
-            <button className={`text-[13px] font-medium transition-colors ${viewMode === "documents" ? "text-[#0066FF] bg-[#0066FF]/5 px-4 py-2 rounded-xl" : "text-black/40 hover:text-black/60 px-4 py-2"}`} onClick={() => setViewMode("documents")}>
-              Invoice
-            </button>
-            <button className="text-[13px] font-medium text-black/40 hover:text-black/60 px-4 py-2">
-              Files
-            </button>
-          </nav>
         </div>
 
         <div className="flex items-center gap-4 lg:gap-6">
           <div className="hidden lg:flex flex-1 max-w-sm relative">
              <div className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-black/20">📍</div>
-             <input type="text" placeholder="Search here" className="h-10 w-full pl-10 pr-4 rounded-full border border-black/5 bg-[#FAFAFB] text-[12px] outline-none transition-all focus:border-[#0066FF]/20 focus:ring-4 focus:ring-[#0066FF]/5" />
+             <input type="text" placeholder="Search here" className="h-10 w-full pl-10 pr-4 rounded-full border border-black/5 bg-[#FAFAFB] text-[12px] outline-none transition-all focus:border-[#FF3B13]/20 focus:ring-4 focus:ring-[#FF3B13]/5" />
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="hidden sm:flex text-[11px] font-bold text-black/60 hover:text-black bg-black/5 px-4 py-2 rounded-full transition-colors">
-              Get Loan
-            </button>
             <button className="text-black/40 hover:text-black/60 transition-colors">
               <Shield className="w-5 h-5" />
             </button>
             <button className="text-black/40 hover:text-black/60 transition-colors">
               <Receipt className="w-5 h-5" />
-            </button>
-            <button className="hidden sm:flex items-center gap-1.5 text-black/40 hover:text-black/60 transition-colors">
-              <div className="w-5 h-5 rounded-full bg-black/5 flex items-center justify-center text-[10px] border border-black/5">
-                🌐
-              </div>
-              <span className="text-[11px] font-bold uppercase tracking-widest">Hindi-IND</span>
             </button>
 
             <div className="hidden sm:block h-8 w-[1px] bg-black/5 mx-2" />
@@ -180,7 +171,7 @@ const Dashboard = () => {
               {avatarUrl ? (
                 <img src={avatarUrl} className="h-10 w-10 rounded-xl object-cover ring-2 ring-black/5" />
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0066FF]/10 font-bold text-[#0066FF] text-[12px] border border-[#0066FF]/5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF3B13]/10 font-bold text-[#FF3B13] text-[12px] border border-[#FF3B13]/5">
                   {initials}
                 </div>
               )}
@@ -206,7 +197,7 @@ const Dashboard = () => {
                   setSidebarOpen(false);
                 }}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                  viewMode === item.id ? "bg-[#0066FF] text-white shadow-md shadow-[#0066FF]/20" : "text-black/30 hover:bg-black/5 hover:text-black/60"
+                  viewMode === item.id ? "bg-[#FF3B13] text-white shadow-md shadow-[#FF3B13]/20" : "text-black/30 hover:bg-black/5 hover:text-black/60"
                 }`}
               >
                 <item.icon className="w-5 h-5" />
@@ -221,7 +212,9 @@ const Dashboard = () => {
             {/* Sidebar Body with flush left and Rounded Top-Right Side */}
             <div className="flex-1 flex flex-col bg-[#f7f7f7] rounded-tr-[2.5rem] ml-0 mt-0 mb-0 py-6 px-6 overflow-y-auto overflow-x-hidden transition-all">
               <div className="mb-8">
-                <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">Vault Categories</p>
+                <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">
+                  {viewMode === "passwords" ? "Vault Categories" : "Vault Settings"}
+                </p>
                 <nav className="flex flex-col gap-1">
                   {viewMode === "passwords" && activeSidebarItems.map((item) => {
                     const active = passwordCategory === item.id;
@@ -233,8 +226,27 @@ const Dashboard = () => {
                         }}
                         className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
                           active
-                            ? "bg-white text-[#0066FF] shadow-sm font-bold" 
-                            : "text-black/50 hover:bg-white/50 hover:text-black"
+                            ? "bg-white text-[#FF3B13] shadow-sm font-bold" 
+                            : "text-black/50 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13]"
+                        }`}
+                      >
+                        <item.icon className="w-5 h-5 shrink-0" />
+                        <span className="text-[13px] font-medium">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                  {viewMode === "settings" && settingsSections.map((item) => {
+                    const active = settingsTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setSettingsTab(item.id);
+                        }}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                          active
+                            ? "bg-white text-[#FF3B13] shadow-sm font-bold" 
+                            : "text-black/50 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13]"
                         }`}
                       >
                         <item.icon className="w-5 h-5 shrink-0" />
@@ -260,8 +272,8 @@ const Dashboard = () => {
                       }}
                       className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
                         viewMode === item.id 
-                          ? "bg-white text-[#0066FF] shadow-sm font-bold" 
-                          : "text-black/50 hover:bg-white/50 hover:text-black"
+                          ? "bg-white text-[#FF3B13] shadow-sm font-bold" 
+                          : "text-black/50 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13]"
                       }`}
                     >
                       <item.icon className="w-5 h-5 shrink-0" />
@@ -326,7 +338,7 @@ const Dashboard = () => {
               </div>
             )}
 
-            {viewMode === "settings" && <SettingsView user={user} onSignOut={handleSignOut} />}
+            {viewMode === "settings" && <SettingsView user={user} onSignOut={handleSignOut} activeTab={settingsTab as any} />}
             {viewMode === "authenticator" && <TwoFAMigrationWizard />}
           </div>
         </main>
