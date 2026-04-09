@@ -92,3 +92,5 @@ export function buildJustifiedRows(
     };
   });
 }
+
+// Row packing uses natural widths for the final row when it would otherwise look sparse (see `shouldStretch`).
