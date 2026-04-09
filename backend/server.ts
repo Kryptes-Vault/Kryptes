@@ -15,11 +15,6 @@ const webhookRoutes = require("./routes/webhooks");
 const authRoutes = require("./routes/auth");
 const { handleSendEmailHook } = require("./routes/authEmailHook");
 const { corsOptions, getSessionCookieOptions } = require("./config/auth");
-const {
-  queueMegaUpload,
-  isMegaUploadBlockedError,
-  getMegaStorage,
-} = require("./services/megaUploadQueue") as typeof import("./services/megaUploadQueue");
 
 const app = express();
 const upload = multer({
@@ -51,21 +46,6 @@ type ConvertResult = {
   buffer: Buffer;
   contentType: string;
   fileName: string;
-};
-
-type MegaNode = {
-  name?: string;
-  size?: number;
-  timestamp?: number;
-  directory?: boolean;
-  children?: MegaNode[];
-  upload?: (...args: any[]) => any;
-  link?: (cb: (err: any, link?: string) => void) => void;
-  delete?: (permanent: boolean, cb: (err?: any) => void) => void;
-};
-
-type MegaStorage = {
-  root: MegaNode;
 };
 
 type DocumentRecord = {
@@ -158,46 +138,15 @@ function parseStoredName(storedName: string) {
   return { folder, name, ts };
 }
 
-function megaErrorMessage(err: unknown): string {
-  const msg = err instanceof Error ? err.message : String(err);
-  if (/EBLOCKED|User blocked/i.test(msg)) {
-    return "MEGA rejected this session (account blocked or restricted). Check your MEGA account status and credentials.";
-  }
-  return msg;
+function documentsVaultUserId(): string {
+  return (process.env.GDRIVE_DOCUMENTS_USER_ID || "kryptes-documents").trim();
 }
 
-/** Uses the same singleton as `megaUploadQueue` (one MEGA session for list + uploads + download). */
-function initMegaStorage(): Promise<MegaStorage> {
-  return getMegaStorage().then(
-    (s) => s as unknown as MegaStorage,
-    (e: unknown) => Promise.reject(new Error(megaErrorMessage(e)))
-  );
-}
-
-async function makeNodePublicLink(node: MegaNode): Promise<string> {
-  return new Promise((resolve, reject) => {
-    node.link?.((err: any, link?: string) => {
-      if (err || !link) return reject(err || new Error("Failed to create MEGA link."));
-      resolve(link);
-    });
-  });
-}
-
-function rootFiles(storage: MegaStorage): MegaNode[] {
-  return Array.isArray(storage.root.children) ? storage.root.children.filter((n) => !n.directory && typeof n.name === "string") : [];
-}
-
-function findNodeByStoredName(storage: MegaStorage, storedName: string): MegaNode | null {
-  return rootFiles(storage).find((node) => node.name === storedName) || null;
-}
-
-async function deleteNode(node: MegaNode) {
-  return new Promise<void>((resolve, reject) => {
-    node.delete?.(true, (err?: any) => {
-      if (err) return reject(err);
-      resolve();
-    });
-  });
+function documentPreviewUrl(req: { get: (name: string) => string | undefined; protocol?: string }, fileId: string, docType: string): string {
+  const host = req.get("x-forwarded-host") || req.get("host") || `127.0.0.1:${process.env.PORT || "4000"}`;
+  const rawProto = req.get("x-forwarded-proto") || req.protocol || "http";
+  const proto = rawProto.includes(",") ? rawProto.split(",")[0]!.trim() : rawProto.trim();
+  return `${proto}://${host}/api/documents/download?id=${encodeURIComponent(fileId)}&targetFormat=${encodeURIComponent(docType)}`;
 }
 
 async function convertImageToImage(buffer: Buffer, targetFormat: SupportedImageFormat): Promise<Buffer> {
@@ -388,28 +337,29 @@ app.post("/api/convert", upload.single("file"), async (req: KryptexRequest, res:
   }
 });
 
-app.get("/api/documents", async (_req: any, res: any) => {
+app.get("/api/documents", async (req: any, res: any) => {
+  const gdrive = require("./services/googleDriveStorage") as typeof import("./services/googleDriveStorage");
+  if (!gdrive.isDriveDocumentVaultConfigured()) {
+    return res.status(503).json({ error: "Document vault not configured (Google Drive: set GDRIVE_* and GDRIVE_MASTER_FOLDER_ID)." });
+  }
   try {
-    const storage = await initMegaStorage();
-    const files = rootFiles(storage).filter((node) => node.name?.startsWith(`${DOCUMENT_PREFIX}__`));
-
+    const rows = await gdrive.listUserFolderBinaryFiles(documentsVaultUserId(), `${DOCUMENT_PREFIX}__`);
     const docs: DocumentRecord[] = [];
-    for (const file of files) {
-      const storedName = file.name as string;
+    for (const row of rows) {
+      const storedName = row.name;
       const parsed = parseStoredName(storedName);
       if (!parsed) continue;
       const type = normalizeDocExtension(parsed.name);
       if (!type) continue;
-      const previewUrl = await makeNodePublicLink(file);
       docs.push({
-        id: storedName,
+        id: row.id,
         storedName,
         name: parsed.name,
         folder: parsed.folder,
-        size: Number(file.size || 0),
-        updatedAt: new Date(parsed.ts).toISOString(),
+        size: row.size,
+        updatedAt: row.modifiedTime ? new Date(row.modifiedTime).toISOString() : new Date(parsed.ts).toISOString(),
         type,
-        previewUrl,
+        previewUrl: documentPreviewUrl(req, row.id, type),
       });
     }
 
@@ -430,54 +380,54 @@ app.post("/api/documents/upload", upload.single("file"), async (req: any, res: a
   const sourceBuffer = Buffer.from(file.buffer);
   scrubBuffer(file.buffer);
 
+  const gdrive = require("./services/googleDriveStorage") as typeof import("./services/googleDriveStorage");
+  if (!gdrive.isDriveDocumentVaultConfigured()) {
+    scrubBuffer(sourceBuffer);
+    return res.status(503).json({ error: "Document vault not configured (Google Drive: set GDRIVE_* and GDRIVE_MASTER_FOLDER_ID)." });
+  }
+
   try {
     const storedName = toStoredName(folder, file.originalname);
-    const previewUrl = await queueMegaUpload(sourceBuffer, storedName);
+    const fileId = await gdrive.uploadToDriveVault(documentsVaultUserId(), sourceBuffer, storedName);
     scrubBuffer(sourceBuffer);
 
     return res.status(201).json({
       document: {
-        id: storedName,
+        id: fileId,
         storedName,
         name: file.originalname,
         folder,
         size: Number(file.size || 0),
         updatedAt: new Date().toISOString(),
         type,
-        previewUrl,
+        previewUrl: documentPreviewUrl(req, fileId, type),
       },
     });
   } catch (error) {
     scrubBuffer(sourceBuffer);
-    if (isMegaUploadBlockedError(error)) {
-      return res.status(error.httpStatus).json({
-        error: error.message,
-        code: "MEGA_EBLOCKED",
-      });
-    }
     return res.status(500).json({ error: error instanceof Error ? error.message : "Upload failed." });
   }
 });
 
 app.get("/api/documents/download", async (req: any, res: any) => {
-  const storedName = typeof req.query?.id === "string" ? req.query.id : "";
+  const fileId = typeof req.query?.id === "string" ? req.query.id : "";
   const targetRaw = normalizeFormat(req.query?.targetFormat);
-  if (!storedName) return res.status(400).json({ error: "Document id is required." });
+  if (!fileId) return res.status(400).json({ error: "Document id is required." });
+
+  const gdrive = require("./services/googleDriveStorage") as typeof import("./services/googleDriveStorage");
+  if (!gdrive.isDriveDocumentVaultConfigured()) {
+    return res.status(503).json({ error: "Document vault not configured." });
+  }
 
   try {
-    const storage = await initMegaStorage();
-    const node = findNodeByStoredName(storage, storedName);
-    if (!node || !node.name) return res.status(404).json({ error: "Document not found." });
-
-    const parsed = parseStoredName(node.name);
+    const meta = await gdrive.getDriveFileMetadata(fileId);
+    const fileName = meta.name || "";
+    const parsed = parseStoredName(fileName);
     if (!parsed) return res.status(404).json({ error: "Document metadata not found." });
     const sourceFormat = normalizeDocExtension(parsed.name);
     if (!sourceFormat) return res.status(400).json({ error: "Unsupported source document type." });
 
-    const megaLink = await makeNodePublicLink(node);
-    const response = await fetch(megaLink);
-    if (!response.ok) return res.status(502).json({ error: "Failed to fetch file from MEGA." });
-    const sourceBuffer = Buffer.from(await response.arrayBuffer());
+    const sourceBuffer = await gdrive.downloadDriveFileBuffer(fileId);
 
     const requestedTarget = targetRaw ?? sourceFormat;
     if (!isTargetFormat(requestedTarget)) {
@@ -529,14 +479,16 @@ app.get("/api/documents/download", async (req: any, res: any) => {
 });
 
 app.delete("/api/documents", async (req: any, res: any) => {
-  const storedName = typeof req.query?.id === "string" ? req.query.id : "";
-  if (!storedName) return res.status(400).json({ error: "Document id is required." });
+  const fileId = typeof req.query?.id === "string" ? req.query.id : "";
+  if (!fileId) return res.status(400).json({ error: "Document id is required." });
+
+  const gdrive = require("./services/googleDriveStorage") as typeof import("./services/googleDriveStorage");
+  if (!gdrive.isDriveDocumentVaultConfigured()) {
+    return res.status(503).json({ error: "Document vault not configured." });
+  }
 
   try {
-    const storage = await initMegaStorage();
-    const node = findNodeByStoredName(storage, storedName);
-    if (!node) return res.status(404).json({ error: "Document not found." });
-    await deleteNode(node);
+    await gdrive.deleteDriveFile(fileId);
     return res.status(200).json({ ok: true });
   } catch (error) {
     return res.status(500).json({ error: error instanceof Error ? error.message : "Delete failed." });
@@ -557,48 +509,51 @@ const BIND_HOST = process.env.BIND_HOST || "0.0.0.0";
 const server = app.listen(PORT, BIND_HOST, () => {
   console.log(`[Kryptex Backend] Listening on http://${BIND_HOST}:${PORT} (NODE_ENV=${process.env.NODE_ENV || "undefined"})`);
 
-  if (process.env.MEGA_EMAIL?.trim() && process.env.MEGA_PASSWORD) {
-    void (async () => {
-      try {
-        const { initMega } = require("./megaService.js") as { initMega: () => Promise<unknown> };
-        await initMega();
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.error("[Status] MEGA: startup connection error:", msg);
-      }
-    })();
-  } else {
-    console.log("[Status] MEGA: skipped (MEGA_EMAIL / MEGA_PASSWORD not set)");
-  }
+  void (async () => {
+    const redisSvc = require("./services/redisService") as {
+      whenRedisReadyOrTimeout: (ms?: number) => Promise<void>;
+    };
+    await redisSvc.whenRedisReadyOrTimeout(15000);
 
-  if (process.env.GDRIVE_STARTUP_VERIFY === "false") {
-    console.log("[Status] Google Drive: startup verify skipped (GDRIVE_STARTUP_VERIFY=false)");
-  } else {
-    void (async () => {
-      const gdrive = require("./services/googleDriveStorage") as typeof import("./services/googleDriveStorage");
-      if (!gdrive.isGoogleDriveConfigured()) {
-        console.log("[Status] Google Drive: skipped (no service account in env or JSON path)");
-        return;
+    const { logBitwardenStartupStatus } = require("./services/bitwardenService") as {
+      logBitwardenStartupStatus: () => Promise<void>;
+    };
+    await logBitwardenStartupStatus();
+
+    if (process.env.GDRIVE_STARTUP_VERIFY === "false") {
+      console.log("[Storage] Google Drive: startup verify skipped (GDRIVE_STARTUP_VERIFY=false)");
+      return;
+    }
+
+    const gdrive = require("./services/googleDriveStorage") as typeof import("./services/googleDriveStorage");
+    if (!gdrive.isGoogleDriveConfigured()) {
+      console.log(
+        "[Storage] Google Drive: not configured — set GDRIVE_CLIENT_EMAIL + GDRIVE_PRIVATE_KEY (or GDRIVE_CREDENTIALS_PATH / JSON file).",
+      );
+      return;
+    }
+    console.log("[Storage] Google Drive: verifying service account and API reachability...");
+    try {
+      const drive = gdrive.getDriveClient();
+      const auth = gdrive.getDriveAuthClient();
+      await gdrive.verifyDriveConnection(drive, auth);
+      if (!process.env.GDRIVE_MASTER_FOLDER_ID?.trim()) {
+        console.warn("[Storage] Google Drive: GDRIVE_MASTER_FOLDER_ID is empty — document vault uploads will fail until set.");
       }
-      try {
-        const drive = gdrive.getDriveClient();
-        const auth = gdrive.getDriveAuthClient();
-        await gdrive.verifyDriveConnection(drive, auth);
-      } catch (e) {
-        console.error("[Status] Google Drive: startup verify error:", e instanceof Error ? e.message : e);
-        if (process.env.GDRIVE_STARTUP_FAIL_FAST !== "false") {
-          process.exit(1);
-        }
+    } catch (e) {
+      console.error("[Storage] Google Drive: startup verify error:", e instanceof Error ? e.message : e);
+      if (process.env.GDRIVE_STARTUP_FAIL_FAST !== "false") {
+        process.exit(1);
       }
-    })();
-  }
+    }
+  })();
 });
 
 server.on("error", (err: NodeJS.ErrnoException) => {
   if (err.code === "EADDRINUSE") {
-    console.error(`Port ${PORT} is already in use.`);
+    console.error(`[Kryptex Backend] Port ${PORT} is already in use. Stop the other process or set PORT to a free port.`);
   } else {
-    console.error("Server error:", err);
+    console.error("[Kryptex Backend] Server error:", err.message || err);
   }
 });
 
