@@ -20,6 +20,15 @@ function getSupabaseAdmin() {
         autoRefreshToken: false,
       },
     });
+
+    // Verify connection status (lightweight check)
+    singleton.from("vault").select("count").limit(1).then(({ error }) => {
+      if (error) {
+        console.error("❌ Supabase: Admin client initialized but table 'vault' health check failed:", error.message);
+      } else {
+        console.log("✅ Supabase Admin Client: Connected and Decrypted!");
+      }
+    });
   }
   return singleton;
 }
