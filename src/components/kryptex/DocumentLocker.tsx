@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import {
   Archive,
   ArrowDownToLine,
@@ -8,8 +8,6 @@ import {
   FileImage,
   FileText,
   FileType2,
-  HardDriveDownload,
-  Eye,
   Image,
   Loader2,
   Lock,
@@ -18,12 +16,12 @@ import {
   FolderOpen,
   X,
   Search,
-  ArrowUpDown,
-  Filter,
-  MoreVertical,
   Grid,
   List,
 } from "lucide-react";
+import { buildJustifiedRows, clampAspect, type AspectItem } from "./documentLocker/justifiedLayout";
+import { DocumentMediaCard } from "./documentLocker/DocumentMediaCard";
+import { DocumentFixedCard } from "./documentLocker/DocumentFixedCard";
 
 export type DocumentFormat = "pdf" | "png" | "jpeg" | "webp" | "docx";
 
@@ -54,6 +52,14 @@ const ACCEPTED_EXTENSIONS = ["pdf", "png", "jpg", "jpeg", "webp", "docx"] as con
 
 const DEFAULT_FOLDERS = ["Education", "Government", "Vehicle", "Certificates"];
 const API_BASE = (import.meta.env.VITE_BACKEND_URL || "http://localhost:4000").replace(/\/$/, "");
+
+/** Gallery row height (Tailwind h-56 = 14rem) — keeps rows even. */
+const GALLERY_ROW_HEIGHT = 224;
+const GALLERY_GAP_PX = 16;
+
+function isImageDoc(doc: LockerDocument) {
+  return doc.type === "png" || doc.type === "jpeg" || doc.type === "webp";
+}
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -132,6 +138,12 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
   const [searchQuery, setSearchQuery] = useState("");
   const [viewLayout, setViewLayout] = useState<"grid" | "list">("grid");
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const galleryRef = useRef<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = useState(1200);
+  const [aspectById, setAspectById] = useState<Record<string, number>>({});
+  const [thumbById, setThumbById] = useState<Record<string, string>>({});
+  const [thumbLoadingId, setThumbLoadingId] = useState<string | null>(null);
+  const [hoveredGalleryId, setHoveredGalleryId] = useState<string | null>(null);
 
   const folderOptions = useMemo(() => {
     const seen = new Set<string>([...DEFAULT_FOLDERS, ...customFolders]);
@@ -159,7 +171,97 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
     [filteredDocuments]
   );
 
+  const imageDocuments = useMemo(() => sortedDocuments.filter(isImageDoc), [sortedDocuments]);
+  const fileDocuments = useMemo(() => sortedDocuments.filter((d) => !isImageDoc(d)), [sortedDocuments]);
+
+  const aspectItems: AspectItem[] = useMemo(
+    () =>
+      imageDocuments.map((d) => ({
+        id: d.id,
+        aspect: aspectById[d.id] ?? 1,
+      })),
+    [imageDocuments, aspectById]
+  );
+
+  const justifiedRows = useMemo(
+    () =>
+      viewLayout === "grid" && imageDocuments.length > 0
+        ? buildJustifiedRows(aspectItems, Math.max(320, containerWidth), GALLERY_ROW_HEIGHT, GALLERY_GAP_PX)
+        : [],
+    [aspectItems, containerWidth, imageDocuments.length, viewLayout]
+  );
+
+  const otherFolders = useMemo(() => folderOptions.filter((f) => f !== activeFolder), [folderOptions, activeFolder]);
+
+  const docById = useMemo(() => {
+    const m = new Map<string, LockerDocument>();
+    sortedDocuments.forEach((d) => m.set(d.id, d));
+    return m;
+  }, [sortedDocuments]);
+
   const hasUploads = uploads.length > 0;
+
+  useLayoutEffect(() => {
+    const el = galleryRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width;
+      if (w && w > 0) setContainerWidth(w);
+    });
+    ro.observe(el);
+    setContainerWidth(el.getBoundingClientRect().width);
+    return () => ro.disconnect();
+  }, [viewLayout, sortedDocuments.length]);
+
+  const thumbFetchedRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    for (const doc of imageDocuments) {
+      if (doc.previewUrl) continue;
+      if (thumbFetchedRef.current.has(doc.id)) continue;
+      thumbFetchedRef.current.add(doc.id);
+      const docId = doc.id;
+      setThumbLoadingId(docId);
+      const fmt = doc.type === "jpeg" ? "jpeg" : doc.type === "webp" ? "webp" : "png";
+      void (async () => {
+        try {
+          const response = await fetch(
+            `${API_BASE}/api/documents/download?id=${encodeURIComponent(docId)}&targetFormat=${fmt}`,
+            { credentials: "include" }
+          );
+          if (!response.ok) return;
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          setThumbById((prev) => (prev[docId] ? prev : { ...prev, [docId]: url }));
+        } finally {
+          setThumbLoadingId((cur) => (cur === docId ? null : cur));
+        }
+      })();
+    }
+  }, [imageDocuments]);
+
+  useEffect(() => {
+    return () => {
+      setThumbById((prev) => {
+        Object.values(prev).forEach((u) => URL.revokeObjectURL(u));
+        return {};
+      });
+    };
+  }, []);
+
+  const downloadDocument = useCallback(async (doc: LockerDocument) => {
+    const targetFormat = doc.type;
+    const url = `${API_BASE}/api/documents/download?id=${encodeURIComponent(doc.id)}&targetFormat=${encodeURIComponent(targetFormat)}`;
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) return;
+    const blob = await response.blob();
+    const dl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = dl;
+    a.download = doc.name;
+    a.click();
+    URL.revokeObjectURL(dl);
+  }, []);
 
   useEffect(() => {
     if (!previewDoc) {
@@ -444,70 +546,156 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
             </div>
           </div>
 
-          {/* Grid View */}
+          {/* Gallery (justified flex) or list */}
           {syncing ? (
             <div className="mx-auto flex min-h-[220px] w-full max-w-3xl items-center justify-center rounded-3xl border border-black/5 bg-[#f7f7f7]">
               <p className="text-xs font-bold uppercase tracking-widest text-black/40">Syncing documents from MEGA...</p>
             </div>
           ) : sortedDocuments.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {sortedDocuments.map((doc) => {
-                const thumb = thumbnailForType(doc.type);
-                const ThumbIcon = thumb.icon;
-                const isBlue = doc.type === "docx";
-                const isRed = doc.type === "pdf";
-                const isGreen = doc.type === "png" || doc.type === "jpeg" || doc.type === "webp" || doc.folder === "Certificates";
-
-                let colorClass = "text-gray-500";
-                if (isBlue) colorClass = "text-[#FF3B13]";
-                if (isRed) colorClass = "text-[#FF3300]";
-                if (isGreen) colorClass = "text-[#10B981]";
-
-                return (
-                  <div
-                    key={doc.id}
-                    className="group relative bg-white border border-black/5 rounded-3xl p-6 transition-all hover:shadow-xl hover:shadow-black/5 hover:-translate-y-1"
-                  >
-                    <button
-                      onClick={() => void deleteDocument(doc)}
-                      disabled={deletePendingId === doc.id}
-                      className="absolute top-4 right-4 p-2 text-black/20 hover:text-[#FF3300] transition-colors disabled:opacity-40"
+            viewLayout === "list" ? (
+              <div className="overflow-hidden rounded-2xl border border-black/5 bg-white">
+                {sortedDocuments.map((doc) => {
+                  const thumb = thumbnailForType(doc.type);
+                  const Icon = thumb.icon;
+                  return (
+                    <div
+                      key={doc.id}
+                      className="flex flex-wrap items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 sm:flex-nowrap"
                     >
-                      {deletePendingId === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-                    </button>
-
-                    <div className="flex flex-col items-center text-center">
-                      <div className={`mb-6 h-16 w-16 flex items-center justify-center rounded-2xl ${colorClass.replace("text-", "bg-")}/5`}>
-                        <ThumbIcon className={`h-10 w-10 ${colorClass}`} />
+                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${thumb.bg}`}>
+                        <Icon className={`h-5 w-5 ${thumb.accent}`} />
                       </div>
-
-                      <div className="space-y-1 mb-6">
-                        <p className="text-[14px] font-bold text-[#111] truncate max-w-[150px]">
-                          {doc.name}
-                        </p>
-                        <p className="text-[12px] font-medium text-black/40">
-                          {formatDate(doc.updatedAt)}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-bold text-[#111]">{doc.name}</p>
+                        <p className="text-[11px] text-black/40">
+                          {formatBytes(doc.size)} · {formatDate(doc.updatedAt)}
                         </p>
                       </div>
-
-                      <div className="flex w-full items-center justify-between border-t border-black/5 pt-4">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-black/30">
-                          {fileTypeLabel(doc.type)}
-                        </span>
+                      <div className="flex shrink-0 items-center gap-2">
                         <button
-                          onClick={() => {
-                            setPreviewDoc(doc);
-                          }}
-                          className="text-[10px] font-bold uppercase tracking-widest text-[#FF3B13] hover:underline"
+                          type="button"
+                          onClick={() => void downloadDocument(doc)}
+                          className="rounded-lg border border-black/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-black/60 hover:border-[#FF3B13]/30 hover:text-[#FF3B13]"
+                        >
+                          Download
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDoc(doc)}
+                          className="rounded-lg bg-black px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white"
                         >
                           Preview
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => void deleteDocument(doc)}
+                          disabled={deletePendingId === doc.id}
+                          className="p-2 text-black/25 hover:text-[#FF3300] disabled:opacity-40"
+                        >
+                          {deletePendingId === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                        </button>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <LayoutGroup>
+                <div ref={galleryRef} className="space-y-8">
+                  {otherFolders.length > 0 ? (
+                    <section>
+                      <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black/35">Folders</p>
+                      <div className="flex flex-wrap gap-4">
+                        {otherFolders.map((folder) => (
+                          <button
+                            key={folder}
+                            type="button"
+                            onClick={() => setActiveFolder(folder)}
+                            className="flex h-56 w-48 shrink-0 flex-col items-center justify-center rounded-2xl border border-black/5 bg-[#fafafa] px-3 text-center shadow-sm transition hover:border-[#FF3B13]/35 hover:bg-white hover:shadow-md"
+                          >
+                            <FolderOpen className="h-10 w-10 text-[#FF3B13]/80" />
+                            <span className="mt-3 line-clamp-2 text-[13px] font-semibold text-black/85">{folder}</span>
+                            <span className="mt-1 text-[9px] font-bold uppercase tracking-widest text-black/30">Open</span>
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  {fileDocuments.length > 0 ? (
+                    <section>
+                      <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black/35">Documents</p>
+                      <div className="flex flex-wrap gap-4">
+                        {fileDocuments.map((doc) => {
+                          const thumb = thumbnailForType(doc.type);
+                          return (
+                            <DocumentFixedCard
+                              key={doc.id}
+                              doc={{ id: doc.id, name: doc.name, sizeLabel: formatBytes(doc.size) }}
+                              icon={thumb.icon}
+                              accent={thumb.accent}
+                              bg={thumb.bg}
+                              typeLabel={fileTypeLabel(doc.type)}
+                              updatedLabel={formatDate(doc.updatedAt)}
+                              onDelete={() => void deleteDocument(doc)}
+                              onDownload={() => void downloadDocument(doc)}
+                              onPreview={() => setPreviewDoc(doc)}
+                              deletePending={deletePendingId === doc.id}
+                              hoveredId={hoveredGalleryId}
+                              onHoverChange={setHoveredGalleryId}
+                            />
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  {imageDocuments.length > 0 ? (
+                    <section>
+                      <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black/35">Media</p>
+                      <div className="flex flex-col gap-4">
+                        {justifiedRows.map((row, rowIdx) => (
+                          <div
+                            key={`row-${rowIdx}`}
+                            className={`flex w-full flex-wrap gap-4 ${row.isLast ? "justify-start" : "justify-start"}`}
+                            style={{ gap: GALLERY_GAP_PX }}
+                          >
+                            {row.items.map((item) => {
+                              const doc = docById.get(item.id);
+                              if (!doc) return null;
+                              const src = doc.previewUrl || thumbById[doc.id];
+                              return (
+                                <DocumentMediaCard
+                                  key={doc.id}
+                                  doc={{ id: doc.id, name: doc.name, sizeLabel: formatBytes(doc.size) }}
+                                  width={item.width}
+                                  height={item.height}
+                                  thumbUrl={src}
+                                  isThumbLoading={thumbLoadingId === doc.id && !src}
+                                  onImageLoad={(e) => {
+                                    const el = e.currentTarget;
+                                    if (el.naturalWidth > 0 && el.naturalHeight > 0) {
+                                      const ar = el.naturalWidth / el.naturalHeight;
+                                      setAspectById((m) => ({ ...m, [doc.id]: clampAspect(ar) }));
+                                    }
+                                  }}
+                                  onDelete={() => void deleteDocument(doc)}
+                                  onDownload={() => void downloadDocument(doc)}
+                                  onPreview={() => setPreviewDoc(doc)}
+                                  deletePending={deletePendingId === doc.id}
+                                  hoveredId={hoveredGalleryId}
+                                  onHoverChange={setHoveredGalleryId}
+                                />
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
+                </div>
+              </LayoutGroup>
+            )
           ) : (
             <button
               type="button"
