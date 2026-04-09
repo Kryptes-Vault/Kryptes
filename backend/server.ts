@@ -603,7 +603,7 @@ server.on("error", (err: NodeJS.ErrnoException) => {
 });
 
 function gracefulShutdown(signal: string) {
-  console.log(`[Kryptex] Received ${signal}. Closing HTTP serverΓÇª`);
+  console.log(`[Kryptex] Received ${signal}. Closing HTTP server...`);
   server.close(() => {
     if (redisClient && redisClient.status !== "end") {
       redisClient.quit().finally(() => process.exit(0));
