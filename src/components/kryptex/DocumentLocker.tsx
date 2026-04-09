@@ -17,6 +17,12 @@ import {
   FolderPlus,
   FolderOpen,
   X,
+  Search,
+  ArrowUpDown,
+  Filter,
+  MoreVertical,
+  Grid,
+  List,
 } from "lucide-react";
 
 export type DocumentFormat = "pdf" | "png" | "jpeg" | "webp" | "docx";
@@ -49,61 +55,61 @@ const CACHED_DOCUMENTS: LockerDocument[] = [
   {
     id: "doc-1",
     name: "Passport_Scan.pdf",
-    size: 2_431_122,
+    size: 2_411_724, // 2.3 MB approx
     type: "pdf",
     folder: "Government",
-    updatedAt: "2026-04-08T10:14:00Z",
+    updatedAt: "2026-04-08T12:00:00Z",
     thumbnailSeed: "P",
     source: "cache",
   },
   {
     id: "doc-2",
     name: "Bank_Statement_Q1.docx",
-    size: 614_200,
+    size: 614_195, // 599.8 KB approx
     type: "docx",
     folder: "Education",
-    updatedAt: "2026-04-07T13:22:00Z",
+    updatedAt: "2026-04-07T12:00:00Z",
     thumbnailSeed: "B",
     source: "cache",
   },
   {
     id: "doc-3",
     name: "Tax_Receipt_2025.png",
-    size: 892_001,
+    size: 892_006, // 871.1 KB approx
     type: "png",
     folder: "Certificates",
-    updatedAt: "2026-04-06T18:03:00Z",
+    updatedAt: "2026-04-06T12:00:00Z",
     thumbnailSeed: "T",
     source: "cache",
   },
   {
     id: "doc-4",
     name: "KYC_Selfie.webp",
-    size: 1_020_445,
+    size: 1_020_416, // 996.5 KB approx
     type: "webp",
     folder: "Government",
-    updatedAt: "2026-04-05T09:58:00Z",
+    updatedAt: "2026-04-05T12:00:00Z",
     thumbnailSeed: "K",
     source: "cache",
   },
   {
     id: "doc-5",
     name: "Insurance_Certificate.pdf",
-    size: 3_118_941,
+    size: 3_145_728, // 3.0 MB approx
     type: "pdf",
     folder: "Vehicle",
-    updatedAt: "2026-04-04T11:45:00Z",
+    updatedAt: "2026-04-04T12:00:00Z",
     thumbnailSeed: "I",
     source: "cache",
   },
 ];
 
 const FRESH_DOCUMENTS: LockerDocument[] = [
-  ...CACHED_DOCUMENTS,
+  ...CACHED_DOCUMENTS.filter(doc => !["doc-6", "doc-7"].includes(doc.id)),
   {
     id: "doc-6",
     name: "Employment_Contract.pdf",
-    size: 4_802_119,
+    size: 4_823_449, // 4.6 MB approx
     type: "pdf",
     folder: "Education",
     updatedAt: "2026-04-09T08:11:00Z",
@@ -113,7 +119,7 @@ const FRESH_DOCUMENTS: LockerDocument[] = [
   {
     id: "doc-7",
     name: "Travel_ID.webp",
-    size: 1_304_554,
+    size: 1_258_291, // 1.2 MB approx
     type: "webp",
     folder: "Government",
     updatedAt: "2026-04-09T08:13:00Z",
@@ -225,7 +231,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
   const { documents, setDocuments, syncing } = useCachedDocuments();
   const [dragActive, setDragActive] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
-  const [activeFolder, setActiveFolder] = useState<string>("all");
+  const [activeFolder, setActiveFolder] = useState<string>(DEFAULT_FOLDERS[0]);
   const [folderName, setFolderName] = useState("");
   const [customFolders, setCustomFolders] = useState<string[]>([]);
   const [previewDoc, setPreviewDoc] = useState<LockerDocument | null>(null);
@@ -233,6 +239,8 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
   const [targetFormat, setTargetFormat] = useState<DocumentFormat>("pdf");
   const [converting, setConverting] = useState(false);
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewLayout, setViewLayout] = useState<"grid" | "list">("grid");
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const folderOptions = useMemo(() => {
@@ -247,8 +255,13 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
   );
 
   const filteredDocuments = useMemo(
-    () => (activeFolder === "all" ? filteredByFormat : filteredByFormat.filter((doc) => doc.folder === activeFolder)),
-    [filteredByFormat, activeFolder]
+    () =>
+      filteredByFormat.filter((doc) => {
+        const matchesFolder = doc.folder === activeFolder;
+        const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesFolder && matchesSearch;
+      }),
+    [filteredByFormat, activeFolder, searchQuery]
   );
 
   const sortedDocuments = useMemo(
@@ -263,7 +276,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
     if (!trimmed) return;
     const exists = folderOptions.some((folder) => folder.toLowerCase() === trimmed.toLowerCase());
     if (exists) {
-      setActiveFolder(folderOptions.find((folder) => folder.toLowerCase() === trimmed.toLowerCase()) || "all");
+      setActiveFolder(folderOptions.find((folder) => folder.toLowerCase() === trimmed.toLowerCase()) || DEFAULT_FOLDERS[0]);
       setFolderName("");
       return;
     }
@@ -296,7 +309,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
           name: file.name,
           size: file.size,
           type: extension,
-          folder: activeFolder === "all" ? "Unsorted" : activeFolder,
+          folder: activeFolder,
           updatedAt: new Date().toISOString(),
           thumbnailSeed: file.name.slice(0, 1).toUpperCase() || "D",
           source: "upload",
@@ -346,209 +359,200 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
   }
 
   return (
-    <div className="min-h-screen bg-white text-black dark:bg-[#090909] dark:text-white">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-black/30 dark:text-white/25">Kryptes Standard</p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Document Locker</h1>
-          </div>
-          <div className="flex flex-col items-end gap-2 text-right">
-            <AnimatePresence>
-              {syncing && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="inline-flex items-center gap-2 rounded-full border border-black/5 bg-black/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-black/45"
-                >
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-[#FF3300]" />
-                  Syncing securely...
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/25">{sortedDocuments.length} documents</p>
-          </div>
-        </div>
-
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragActive(true);
-          }}
-          onDragLeave={() => setDragActive(false)}
-          onDrop={handleDrop}
-          className={`mb-8 rounded-3xl border-2 border-dashed px-5 py-6 transition-all sm:px-6 ${
-            dragActive ? "border-[#FF3300] bg-[#FF3300]/5" : "border-black/10 bg-black/[0.02]"
-          }`}
-        >
-          <div className="mb-5 rounded-2xl border border-black/5 bg-white p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/35">Document Folders</p>
-                <p className="mt-1 text-xs text-black/40">Create your own folders (Education, Government, Vehicle, Certificates, or custom).</p>
-              </div>
-              <div className="flex w-full gap-2 lg:w-auto">
-                <input
-                  value={folderName}
-                  onChange={(e) => setFolderName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      createFolder();
-                    }
-                  }}
-                  className="h-10 w-full rounded-xl border border-black/10 bg-white px-3 text-xs outline-none transition focus:border-[#FF3300]/30 lg:w-56"
-                />
-                <button type="button" onClick={createFolder} className="inline-flex h-10 items-center gap-2 rounded-xl bg-black px-4 text-[10px] font-bold uppercase tracking-widest text-white hover:bg-[#FF3300]">
-                  <FolderPlus className="h-4 w-4" /> Add
-                </button>
-              </div>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
+    <>
+    <div className="bg-white text-black min-h-full">
+      <div className="w-full flex flex-col md:flex-row">
+        {/* Left Sidebar for Folders */}
+        <aside className="w-full md:w-64 flex flex-col pt-8 px-6 border-r border-black/5 min-h-screen bg-[#f7f7f7]">
+          <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">Vault Categories</p>
+          <nav className="flex flex-col gap-1">
+            {folderOptions.map((folder) => (
               <button
+                key={folder}
                 type="button"
-                onClick={() => setActiveFolder("all")}
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] transition ${
-                  activeFolder === "all" ? "border-[#FF3300] bg-[#FF3300] text-white" : "border-black/10 bg-black/[0.02] text-black/45"
+                onClick={() => setActiveFolder(folder)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                  activeFolder === folder 
+                    ? "bg-white text-[#0066FF] shadow-sm font-bold" 
+                    : "text-black/40 hover:bg-black/5 hover:text-black"
                 }`}
               >
-                <FolderOpen className="h-3.5 w-3.5" /> All Folders
+                <FolderOpen className="h-4 w-4 shrink-0" />
+                <span className="text-[13px] font-medium">{folder}</span>
               </button>
-              {folderOptions.map((folder) => (
-                <button
-                  key={folder}
-                  type="button"
-                  onClick={() => setActiveFolder(folder)}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] transition ${
-                    activeFolder === folder ? "border-[#FF3300] bg-[#FF3300] text-white" : "border-black/10 bg-black/[0.02] text-black/45"
-                  }`}
-                >
-                  <FolderOpen className="h-3.5 w-3.5" /> {folder}
-                </button>
-              ))}
+            ))}
+          </nav>
+          
+          <div className="mt-8 px-4">
+            <div className="flex flex-col gap-2">
+              <input
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
+                placeholder="New folder..."
+                className="h-9 w-full rounded-xl border border-black/5 bg-white px-3 text-[11px] outline-none"
+              />
+              <button onClick={createFolder} className="text-[10px] font-bold uppercase tracking-widest text-[#0066FF] hover:underline text-left px-1">
+                + Add Folder
+              </button>
             </div>
           </div>
+        </aside>
 
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
-                <CloudUpload className="h-6 w-6 text-[#FF3300]" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-black/70">Upload Zone</h2>
-                <p className="mt-1 text-xs text-black/40">PDF, PNG, JPEG, WEBP, DOCX — drop files or browse securely.</p>
+        {/* Main Content Area */}
+        <div className="flex-1 py-8 px-4">
+          {/* Header Controls */}
+          <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-1 items-center gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-black/20" />
+                <input
+                  type="text"
+                  placeholder="Search here"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-12 w-full pl-12 pr-4 rounded-xl border border-black/5 bg-[#f7f7f7] text-[13px] outline-none shadow-sm"
+                />
               </div>
             </div>
+
             <div className="flex items-center gap-3">
-              <button type="button" onClick={() => inputRef.current?.click()} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#FF3300] px-4 text-[10px] font-bold uppercase tracking-widest text-white">
-                <HardDriveDownload className="h-4 w-4" /> Browse Files
+              <div className="flex items-center border border-black/5 rounded-xl bg-white overflow-hidden shadow-sm h-12">
+                <button 
+                  onClick={() => setViewLayout("list")}
+                  className={`flex h-12 w-12 items-center justify-center transition-colors ${viewLayout === "list" ? "bg-[#0066FF]/5 text-[#0066FF]" : "text-black/30 hover:bg-black/[0.02]"}`}
+                >
+                  <List className="h-4 w-4" />
+                </button>
+                <div className="w-[1px] h-6 bg-black/5" />
+                <button 
+                  onClick={() => setViewLayout("grid")}
+                  className={`flex h-12 w-12 items-center justify-center transition-colors ${viewLayout === "grid" ? "bg-[#0066FF]/5 text-[#0066FF]" : "text-black/30 hover:bg-black/[0.02]"}`}
+                >
+                  <Grid className="h-4 w-4" />
+                </button>
+              </div>
+
+              <button 
+                onClick={() => inputRef.current?.click()}
+                className="flex items-center gap-2 h-12 px-6 bg-[#0066FF] text-white rounded-xl text-[13px] font-bold shadow-lg shadow-[#0066FF]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                <CloudUpload className="h-4 w-4" /> Upload button
               </button>
               <input ref={inputRef} type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.docx" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
             </div>
           </div>
 
-          <div className="mt-5 space-y-3">
-            {uploads.map((upload) => (
-              <div key={upload.id} className="rounded-2xl border border-black/5 bg-white p-3 shadow-sm">
-                <div className="mb-2 flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-bold text-black/75">{upload.name}</p>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-black/30">{fileTypeLabel(upload.type)}</p>
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/35">{upload.progress}%</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-black/5">
-                  <div className="h-full rounded-full bg-[#FF3300] transition-all duration-150" style={{ width: `${upload.progress}%` }} />
-                </div>
-              </div>
-            ))}
-            {!hasUploads && (
-              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-black/25">
-                <ShieldCheck className="h-4 w-4 text-[#FF3300]" /> Zero-knowledge upload handling
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="columns-2 gap-4 md:columns-3 lg:columns-4">
-          {sortedDocuments.map((doc) => {
+          {/* Grid View */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {sortedDocuments.map((doc) => {
             const thumb = thumbnailForType(doc.type);
             const ThumbIcon = thumb.icon;
+            const isBlue = doc.type === "docx";
+            const isRed = doc.type === "pdf";
+            const isGreen = doc.type === "png" || doc.type === "jpeg" || doc.type === "webp" || doc.folder === "Certificates";
+            
+            let colorClass = "text-gray-500";
+            if (isBlue) colorClass = "text-[#0066FF]";
+            if (isRed) colorClass = "text-[#FF3300]";
+            if (isGreen) colorClass = "text-[#10B981]";
+
             return (
-              <div key={doc.id} className="group mb-4 break-inside-avoid overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
-                <div className={`relative flex min-h-[180px] items-center justify-center ${thumb.bg}`}>
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/[0.12] opacity-0 transition-opacity group-hover:opacity-100" />
-                  <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/85 shadow-sm backdrop-blur">
-                      <ThumbIcon className={`h-8 w-8 ${thumb.accent}`} />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/35">{fileTypeLabel(doc.type)}</p>
-                      <p className="mt-1 text-[11px] font-mono text-black/50">{doc.thumbnailSeed}</p>
-                    </div>
+              <div 
+                key={doc.id} 
+                className="group relative bg-white border border-black/5 rounded-3xl p-6 transition-all hover:shadow-xl hover:shadow-black/5 hover:-translate-y-1"
+              >
+                <button className="absolute top-4 right-4 p-2 text-black/20 hover:text-black/40 transition-colors">
+                  <MoreVertical className="h-4 w-4" />
+                </button>
+
+                <div className="flex flex-col items-center text-center">
+                  <div className={`mb-6 h-16 w-16 flex items-center justify-center rounded-2xl ${colorClass.replace("text-", "bg-")}/5`}>
+                    <ThumbIcon className={`h-10 w-10 ${colorClass}`} />
                   </div>
-                  <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/35 group-hover:opacity-100">
-                    <button type="button" onClick={() => setPreviewDoc(doc)} className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white">
-                      <Eye className="h-4 w-4" /> Preview
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setConversionDoc(doc);
-                        setTargetFormat(doc.type);
-                      }}
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#FF3300] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white"
-                    >
-                      <ArrowDownToLine className="h-4 w-4" /> Download
-                    </button>
+                  
+                  <div className="space-y-1 mb-6">
+                    <p className="text-[14px] font-bold text-[#111] truncate max-w-[150px]">
+                      {doc.name}
+                    </p>
+                    <p className="text-[12px] font-medium text-black/40">
+                      {formatDate(doc.updatedAt)}
+                    </p>
                   </div>
-                </div>
-                <div className="space-y-2 px-4 py-4">
-                  <div>
-                    <h3 className="truncate text-sm font-bold text-black">{doc.name}</h3>
-                    <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-black/30">{formatBytes(doc.size)} · {formatDate(doc.updatedAt)}</p>
-                    <p className="mt-2 inline-flex items-center rounded-full bg-black/[0.04] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-black/45">{doc.folder}</p>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-black/5 pt-3">
-                    <span className="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-black/35">
-                      <Lock className="h-3.5 w-3.5 text-[#FF3300]" /> Encrypted
+
+                  <div className="flex w-full items-center justify-between border-t border-black/5 pt-4">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-black/30">
+                      {fileTypeLabel(doc.type)}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-black/[0.03] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">{doc.source}</span>
+                    <button 
+                      onClick={() => setPreviewDoc(doc)}
+                      className="text-[10px] font-bold uppercase tracking-widest text-[#0066FF] hover:underline"
+                    >
+                      Preview
+                    </button>
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
+
+        {/* Empty state or upload progress */}
+        {uploads.length > 0 && (
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {uploads.map((upload) => (
+              <div key={upload.id} className="bg-white border border-black/5 rounded-2xl p-4 flex items-center gap-4">
+                <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#0066FF]/5 text-[#0066FF]">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-bold text-black truncate">{upload.name}</p>
+                  <div className="mt-1.5 h-1.5 w-full bg-black/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#0066FF] transition-all duration-300" style={{ width: `${upload.progress}%` }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+    </div>
+</div>
 
       <AnimatePresence>
         {previewDoc && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4 py-6 backdrop-blur-sm" onClick={() => setPreviewDoc(null)}>
-            <motion.div initial={{ scale: 0.96, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.96, y: 16 }} transition={{ type: "spring", stiffness: 220, damping: 22 }} className="w-full max-w-xl rounded-3xl border border-white/10 bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/35">Preview</p>
-                  <h3 className="mt-1 text-xl font-bold">{previewDoc.name}</h3>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 px-4 py-6 backdrop-blur-sm" onClick={() => setPreviewDoc(null)}>
+            <motion.div initial={{ scale: 0.96, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.96, y: 16 }} transition={{ type: "spring", stiffness: 220, damping: 22 }} className="w-full max-w-xl rounded-[2.5rem] border border-black/5 bg-white p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="mb-8 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`h-12 w-12 flex items-center justify-center rounded-xl ${thumbnailForType(previewDoc.type).bg}`}>
+                    {(() => {
+                      const Thumb = thumbnailForType(previewDoc.type).icon;
+                      return <Thumb className={`h-6 w-6 ${thumbnailForType(previewDoc.type).accent}`} />;
+                    })()}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-[#111]">{previewDoc.name}</h3>
+                    <p className="text-sm font-medium text-black/40">{formatBytes(previewDoc.size)} · {formatDate(previewDoc.updatedAt)}</p>
+                  </div>
                 </div>
-                <button type="button" onClick={() => setPreviewDoc(null)} className="rounded-full p-2 text-black/40 transition hover:bg-black/5 hover:text-black">
+                <button type="button" onClick={() => setPreviewDoc(null)} className="h-10 w-10 flex items-center justify-center rounded-full bg-black/5 text-black/40 transition hover:bg-black/10 hover:text-black">
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <div className="rounded-3xl border border-black/5 bg-black/[0.02] p-6">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white shadow-sm">
-                    {(() => {
-                      const Thumb = thumbnailForType(previewDoc.type).icon;
-                      return <Thumb className={`h-10 w-10 ${thumbnailForType(previewDoc.type).accent}`} />;
-                    })()}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-[#FF3300]">{fileTypeLabel(previewDoc.type)}</p>
-                    <p className="truncate text-xs text-black/45">{previewDoc.name}</p>
-                    <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-black/30">{formatBytes(previewDoc.size)} · {formatDate(previewDoc.updatedAt)}</p>
-                  </div>
+              
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => {
+                    setConversionDoc(previewDoc);
+                    runConversion();
+                  }}
+                  className="w-full h-14 bg-black text-white rounded-2xl font-bold uppercase tracking-widest text-[12px] shadow-lg shadow-black/10 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-3"
+                >
+                  <ArrowDownToLine className="h-5 w-5" /> Download Securely
+                </button>
+                <div className="flex items-center justify-center gap-4 text-[11px] font-bold uppercase tracking-widest text-black/30 mt-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" /> AES-256 Encrypted
+                  <Lock className="h-4 w-4 text-[#0066FF]" /> Zero-Knowledge
                 </div>
               </div>
             </motion.div>
@@ -604,6 +608,6 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }
