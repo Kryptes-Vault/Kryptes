@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import { toast } from "sonner";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import {
   Archive,
@@ -52,6 +53,14 @@ const ACCEPTED_EXTENSIONS = ["pdf", "png", "jpg", "jpeg", "webp", "docx"] as con
 
 const DEFAULT_FOLDERS = ["Education", "Government", "Vehicle", "Certificates"];
 const API_BASE = (import.meta.env.VITE_BACKEND_URL || "http://localhost:4000").replace(/\/$/, "");
+
+function networkFetchToastMessage(e: unknown): string {
+  if (e instanceof TypeError && /failed to fetch|load failed|networkerror/i.test(String(e.message))) {
+    return `Cannot reach the API at ${API_BASE}. Start the backend (port 4000 by default) or set VITE_BACKEND_URL.`;
+  }
+  if (e instanceof Error) return e.message;
+  return "Request failed.";
+}
 
 /** Gallery row height (Tailwind h-56 = 14rem) — keeps rows even. */
 const GALLERY_ROW_HEIGHT = 224;
@@ -308,7 +317,17 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
       setSyncing(true);
       try {
         const response = await fetch(`${API_BASE}/api/documents`, { credentials: "include" });
-        const data = (await response.json()) as { documents?: unknown };
+        let data: { documents?: unknown; error?: string };
+        try {
+          data = (await response.json()) as { documents?: unknown; error?: string };
+        } catch {
+          if (!response.ok) toast.error(`Could not load documents (${response.status}).`);
+          return;
+        }
+        if (!response.ok) {
+          toast.error(typeof data.error === "string" ? data.error : `Could not load documents (${response.status}).`);
+          return;
+        }
         const raw = Array.isArray(data?.documents) ? data.documents : [];
         setDocuments(
           raw.map((row) => {
@@ -326,6 +345,8 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
             };
           })
         );
+      } catch (e) {
+        toast.error(networkFetchToastMessage(e));
       } finally {
         setSyncing(false);
       }
@@ -379,8 +400,17 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
         body: form,
         credentials: "include",
       });
-      const data = await response.json();
-      if (!response.ok || !data?.document) throw new Error(data?.error || "Upload failed");
+      let data: { document?: unknown; error?: string };
+      try {
+        data = (await response.json()) as { document?: unknown; error?: string };
+      } catch {
+        toast.error(`Upload failed (${response.status}).`);
+        return;
+      }
+      if (!response.ok || !data?.document) {
+        toast.error(typeof data?.error === "string" ? data.error : `Upload failed (${response.status}).`);
+        return;
+      }
       const uploadedDoc: LockerDocument = {
         id: data.document.id,
         name: data.document.name,
@@ -393,6 +423,8 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
         previewUrl: data.document.previewUrl,
       };
       syncDocument(uploadedDoc);
+    } catch (e) {
+      toast.error(networkFetchToastMessage(e));
     } finally {
       window.clearInterval(interval);
       setUploads((prev) => prev.filter((item) => item.id !== tempId));
@@ -572,7 +604,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[13px] font-bold text-[#111]">{doc.name}</p>
                         <p className="text-[11px] text-black/40">
-                          {formatBytes(doc.size)} · {formatDate(doc.updatedAt)}
+                          {formatBytes(doc.size)} ┬╖ {formatDate(doc.updatedAt)}
                         </p>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
@@ -752,7 +784,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-[#111]">{previewDoc.name}</h3>
-                    <p className="text-sm font-medium text-black/40">{formatBytes(previewDoc.size)} · {formatDate(previewDoc.updatedAt)}</p>
+                    <p className="text-sm font-medium text-black/40">{formatBytes(previewDoc.size)} ┬╖ {formatDate(previewDoc.updatedAt)}</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setPreviewDoc(null)} className="h-10 w-10 flex items-center justify-center rounded-full bg-black/5 text-black/40 transition hover:bg-black/10 hover:text-black">

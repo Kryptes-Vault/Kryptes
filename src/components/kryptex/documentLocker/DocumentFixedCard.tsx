@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from "react";
 import { motion } from "framer-motion";
 import { Download, Loader2, LucideIcon, X } from "lucide-react";
 import type { CardDoc } from "./DocumentMediaCard";
@@ -34,6 +35,13 @@ export function DocumentFixedCard({
 }: Props) {
   const active = hoveredId === doc.id;
 
+  function handlePreviewKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onPreview();
+    }
+  }
+
   return (
     <motion.article
       layout
@@ -53,7 +61,13 @@ export function DocumentFixedCard({
         {deletePending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
       </button>
 
-      <button type="button" className="relative flex h-full w-full flex-col" onClick={onPreview}>
+      <div
+        role="button"
+        tabIndex={0}
+        className="relative flex h-full w-full cursor-pointer flex-col outline-none focus-visible:ring-2 focus-visible:ring-black/20"
+        onClick={onPreview}
+        onKeyDown={handlePreviewKeyDown}
+      >
         <div className={`flex flex-1 flex-col items-center justify-center px-4 ${bg}`}>
           <Icon className={`h-14 w-14 ${accent}`} />
           <p className="mt-3 line-clamp-2 text-center text-[11px] font-bold leading-tight text-[#111]">{doc.name}</p>
@@ -90,7 +104,7 @@ export function DocumentFixedCard({
             Download
           </button>
         </motion.div>
-      </button>
+      </div>
     </motion.article>
   );
 }
