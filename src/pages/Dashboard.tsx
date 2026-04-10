@@ -124,16 +124,74 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#FAFAFB] text-[#111] font-sans selection:bg-[#0066FF] selection:text-white overflow-hidden">
-      {/* Original Mini Sidebar - Always Visible */}
-      <aside className="hidden lg:flex w-16 flex-col items-center border-r border-[#F3F4F6] bg-white py-6 shrink-0 relative z-50">
-        <div className="flex flex-col items-center gap-6">
-          <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-sm border border-black/5">
-            <img src="/Krytes.png" alt="Logo" className="w-full h-full object-cover" />
+    <div className="flex h-screen w-full bg-[#FAFAFB] text-[#111] font-sans selection:bg-[#0066FF] selection:text-white overflow-hidden flex-col">
+      {/* Full-Width Navigation Bar */}
+      <header className="h-20 border-b border-black/5 bg-white flex items-center justify-between px-6 lg:px-8 shrink-0 z-50">
+        <div className="flex items-center gap-6 lg:gap-10">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold tracking-tight text-[#111] flex items-center gap-2">
+              Kryptes<span className="h-2 w-2 rounded-full bg-[#0066FF]" />
+            </span>
+          </div>
+          <div className="hidden lg:flex items-center gap-1 bg-[#2D2D33] text-white px-3 py-1.5 rounded-full text-[10px] font-bold">
+            Seller <div className="w-3 h-3 rounded-full bg-white shadow-sm" />
+          </div>
+          
+          <nav className="hidden md:flex items-center gap-6 ml-4">
+            <button className={`text-[13px] font-medium transition-colors ${viewMode === "documents" ? "text-[#0066FF] bg-[#0066FF]/5 px-4 py-2 rounded-xl" : "text-black/40 hover:text-black/60 px-4 py-2"}`} onClick={() => setViewMode("documents")}>
+              Invoice
+            </button>
+            <button className="text-[13px] font-medium text-black/40 hover:text-black/60 px-4 py-2">
+              Files
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4 lg:gap-6">
+          <div className="hidden lg:flex flex-1 max-w-sm relative">
+             <div className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-black/20">📍</div>
+             <input type="text" placeholder="Search here" className="h-10 w-full pl-10 pr-4 rounded-full border border-black/5 bg-[#FAFAFB] text-[12px] outline-none transition-all focus:border-[#0066FF]/20 focus:ring-4 focus:ring-[#0066FF]/5" />
           </div>
 
-          <div className="w-8 h-[1px] bg-black/5" />
+          <div className="flex items-center gap-4">
+            <button className="hidden sm:flex text-[11px] font-bold text-black/60 hover:text-black bg-black/5 px-4 py-2 rounded-full transition-colors">
+              Get Loan
+            </button>
+            <button className="text-black/40 hover:text-black/60 transition-colors">
+              <Shield className="w-5 h-5" />
+            </button>
+            <button className="text-black/40 hover:text-black/60 transition-colors">
+              <Receipt className="w-5 h-5" />
+            </button>
+            <button className="hidden sm:flex items-center gap-1.5 text-black/40 hover:text-black/60 transition-colors">
+              <div className="w-5 h-5 rounded-full bg-black/5 flex items-center justify-center text-[10px] border border-black/5">
+                🌐
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-widest">Hindi-IND</span>
+            </button>
 
+            <div className="hidden sm:block h-8 w-[1px] bg-black/5 mx-2" />
+
+            <div className="flex items-center gap-3">
+              <div className="text-right hidden sm:block">
+                <p className="text-[12px] font-bold text-black leading-tight">{displayName}</p>
+                <p className="text-[10px] font-medium text-black/40 leading-tight">{user?.email}</p>
+              </div>
+              {avatarUrl ? (
+                <img src={avatarUrl} className="h-10 w-10 rounded-xl object-cover ring-2 ring-black/5" />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0066FF]/10 font-bold text-[#0066FF] text-[12px] border border-[#0066FF]/5">
+                  {initials}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex flex-1 min-h-0 relative">
+        {/* Original Mini Sidebar - Always Visible */}
+        <aside className="hidden lg:flex w-16 flex-col items-center border-r border-[#F3F4F6] bg-white py-6 shrink-0 relative z-40">
           <nav className="flex flex-col items-center gap-4">
             {[
               { id: "documents", icon: FileText },
@@ -148,58 +206,60 @@ const Dashboard = () => {
                   setSidebarOpen(false);
                 }}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                  viewMode === item.id ? "bg-black text-white" : "text-black/30 hover:bg-black/5 hover:text-black/60"
+                  viewMode === item.id ? "bg-[#0066FF] text-white shadow-md shadow-[#0066FF]/20" : "text-black/30 hover:bg-black/5 hover:text-black/60"
                 }`}
               >
                 <item.icon className="w-5 h-5" />
               </button>
             ))}
           </nav>
-        </div>
+        </aside>
 
-        <div className="mt-auto">
-          {avatarUrl ? (
-            <img src={avatarUrl} className="h-8 w-8 rounded-lg object-cover ring-2 ring-black/5" />
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0066FF]/10 font-bold text-[#0066FF] text-[10px]">
-              {initials}
-            </div>
-          )}
-        </div>
-      </aside>
-
-      {/* Redesigned Expanded Sidebar (Only for settings and passwords/keys) */}
-      {showMainSidebar && (
-        <aside className="hidden lg:flex w-[280px] flex-col bg-white shrink-0 relative z-40 border-r border-black/5">
-          {/* Branding Above Sidebar */}
-          <div className="h-20 flex items-center px-8 gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold tracking-tight text-[#111] flex items-center gap-2">
-                Kryptes<span className="h-2 w-2 rounded-full bg-[#0066FF]" />
-              </span>
-            </div>
-            <div className="ml-auto">
-              <div className="flex items-center gap-1 bg-[#2D2D33] text-white px-3 py-1.5 rounded-full text-[10px] font-bold">
-                Seller <div className="w-3 h-3 rounded-full bg-white shadow-sm" />
+        {/* Redesigned Expanded Sidebar (Only for settings and passwords/keys) */}
+        {showMainSidebar && (
+          <aside className="hidden lg:flex w-[260px] flex-col bg-white shrink-0 relative z-30">
+            {/* Sidebar Body with flush left and Rounded Right Side */}
+            <div className="flex-1 flex flex-col bg-[#F3F4F6]/60 rounded-r-[2rem] ml-0 my-4 mr-4 py-8 px-6 overflow-y-auto overflow-x-hidden shadow-sm">
+              <div className="mb-8">
+                <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">Vault Categories</p>
+                <nav className="flex flex-col gap-1">
+                  {viewMode === "passwords" && activeSidebarItems.map((item) => {
+                    const active = passwordCategory === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setPasswordCategory(item.id as CategoryFilter);
+                        }}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                          active
+                            ? "bg-white text-[#0066FF] shadow-sm font-bold" 
+                            : "text-black/50 hover:bg-white/50 hover:text-black"
+                        }`}
+                      >
+                        <item.icon className="w-5 h-5 shrink-0" />
+                        <span className="text-[13px] font-medium">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
               </div>
-            </div>
-          </div>
 
-          {/* Sidebar Body with Rounded Right Side */}
-          <div className="flex-1 flex flex-col bg-[#F3F4F6]/50 rounded-r-[3rem] mt-6 ml-0 py-8 px-6 overflow-y-auto overflow-x-hidden">
-            <div className="mb-8">
-              <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">Vault Categories</p>
-              <nav className="flex flex-col gap-1">
-                {viewMode === "passwords" && activeSidebarItems.map((item) => {
-                  const active = passwordCategory === item.id;
-                  return (
+              <div className="mt-auto pt-6 border-t border-black/10">
+                <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">System</p>
+                <nav className="flex flex-col gap-1">
+                  {[
+                    { id: "settings", label: "Settings", icon: Settings },
+                    { id: "logout", label: "Logout", icon: LogOut },
+                  ].map((item) => (
                     <button
                       key={item.id}
                       onClick={() => {
-                        setPasswordCategory(item.id as CategoryFilter);
+                        if (item.id === "logout") handleSignOut();
+                        else if (item.id === "settings") setViewMode("settings");
                       }}
                       className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
-                        active
+                        viewMode === item.id 
                           ? "bg-white text-[#0066FF] shadow-sm font-bold" 
                           : "text-black/50 hover:bg-white/50 hover:text-black"
                       }`}
@@ -207,95 +267,12 @@ const Dashboard = () => {
                       <item.icon className="w-5 h-5 shrink-0" />
                       <span className="text-[13px] font-medium">{item.label}</span>
                     </button>
-                  );
-                })}
-              </nav>
-            </div>
-
-            <div className="mt-auto pt-6 border-t border-black/5">
-              <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">System</p>
-              <nav className="flex flex-col gap-1">
-                {[
-                  { id: "settings", label: "Settings", icon: Settings },
-                  { id: "logout", label: "Logout", icon: LogOut },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      if (item.id === "logout") handleSignOut();
-                      else if (item.id === "settings") setViewMode("settings");
-                    }}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
-                      viewMode === item.id 
-                        ? "bg-white text-[#0066FF] shadow-sm font-bold" 
-                        : "text-black/50 hover:bg-white/50 hover:text-black"
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5 shrink-0" />
-                    <span className="text-[13px] font-medium">{item.label}</span>
-                  </button>
-                ))}
-              </nav>
-            </div>
-          </div>
-        </aside>
-      )}
-
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        {/* Navigation Bar */}
-        <header className="h-20 border-b border-black/5 bg-white flex items-center justify-between px-8 shrink-0 z-40">
-          <div className="flex items-center gap-10">
-            <nav className="hidden md:flex items-center gap-6">
-              <button className={`text-[13px] font-medium transition-colors ${viewMode === "documents" ? "text-[#0066FF] bg-[#0066FF]/5 px-4 py-2 rounded-xl" : "text-black/40 hover:text-black/60"}`} onClick={() => setViewMode("documents")}>
-                Invoice
-              </button>
-              <button className="text-[13px] font-medium text-black/40 hover:text-black/60 px-4 py-2">
-                Files
-              </button>
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <div className="hidden sm:flex items-center gap-3 bg-[#F3F4F6] rounded-xl px-4 py-2 border border-black/5">
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-black/40 border border-black/5 transition-transform hover:scale-110 cursor-pointer">
-                📍
-              </div>
-              <span className="text-[12px] font-medium text-black/60">All India</span>
-              <ChevronDown className="w-3.5 h-3.5 text-black/30" />
-            </div>
-
-            <div className="flex items-center gap-4">
-              <button className="text-black/40 hover:text-black/60 transition-colors">
-                <Shield className="w-5 h-5" />
-              </button>
-              <button className="text-black/40 hover:text-black/60 transition-colors">
-                <Receipt className="w-5 h-5" />
-              </button>
-              <button className="flex items-center gap-1.5 text-black/40 hover:text-black/60 transition-colors">
-                <div className="w-5 h-5 rounded-full bg-black/5 flex items-center justify-center text-[10px] border border-black/5">
-                  🌐
-                </div>
-                <span className="text-[11px] font-bold uppercase tracking-widest">Hindi-IND</span>
-              </button>
-
-              <div className="h-8 w-[1px] bg-black/5 mx-2" />
-
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-[12px] font-bold text-black leading-tight">{displayName}</p>
-                  <p className="text-[10px] font-medium text-black/40 leading-tight">{user?.email}</p>
-                </div>
-                {avatarUrl ? (
-                  <img src={avatarUrl} className="h-10 w-10 rounded-xl object-cover ring-2 ring-black/5" />
-                ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0066FF]/10 font-bold text-[#0066FF] text-[12px] border border-[#0066FF]/5">
-                    {initials}
-                  </div>
-                )}
+                  ))}
+                </nav>
               </div>
             </div>
-          </div>
-        </header>
+          </aside>
+        )}
 
         <main className="flex-1 overflow-y-auto bg-[#FAFAFB]">
           <div className={`p-8 ${viewMode === "documents" ? "max-w-[1400px]" : "max-w-[1200px]"} mx-auto`}>
