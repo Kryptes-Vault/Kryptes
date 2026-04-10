@@ -15,6 +15,8 @@ const webhookRoutes = require("./routes/webhooks");
 const authRoutes = require("./routes/auth");
 const { handleSendEmailHook } = require("./routes/authEmailHook");
 const { corsOptions, getSessionCookieOptions } = require("./config/auth");
+import { logBitwardenStartupStatus } from "./services/bitwardenService";
+const supportRoutes = require("./routes/support");
 
 const app = express();
 const upload = multer({
@@ -356,6 +358,14 @@ app.post("/api/convert", upload.single("file"), async (req: KryptexRequest, res:
 });
 
 app.get("/api/documents", async (req: any, res: any) => {
+  const userId = req.query.userId || (req.user && req.user.id);
+  if (!userId) return res.status(400).json({ error: "UserID required" });
+
+  const { checkProfileFlag } = require("./services/gatekeeperService");
+  if (!(await checkProfileFlag(userId, 'has_documents'))) {
+    return res.status(200).json({ documents: [], source: "gatekeeper_documents" });
+  }
+
   const gdrive = require("./services/googleDriveStorage") as typeof import("./services/googleDriveStorage");
   if (!gdrive.isDriveDocumentVaultConfigured()) {
     return res.status(503).json({ error: "Document vault not configured (Google Drive: set GDRIVE_* and GDRIVE_MASTER_FOLDER_ID)." });
@@ -408,6 +418,12 @@ app.post("/api/documents/upload", upload.single("file"), async (req: any, res: a
     const storedName = toStoredName(folder, file.originalname);
     const fileId = await gdrive.uploadToDriveVault(documentsVaultUserId(), sourceBuffer, storedName);
     scrubBuffer(sourceBuffer);
+
+    const userId = req.body?.userId || req.query?.userId || (req.user && req.user.id);
+    if (userId) {
+      const { setProfileFlagActive } = require("./services/gatekeeperService");
+      await setProfileFlagActive(userId, 'has_documents');
+    }
 
     return res.status(201).json({
       document: {
@@ -516,6 +532,9 @@ app.delete("/api/documents", async (req: any, res: any) => {
 app.use("/api/vault", vaultRoutes);
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api/auth", authRoutes);
+app.post("/api/auth/send-email-hook", express.json(), handleSendEmailHook);
+app.use("/api/otp", otpRoutes);
+app.use("/api/support", supportRoutes);
 
 process.on("unhandledRejection", (reason) => {
   console.error("[unhandledRejection]", reason);
@@ -533,9 +552,6 @@ const server = app.listen(PORT, BIND_HOST, () => {
     };
     await redisSvc.whenRedisReadyOrTimeout(15000);
 
-    const { logBitwardenStartupStatus } = require("./services/bitwardenService") as {
-      logBitwardenStartupStatus: () => Promise<void>;
-    };
     await logBitwardenStartupStatus();
 
     if (process.env.GDRIVE_STARTUP_VERIFY === "false") {

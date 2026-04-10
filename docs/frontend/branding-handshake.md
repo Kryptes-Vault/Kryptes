@@ -358,7 +358,7 @@ After deploying Edge Functions:
 | Supabase: Custom Access Token Hook | https://supabase.com/docs/guides/auth/auth-hooks/custom-access-token-hook |
 | Google: OAuth Consent Screen | https://console.cloud.google.com/apis/credentials/consent |
 | Resend: Email API | https://resend.com/docs/api-reference/emails/send-email |
-| In-repo: Auth debugging | `docs/23_production_auth_debugging.md` |
+| In-repo: Auth debugging | `docs/auth/production-auth-debugging.md` |
 | In-repo: Backend server | `backend/server.js` |
 | In-repo: Edge Function (email) | `supabase/functions/send-email-hook/index.ts` |
 | In-repo: Edge Function (session) | `supabase/functions/auth-session-hook/index.ts` |

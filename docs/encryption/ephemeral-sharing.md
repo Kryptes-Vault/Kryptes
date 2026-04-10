@@ -54,4 +54,4 @@ This complements **expiry checks inside `get_and_burn_secret`** (expired rows re
 
 ---
 
-*See also: `08_vault_database_schema.md`, `architecture_update.md`.*
+*See also: `docs/encryption/vault-database-schema.md`, `docs/platform/supabase-migration-firebase.md`.*

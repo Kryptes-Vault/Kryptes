@@ -72,4 +72,4 @@ Thus, **Redis-backed cache/session usage** is gated by **successful Supabase JWT
 
 ---
 
-*See also: `03_google_oauth_supabase.md`, `session_redis_supabase.md`, `env_template.md`.*
+*See also: `docs/auth/google-oauth-supabase.md`, `docs/auth/session-redis-supabase.md`, `docs/platform/env-template.md`.*

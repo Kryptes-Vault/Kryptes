@@ -8,7 +8,7 @@ This document describes the **finalized** email delivery model for Kryptex: **Su
 - The **Render** API is **not** in the path for outbound auth email: no webhook handler, no nodemailer path, and no email HTML maintained in the Node codebase for these flows.
 - This keeps email infrastructure **centralized in Supabase**, aligned with where Auth and redirect URLs are already configured.
 
-> **Note:** If you previously used an **HTTPS Send Email Hook** to Render (`/api/auth/send-email-hook`), that path is **orthogonal** to Custom SMTP. With Custom SMTP enabled and the hook disabled, Supabase sends mail itself—see `06_email_auth_hook_integration.md` only if you still operate a hook-based flow.
+> **Note:** If you previously used an **HTTPS Send Email Hook** to Render (`/api/auth/send-email-hook`), that path is **orthogonal** to Custom SMTP. With Custom SMTP enabled and the hook disabled, Supabase sends mail itself—see `docs/auth/email-auth-hook.md` only if you still operate a hook-based flow.
 
 ## Connection details
 
@@ -36,4 +36,4 @@ For product-specific copy or localization, update templates in Supabase rather t
 
 ---
 
-*See also: `env_template.md`, `architecture_update.md`.*
+*See also: `docs/platform/env-template.md`, `docs/platform/supabase-migration-firebase.md`.*

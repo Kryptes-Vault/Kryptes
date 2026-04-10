@@ -42,7 +42,7 @@
  *        - https://kryptes.vercel.app/**
  *        - http://localhost:5173/**
  *
- * @see docs/34_twitter_oauth_integration.md
+ * @see docs/auth/twitter-oauth-integration.md
  */
 export function getOAuthRedirectUrl(): string {
   if (typeof window === "undefined") {

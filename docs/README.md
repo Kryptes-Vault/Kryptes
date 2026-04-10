@@ -1,25 +1,78 @@
-# Kryptex documentation index
+# Kryptes documentation
 
-| Document | Purpose |
-|----------|---------|
-| [architecture_update.md](./architecture_update.md) | Firebase → Supabase migration, schema, RLS, redirect URLs |
-| [session_redis_supabase.md](./session_redis_supabase.md) | Redis session + `/api/auth/supabase/sync` flow |
-| [env_template.md](./env_template.md) | Environment variables (no secrets) |
-| [03_google_oauth_supabase.md](./03_google_oauth_supabase.md) | Google OAuth via Supabase (vs Passport), redirects, JWT → Redis flow |
-| [05_env_cleanup_and_security.md](./05_env_cleanup_and_security.md) | Remove provider secrets from hosts; required env vars; JWT validation model |
-| [06_email_auth_hook_integration.md](./06_email_auth_hook_integration.md) | Send Email HTTPS hook, webhook verification, signup mail via nodemailer |
-| [06_custom_smtp_integration.md](./06_custom_smtp_integration.md) | Supabase Custom SMTP (Gmail 465 SSL), App Password, dashboard templates |
-| [08_vault_database_schema.md](./08_vault_database_schema.md) | `vault_items` ciphertext schema, RLS, zero-knowledge guarantees |
-| [08_vercel_env_sync_architecture.md](./08_vercel_env_sync_architecture.md) | Supabase↔Vercel integration, `VITE_` prefix, Render manual secrets, deprecations |
-| [09_ephemeral_sharing_technical_spec.md](./09_ephemeral_sharing_technical_spec.md) | Burn-on-read `shared_secrets`, `get_and_burn_secret`, URL fragment, limitations |
+Documentation is grouped by **topic**. Paths are from the repository root (e.g. `docs/encryption/...`).
 
-## Checklists
+---
 
-| Document | Purpose |
-|----------|---------|
-| [checklists/supabase-dashboard.md](./checklists/supabase-dashboard.md) | Supabase project and auth URLs |
-| [checklists/vercel-env.md](./checklists/vercel-env.md) | Vercel `VITE_*` variables |
-| [checklists/render-env.md](./checklists/render-env.md) | Render API secrets |
-| [checklists/post-deploy.md](./checklists/post-deploy.md) | Smoke tests after deploy |
+## Encryption & vault
 
-**Convention:** When changing auth, database, or deployment wiring, add or update a doc in this folder.
+| Document | Description |
+|----------|-------------|
+| [encryption/vault-crypto-and-redirects.md](./encryption/vault-crypto-and-redirects.md) | Client AES-GCM, PBKDF2, OAuth redirect rules |
+| [encryption/vault-database-schema.md](./encryption/vault-database-schema.md) | `vault_items` ciphertext, RLS |
+| [encryption/ephemeral-sharing.md](./encryption/ephemeral-sharing.md) | Burn-on-read `shared_secrets`, URL fragment |
+| [encryption/password-vault.md](./encryption/password-vault.md) | Password vault feature |
+| [encryption/granular-gatekeeper.md](./encryption/granular-gatekeeper.md) | Granular gatekeeper / profile flags |
+| [encryption/zero-knowledge-support-grant.md](./encryption/zero-knowledge-support-grant.md) | ZK + OTP support grant escrow (design) |
+
+---
+
+## Frontend & UI
+
+| Document | Description |
+|----------|-------------|
+| [frontend/settings-dashboard.md](./frontend/settings-dashboard.md) | Settings dashboard spec |
+| [frontend/linkedin-ui.md](./frontend/linkedin-ui.md) | LinkedIn UI |
+| [frontend/animation-orchestration.md](./frontend/animation-orchestration.md) | Animation orchestration |
+| [frontend/add-node-component.md](./frontend/add-node-component.md) | Add-node component spec |
+| [frontend/branding-handshake.md](./frontend/branding-handshake.md) | Branding & OAuth handshake |
+
+---
+
+## Auth, email & sessions
+
+| Document | Description |
+|----------|-------------|
+| [auth/google-oauth-supabase.md](./auth/google-oauth-supabase.md) | Google OAuth via Supabase |
+| [auth/session-redis-supabase.md](./auth/session-redis-supabase.md) | Redis session + `/api/auth/supabase/sync` |
+| [auth/email-auth-hook.md](./auth/email-auth-hook.md) | Send Email HTTPS hook, webhooks |
+| [auth/custom-smtp.md](./auth/custom-smtp.md) | Supabase Custom SMTP (Gmail, etc.) |
+| [auth/production-auth-debugging.md](./auth/production-auth-debugging.md) | Production auth debugging |
+| [auth/twitter-oauth-integration.md](./auth/twitter-oauth-integration.md) | Twitter / X OAuth integration |
+| [auth/twitter-oauth-v2-resolution.md](./auth/twitter-oauth-v2-resolution.md) | Twitter OAuth v2 resolution |
+
+---
+
+## Platform, deployment & API
+
+| Document | Description |
+|----------|-------------|
+| [platform/supabase-migration-firebase.md](./platform/supabase-migration-firebase.md) | Firebase → Supabase migration, RLS, redirects |
+| [platform/env-cleanup-security.md](./platform/env-cleanup-security.md) | Env cleanup, JWT validation, secrets |
+| [platform/vercel-env-sync.md](./platform/vercel-env-sync.md) | Vercel / Supabase env sync |
+| [platform/env-template.md](./platform/env-template.md) | Environment variable template |
+| [platform/api-configuration.md](./platform/api-configuration.md) | Final API configuration |
+
+---
+
+## Operations checklists
+
+| Document | Description |
+|----------|-------------|
+| [operations/checklists/supabase-dashboard.md](./operations/checklists/supabase-dashboard.md) | Supabase project & auth URLs |
+| [operations/checklists/vercel-env.md](./operations/checklists/vercel-env.md) | Vercel `VITE_*` variables |
+| [operations/checklists/render-env.md](./operations/checklists/render-env.md) | Render API secrets |
+| [operations/checklists/post-deploy.md](./operations/checklists/post-deploy.md) | Post-deploy smoke tests |
+
+---
+
+## Legal
+
+| Document | Description |
+|----------|-------------|
+| [legal/PRIVACY_POLICY.md](./legal/PRIVACY_POLICY.md) | Privacy policy |
+| [legal/TERMS_OF_SERVICE.md](./legal/TERMS_OF_SERVICE.md) | Terms of service |
+
+---
+
+**Convention:** When changing auth, database, encryption, or deployment wiring, add or update a doc in the matching folder and link it from this index.

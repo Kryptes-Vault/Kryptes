@@ -40,4 +40,4 @@ Policies are granted to the **`authenticated`** role so anonymous (`anon`) sessi
 
 ---
 
-*See also: `architecture_update.md`, `supabase/migrations/001_profiles.sql`, `session_redis_supabase.md`.*
+*See also: `docs/platform/supabase-migration-firebase.md`, `supabase/migrations/001_profiles.sql`, `docs/auth/session-redis-supabase.md`.*

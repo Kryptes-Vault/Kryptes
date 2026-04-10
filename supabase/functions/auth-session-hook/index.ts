@@ -21,7 +21,7 @@
  * Required secrets (Functions → auth-session-hook → Secrets):
  *   SUPABASE_HOOK_SECRET  (v1,whsec_…)
  *
- * @see docs/24_branding_and_handshake_architecture.md
+ * @see docs/frontend/branding-handshake.md
  */
 import { Webhook } from "npm:standardwebhooks@1.0.0";
 

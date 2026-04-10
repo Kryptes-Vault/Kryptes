@@ -65,4 +65,4 @@ The backend builds a Supabase Auth verify URL (same pattern as official docs):
 
 ---
 
-*See also: `05_env_cleanup_and_security.md`, `env_template.md`.*
+*See also: `docs/platform/env-cleanup-security.md`, `docs/platform/env-template.md`.*

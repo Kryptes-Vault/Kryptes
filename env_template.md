@@ -2,7 +2,7 @@
 
 **Do not commit real keys.** Copy values from the Supabase dashboard and your host settings.
 
-Local dev: Vite runs on **port 5173** by default — add `http://localhost:5173/**` to Supabase redirect URLs (see `docs/16_vault_and_crypto_implementation.md`).
+Local dev: Vite runs on **port 5173** by default — add `http://localhost:5173/**` to Supabase redirect URLs (see `docs/encryption/vault-crypto-and-redirects.md`).
 
 ## Vercel (Vite frontend)
 
@@ -27,6 +27,6 @@ Local dev: Vite runs on **port 5173** by default — add `http://localhost:5173/
 
 ## Supabase Dashboard
 
-Under **Authentication → URL Configuration**, set **Site URL** and **Redirect URLs** (see `architecture_update.md`).
+Under **Authentication → URL Configuration**, set **Site URL** and **Redirect URLs** (see `docs/platform/supabase-migration-firebase.md`).
 
 If keys were ever pasted into chat or committed to git, **rotate** them in the dashboard.

@@ -80,4 +80,4 @@ The following should be treated as **obsolete for Kryptex auth** and **removed**
 
 ---
 
-*See also: `05_env_cleanup_and_security.md`, `env_template.md`, `session_redis_supabase.md`, `architecture_update.md`.*
+*See also: `docs/platform/env-cleanup-security.md`, `docs/platform/env-template.md`, `docs/auth/session-redis-supabase.md`, `docs/platform/supabase-migration-firebase.md`.*
