@@ -10,7 +10,7 @@ const multer = require("multer") as any;
 const sharp = require("sharp") as any;
 const { PDFDocument } = require("pdf-lib") as any;
 
-const vaultRoutes = require("./routes/vault");
+import vaultRoutes from "./routes/vault";
 const webhookRoutes = require("./routes/webhooks");
 const authRoutes = require("./routes/auth");
 const { handleSendEmailHook } = require("./routes/authEmailHook");
