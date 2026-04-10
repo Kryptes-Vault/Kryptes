@@ -63,7 +63,6 @@ const fetchFromBitwarden = async (userId) => {
     }
 };
 
-<<<<<<< HEAD
 const saveCardToBitwarden = async (userId, payload) => {
     try {
         console.log(`[Bitwarden] Saving Card entry for User: ${userId}`);
@@ -105,6 +104,3 @@ module.exports = {
     saveCardToBitwarden,
     fetchCardsFromBitwarden 
 };
-=======
-module.exports = { saveToBitwarden, fetchFromBitwarden, logBitwardenStartupStatus };
->>>>>>> e8715624721645242fe7c831993979066bea9673
