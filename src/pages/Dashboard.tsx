@@ -145,18 +145,6 @@ const Dashboard = () => {
               Kryptes<span className="h-2 w-2 rounded-full bg-[#0066FF]" />
             </span>
           </div>
-          <div className="hidden lg:flex items-center gap-1 bg-[#2D2D33] text-white px-3 py-1.5 rounded-full text-[10px] font-bold">
-            Seller <div className="w-3 h-3 rounded-full bg-white shadow-sm" />
-          </div>
-          
-          <nav className="hidden md:flex items-center gap-6 ml-4">
-            <button className={`text-[13px] font-medium transition-colors ${viewMode === "documents" ? "text-[#0066FF] bg-[#0066FF]/5 px-4 py-2 rounded-xl" : "text-black/40 hover:text-black/60 px-4 py-2"}`} onClick={() => setViewMode("documents")}>
-              Invoice
-            </button>
-            <button className="text-[13px] font-medium text-black/40 hover:text-black/60 px-4 py-2">
-              Files
-            </button>
-          </nav>
         </div>
 
         <div className="flex items-center gap-4 lg:gap-6">
