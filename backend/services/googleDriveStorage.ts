@@ -6,6 +6,10 @@
  * - Share `GDRIVE_MASTER_FOLDER_ID` with the service account email (Editor or Content manager).
  * - Credentials: set `GDRIVE_CLIENT_EMAIL` + `GDRIVE_PRIVATE_KEY`, or point to `kryptes-storage-bot.json`
  *   via `GDRIVE_CREDENTIALS_PATH` / auto-discovery (repo root or `backend/` parent).
+ *
+ * Storage / quota: uploads into a personal “My Drive” folder often fail with “Service Accounts do not have
+ * storage quota”. Use a **Shared drive** (Team Drive) folder and add the service account as a member, or use
+ * a Google Workspace setup where the folder lives in storage the API can write to.
  */
 
 import * as fs from "node:fs";
@@ -16,6 +20,34 @@ import type { JWT } from "google-auth-library";
 import type { drive_v3 } from "googleapis";
 
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
+
+/** Parsed from `googleapis` / Gaxios failures so API routes can return useful JSON (not generic 500). */
+export type DriveApiErrorDetails = {
+  message: string;
+  httpStatus?: number;
+  /** True when Drive rejects the write for quota / SA storage rules. */
+  isQuotaOrSaStorage: boolean;
+};
+
+/**
+ * Extract user-facing text and flags from a Drive client error (Gaxios wraps API JSON).
+ */
+export function getDriveApiErrorDetails(err: unknown): DriveApiErrorDetails {
+  const g = err as {
+    response?: { status?: number; data?: { error?: { message?: string; code?: number; errors?: Array<{ message?: string; reason?: string }> } } };
+    message?: string;
+  };
+  const api = g.response?.data?.error;
+  const nested = api?.errors?.map((e) => e.message).filter(Boolean).join("; ");
+  const apiMsg = (typeof api?.message === "string" && api.message) || nested || "";
+  const fallback = err instanceof Error ? err.message : String(err);
+  const message = (apiMsg || fallback || "Google Drive request failed.").trim();
+  const status = g.response?.status;
+  const blob = `${message} ${fallback}`.toLowerCase();
+  const isQuotaOrSaStorage =
+    /storage\s*quota|does\s*not\s*have\s*storage|storagequotaexceeded|service\s*accounts?\s*do\s*not\s*have/i.test(blob);
+  return { message, httpStatus: status, isQuotaOrSaStorage };
+}
 
 /** Folder MIME type in Drive */
 const FOLDER_MIME = "application/vnd.google-apps.folder";
@@ -112,12 +144,28 @@ export function loadServiceAccountCredentials(): ServiceAccountCredentials {
   return readJsonCredentials(jsonPath);
 }
 
+/**
+ * Drive v3 expects a bare file/folder id. Users often paste a full browser URL instead.
+ */
+export function parseDriveFolderId(raw: string): string {
+  const t = raw.trim();
+  if (!t) return t;
+  const fromFolders = t.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if (fromFolders?.[1]) return fromFolders[1];
+  const fromIdParam = t.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (fromIdParam?.[1]) return fromIdParam[1];
+  if (/^[a-zA-Z0-9_-]+$/.test(t) && t.length >= 10) return t;
+  throw new Error(
+    "GDRIVE_MASTER_FOLDER_ID must be the folder id (from .../folders/FOLDER_ID) or a full Drive folder URL — not an invalid value."
+  );
+}
+
 function getMasterFolderId(): string {
-  const id = process.env.GDRIVE_MASTER_FOLDER_ID?.trim();
-  if (!id) {
+  const raw = process.env.GDRIVE_MASTER_FOLDER_ID?.trim();
+  if (!raw) {
     throw new Error("GDRIVE_MASTER_FOLDER_ID is not set.");
   }
-  return id;
+  return parseDriveFolderId(raw);
 }
 
 function getJwtClient(): JWT {
@@ -165,6 +213,30 @@ export async function verifyDriveConnection(driveClient: drive_v3.Drive, authCli
     if (process.env.GDRIVE_STARTUP_FAIL_FAST !== "false") {
       process.exit(1);
     }
+  }
+}
+
+/**
+ * Verifies that the bot has explicit access and permissions for the Master Folder.
+ * Attempts to fetch metadata with minimal fields; exits on 404/403.
+ */
+export async function verifyDrivePermissions(driveClient: drive_v3.Drive, masterFolderId: string): Promise<void> {
+  try {
+    await driveClient.files.get({
+      fileId: masterFolderId,
+      fields: "id, capabilities",
+      supportsAllDrives: true,
+    });
+    console.log("✅ Google Drive Storage: Bot Authenticated and Master Folder Linked!");
+  } catch (err: any) {
+    const status = err.response?.status;
+    if (status === 404 || status === 403) {
+      console.error(
+        "❌ CRITICAL: The bot cannot see the Master Folder. Ensure you shared the folder with the new Service Account email as an Editor.",
+      );
+      process.exit(1);
+    }
+    throw err;
   }
 }
 
@@ -291,29 +363,41 @@ export async function uploadToDriveVault(
   }
 
   const drive = getDriveClient();
-  const parentId = await getOrCreateUserFolder(userId);
   const body = bufferToUploadBody(fileBuffer);
+  const MASTER_FOLDER_ID = "1ph_hpnwGbKALdJay6RFILGJ_lpWukgJU";
 
-  const created = await drive.files.create({
-    requestBody: {
-      name: uniqueFileCode,
-      parents: [parentId],
-      mimeType: BLOB_MIME,
-    },
-    media: {
-      mimeType: BLOB_MIME,
-      body,
-    },
-    fields: "id",
-    supportsAllDrives: true,
-  });
+  try {
+    const created = await drive.files.create({
+      requestBody: {
+        name: uniqueFileCode,
+        parents: [MASTER_FOLDER_ID],
+        mimeType: "application/octet-stream",
+      },
+      media: {
+        mimeType: "application/octet-stream",
+        body,
+      },
+      fields: "id",
+      supportsAllDrives: true,
+    });
 
-  const fileId = created.data.id;
-  if (!fileId) {
-    throw new Error("Drive did not return a file id after upload.");
+    const fileId = created.data.id;
+    if (!fileId) {
+      throw new Error("Drive did not return a file id after upload.");
+    }
+    return fileId;
+  } catch (err: any) {
+    const status = err.response?.status;
+    if (status === 507 || status === 403) {
+      console.error("❌ Google Drive Error: Storage Full or Missing Permissions for the Master Folder.");
+    }
+    throw err;
   }
-  return fileId;
 }
+
+/** Hint for clients when `isQuotaOrSaStorage` is true. */
+export const DRIVE_QUOTA_HINT =
+  "Google blocked this upload: service accounts have no personal Drive quota. Put GDRIVE_MASTER_FOLDER_ID inside a Shared drive (Team Drive) and add your service account as Content manager (or Manager), then try again.";
 
 /** Clears cached clients (e.g. after credential rotation in long-running tests). */
 export function resetDriveClientCache(): void {
