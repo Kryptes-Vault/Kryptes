@@ -286,31 +286,33 @@ const Dashboard = () => {
                 </nav>
               </div>
 
-              <div className="mt-auto pt-6 border-t border-black/10">
-                <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">System</p>
-                <nav className="flex flex-col gap-1">
-                  {[
-                    { id: "settings", label: "Settings", icon: Settings },
-                    { id: "logout", label: "Logout", icon: LogOut },
-                  ].map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        if (item.id === "logout") handleSignOut();
-                        else if (item.id === "settings") setViewMode("settings");
-                      }}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
-                        viewMode === item.id 
-                          ? "bg-white text-[#FF3B13] shadow-sm font-bold" 
-                          : "text-black/50 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13]"
-                      }`}
-                    >
-                      <item.icon className="w-5 h-5 shrink-0" />
-                      <span className="text-[13px] font-medium">{item.label}</span>
-                    </button>
-                  ))}
-                </nav>
-              </div>
+              {viewMode === "settings" && (
+                <div className="mt-auto pt-6 border-t border-black/10">
+                  <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">System</p>
+                  <nav className="flex flex-col gap-1">
+                    {[
+                      { id: "settings", label: "Settings", icon: Settings },
+                      { id: "logout", label: "Logout", icon: LogOut },
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          if (item.id === "logout") handleSignOut();
+                          else if (item.id === "settings") setViewMode("settings");
+                        }}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                          viewMode === item.id 
+                            ? "bg-white text-[#FF3B13] shadow-sm font-bold" 
+                            : "text-black/50 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13]"
+                        }`}
+                      >
+                        <item.icon className="w-5 h-5 shrink-0" />
+                        <span className="text-[13px] font-medium">{item.label}</span>
+                      </button>
+                    ))}
+                  </nav>
+                </div>
+              )}
             </div>
           </aside>
         )}
