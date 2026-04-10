@@ -11,6 +11,7 @@ import AuthCallback from "./pages/AuthCallback";
 import ShareReceive from "./pages/ShareReceive";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import AddBankingPage from "./pages/AddBankingPage";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/share/:secretId" element={<ShareReceive />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/vault/banking/new" element={<AddBankingPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
