@@ -6,6 +6,8 @@ const { getSupabaseAdmin } = require("../services/supabaseAdmin");
 const router = express.Router();
 const redisClient = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
 
+type AuthedRequest = express.Request & { user: { id: string; email?: string } };
+
 const ESCROW_SALT = "ESCROW_SUPPORT_SALT";
 const PBKDF2_ITERATIONS = 100000;
 
@@ -24,8 +26,7 @@ function requireAuth(req: any, res: any, next: any) {
  */
 router.post("/initialize", requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
-    const userEmail = req.user.email;
+    const { id: userId, email: userEmail } = (req as AuthedRequest).user;
 
     if (!userEmail) throw new Error("User email is required to dispatch OTP.");
 
@@ -64,7 +65,7 @@ router.post("/initialize", requireAuth, async (req, res) => {
  */
 router.post("/grant", requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req as AuthedRequest).user.id;
     const { otp, escrowWrappedKey, escrowIv, vaultSnapshot } = req.body;
 
     if (!otp || !escrowWrappedKey || !vaultSnapshot) {

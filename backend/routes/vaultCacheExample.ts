@@ -10,7 +10,7 @@ const router = express.Router();
  */
 router.get("/items", async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id || req.query.userId as string;
+    const userId = (req as Request & { user?: { id: string } }).user?.id || (req.query.userId as string);
 
     if (!userId) {
       res.status(400).json({ error: "userId is required." });
@@ -18,7 +18,7 @@ router.get("/items", async (req: Request, res: Response): Promise<void> => {
     }
 
     // 1. Check secure Redis cache first
-    let vaultItems = await redisCacheService.getCachedVaultItems(userId);
+    let vaultItems = await redisCacheService.getCachedVaultItems(userId, "general");
 
     if (vaultItems) {
       // 2a. Cache Hit: Return immediately
@@ -40,7 +40,7 @@ router.get("/items", async (req: Request, res: Response): Promise<void> => {
 
     if (vaultItems && vaultItems.length > 0) {
       // 3. Cache the results securely for future requests (15 min TTL)
-      await redisCacheService.setCachedVaultItems(userId, vaultItems);
+      await redisCacheService.setCachedVaultItems(userId, "general", vaultItems);
     }
 
     // 4. Return Data
