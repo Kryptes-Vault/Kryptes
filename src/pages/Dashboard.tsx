@@ -275,7 +275,7 @@ const Dashboard = () => {
         )}
 
         <main className="flex-1 overflow-y-auto bg-white">
-          <div className={`p-8 ${viewMode === "documents" ? "max-w-[1400px]" : "max-w-[1200px]"} mx-auto`}>
+          <div className={`${viewMode === "documents" ? "p-0" : "p-8 max-w-[1200px] mx-auto"}`}>
             {viewMode === "documents" && <DocumentLocker />}
             {/* ... other views ... */}
 
