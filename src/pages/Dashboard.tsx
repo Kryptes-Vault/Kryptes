@@ -22,6 +22,7 @@ import {
   Store,
   CreditCard,
   Target,
+  Database,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AddSecretModal } from "@/components/kryptex/AddSecretModal";
@@ -110,6 +111,17 @@ const Dashboard = () => {
   ];
 
   const activeSidebarItems = viewMode === "passwords" ? passwordSections : [];
+  const [settingsTab, setSettingsTab] = useState("identity");
+
+  const settingsSections = [
+    { id: "identity", label: "Identity Profile", icon: User },
+    { id: "account", label: "Account & Identity", icon: User },
+    { id: "security", label: "Security & Access", icon: Shield },
+    { id: "vault", label: "Vault Preferences", icon: Settings },
+    { id: "categories", label: "Vault Categories", icon: LayoutGrid },
+    { id: "data", label: "Data Management", icon: Database },
+  ];
+
   const showMainSidebar = viewMode === "passwords" || viewMode === "settings";
 
   if (authLoading || !user) {
@@ -154,20 +166,11 @@ const Dashboard = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="hidden sm:flex text-[11px] font-bold text-black/60 hover:text-black bg-black/5 px-4 py-2 rounded-full transition-colors">
-              Get Loan
-            </button>
             <button className="text-black/40 hover:text-black/60 transition-colors">
               <Shield className="w-5 h-5" />
             </button>
             <button className="text-black/40 hover:text-black/60 transition-colors">
               <Receipt className="w-5 h-5" />
-            </button>
-            <button className="hidden sm:flex items-center gap-1.5 text-black/40 hover:text-black/60 transition-colors">
-              <div className="w-5 h-5 rounded-full bg-black/5 flex items-center justify-center text-[10px] border border-black/5">
-                🌐
-              </div>
-              <span className="text-[11px] font-bold uppercase tracking-widest">Hindi-IND</span>
             </button>
 
             <div className="hidden sm:block h-8 w-[1px] bg-black/5 mx-2" />
@@ -221,7 +224,9 @@ const Dashboard = () => {
             {/* Sidebar Body with flush left and Rounded Top-Right Side */}
             <div className="flex-1 flex flex-col bg-[#f7f7f7] rounded-tr-[2.5rem] ml-0 mt-0 mb-0 py-6 px-6 overflow-y-auto overflow-x-hidden transition-all">
               <div className="mb-8">
-                <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">Vault Categories</p>
+                <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">
+                  {viewMode === "passwords" ? "Vault Categories" : "Vault Settings"}
+                </p>
                 <nav className="flex flex-col gap-1">
                   {viewMode === "passwords" && activeSidebarItems.map((item) => {
                     const active = passwordCategory === item.id;
@@ -230,6 +235,25 @@ const Dashboard = () => {
                         key={item.id}
                         onClick={() => {
                           setPasswordCategory(item.id as CategoryFilter);
+                        }}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                          active
+                            ? "bg-white text-[#0066FF] shadow-sm font-bold" 
+                            : "text-black/50 hover:bg-white/50 hover:text-black"
+                        }`}
+                      >
+                        <item.icon className="w-5 h-5 shrink-0" />
+                        <span className="text-[13px] font-medium">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                  {viewMode === "settings" && settingsSections.map((item) => {
+                    const active = settingsTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setSettingsTab(item.id);
                         }}
                         className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
                           active
@@ -326,7 +350,7 @@ const Dashboard = () => {
               </div>
             )}
 
-            {viewMode === "settings" && <SettingsView user={user} onSignOut={handleSignOut} />}
+            {viewMode === "settings" && <SettingsView user={user} onSignOut={handleSignOut} activeTab={settingsTab as any} />}
             {viewMode === "authenticator" && <TwoFAMigrationWizard />}
           </div>
         </main>
