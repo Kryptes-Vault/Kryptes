@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   FileText,
   Briefcase,
@@ -49,9 +49,10 @@ type ViewMode = "documents" | "passwords" | "banking" | "settings" | "authentica
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useSupabaseUser();
+  const { user } = useSupabaseUser();
   const legacySessionKey = useVaultMasterKey();
-  const { items, reload: reloadVault } = useVaultItems(user?.id ?? null);
+  const { items, reload: reloadVault, loading: itemsLoading } = useVaultItems(user?.id ?? null);
+  const { view } = useParams();
   const [viewMode, setViewMode] = useState<ViewMode>("documents");
   const [passwordCategory, setPasswordCategory] = useState<CategoryFilter>("all");
   const [bankingCategory, setBankingCategory] = useState<"all" | "accounts" | "cards">("all");
@@ -63,14 +64,18 @@ const Dashboard = () => {
   const [unlockPassword, setUnlockPassword] = useState("");
   const [unlockBusy, setUnlockBusy] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Sync viewMode with URL param
+  useEffect(() => {
+    if (view && ["documents", "passwords", "banking", "settings", "authenticator"].includes(view)) {
+      setViewMode(view as ViewMode);
+    } else if (!view) {
+      // Default to documents if no sub-path
+      setViewMode("documents");
+    }
+  }, [view]);
 
   const hasV2Items = useMemo(() => items.some((i) => i.encryption_version === ENCRYPTION_VERSION_V2_PBKDF2), [items]);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/", { replace: true });
-    }
-  }, [authLoading, user, navigate]);
 
   async function handleSignOut() {
     setPbkdfDerivedKey(null);
@@ -125,23 +130,11 @@ const Dashboard = () => {
     { id: "identity", label: "Identity Profile", icon: User },
     { id: "account", label: "Account & Identity", icon: User },
     { id: "security", label: "Security & Access", icon: Shield },
-    { id: "vault", label: "Vault Preferences", icon: Settings },
     { id: "categories", label: "Vault Categories", icon: LayoutGrid },
     { id: "data", label: "Data Management", icon: Database },
   ];
 
   const showMainSidebar = viewMode === "passwords" || viewMode === "settings" || viewMode === "banking";
-
-  if (authLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-3 border-[#FF3B13] border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs font-bold uppercase tracking-widest text-black/40">Loading vault…</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-screen w-full bg-white text-[#111] font-sans selection:bg-[#FF3B13] selection:text-white overflow-hidden flex-col">
@@ -202,7 +195,7 @@ const Dashboard = () => {
                   if (item.path) {
                     navigate(item.path);
                   } else {
-                    setViewMode(item.id as ViewMode);
+                    navigate(`/dashboard/${item.id}`);
                     setSidebarOpen(false);
                   }
                 }}
@@ -319,8 +312,22 @@ const Dashboard = () => {
 
         <main className="flex-1 overflow-y-auto bg-white">
           <div className={`${viewMode === "documents" ? "p-0" : "p-8 max-w-[1200px] mx-auto"}`}>
-            {viewMode === "documents" && <DocumentLocker userId={user?.id ?? null} />}
-            {viewMode === "banking" && <BankingView userId={user.id} filter={bankingCategory} />}
+            {viewMode === "documents" && (
+              <div className="space-y-8">
+                <DocumentLocker userId={user?.id ?? null} />
+              </div>
+            )}
+            {viewMode === "banking" && (
+              <div className="p-8 max-w-[1200px] mx-auto">
+                <BankingView 
+                  userId={user.id} 
+                  filter={bankingCategory} 
+                  items={items} 
+                  loading={itemsLoading} 
+                  onRefresh={reloadVault}
+                />
+              </div>
+            )}
             {/* ... other views ... */}
 
             {viewMode === "passwords" && (

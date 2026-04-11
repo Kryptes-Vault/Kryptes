@@ -49,7 +49,7 @@ export async function deriveVaultKeyFromPassword(
     "deriveBits",
     "deriveKey",
   ]);
-  return crypto.subtle.deriveKey(
+  const derivedKey = await crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
       salt,
@@ -61,6 +61,28 @@ export async function deriveVaultKeyFromPassword(
     false,
     ["encrypt", "decrypt"]
   );
+
+  /* =========================================================================
+   * ⚠️ TEMPORARY DEBUG — DELETE THIS ENTIRE BLOCK BEFORE COMMIT OR RELEASE ⚠️
+   * Verifies the Web Crypto `CryptoKey` exists in browser RAM after unlock.
+   * Safe: logs the handle + public metadata only (no raw key bytes; never
+   * call `exportKey` here). Remove after visual verification in DevTools.
+   * ========================================================================= */
+  if (import.meta.env.DEV) {
+    console.log(
+      "🔐 [Local Crypto] Temporary AES Key Generated in Browser RAM:",
+      derivedKey
+    );
+    console.log("🔐 [Local Crypto] Key handle (metadata only, no secret material):", {
+      type: derivedKey.type,
+      extractable: derivedKey.extractable,
+      usages: derivedKey.usages,
+      algorithm: derivedKey.algorithm,
+    });
+  }
+  /* ========================= END TEMPORARY DEBUG ========================= */
+
+  return derivedKey;
 }
 
 /** Encrypt UTF-8 secret body only (v2: title stored separately, often as plaintext in DB). */

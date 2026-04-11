@@ -3,26 +3,61 @@ import { Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { BankSelector } from "./BankSelector";
+
+/** Standard card length for this form — 16 digits, shown as four groups of four. */
+const MAX_CARD_DIGITS = 16;
+/** Formatted length: 16 digits + 3 spaces */
+const MAX_CARD_INPUT_LENGTH = MAX_CARD_DIGITS + 3;
+
+/** Display as "1234 5678 9012 3456" — at most 16 digits. */
+function formatCardNumberGroups(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, MAX_CARD_DIGITS);
+  return digits.replace(/(\d{4})(?=\d)/g, "$1 ").trimEnd();
+}
+
+/** Format expiration date as MM/YY with month validation (01-12) */
+function formatExpiration(raw: string): string {
+  let digits = raw.replace(/\D/g, "").slice(0, 4);
+  
+  // Validate month (first 2 digits)
+  if (digits.length >= 2) {
+    const month = parseInt(digits.slice(0, 2), 10);
+    if (month > 12) {
+      // If month is invalid (e.g. 13), force it to 12 or keep the first digit if it's '0' or '1'
+      digits = "12" + digits.slice(2);
+    } else if (month === 0 && digits.length === 2) {
+      // Don't allow '00'
+      digits = "0";
+    }
+  } else if (digits.length === 1) {
+    // If first digit is 2-9, automatically make it 02, 03, etc.
+    const firstDigit = parseInt(digits, 10);
+    if (firstDigit > 1) {
+      digits = "0" + digits;
+    }
+  }
+
+  if (digits.length >= 2) {
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  }
+  return digits;
+}
 
 export function AddDebitCardForm({ userId, onSuccess }: { userId: string; onSuccess?: () => void }) {
   const [cardholderName, setCardholderName] = useState("");
   const [cardNumber, setCardNumber] = useState("");
+  const [bankName, setBankName] = useState("");
   const [expiration, setExpiration] = useState("");
   const [cvv, setCvv] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
-  const [ifscCode, setIfscCode] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
     // Validation
-    if (!accountNumber.trim()) {
-      toast.error("Account Number is required.");
-      return;
-    }
-    if (!ifscCode.trim()) {
-      toast.error("IFSC Code is required.");
+    if (!cardNumber.trim()) {
+      toast.error("Card Number is required.");
       return;
     }
 
@@ -33,33 +68,37 @@ export function AddDebitCardForm({ userId, onSuccess }: { userId: string; onSucc
     try {
       const response = await fetch("/api/vault/cards", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId,
           cardholderName,
-          cardNumber,
+          cardNumber: cardNumber.replace(/\D/g, ""),
+          bankName,
           expMonth: expMonth || "",
-          expYear: expYear ? `20${expYear}` : "", // e.g. "25" -> "2025" or exact
+          expYear: expYear ? `20${expYear}` : "",
           code: cvv,
-          accountNumber: accountNumber.trim(),
-          ifscCode: ifscCode.trim(),
         }),
       });
 
-      const data = await response.json();
+      let data: { error?: string; message?: string } = {};
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("Unexpected response from server.");
+      }
       if (!response.ok) {
-        throw new Error(data.error || "Failed to save card securely.");
+        throw new Error(typeof data.error === "string" ? data.error : "Failed to save card securely.");
       }
 
-      toast.success("Card and Bank Details securely saved to Bitwarden!");
+      toast.success("Kryptes Vault: Card securely encrypted and saved.");
       
       // Reset form
       setCardholderName("");
       setCardNumber("");
+      setBankName("");
       setExpiration("");
       setCvv("");
-      setAccountNumber("");
-      setIfscCode("");
       
       onSuccess?.();
     } catch (err: any) {
@@ -70,102 +109,102 @@ export function AddDebitCardForm({ userId, onSuccess }: { userId: string; onSucc
   }
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm max-w-md w-full">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="h-10 w-10 flex border border-black/5 items-center justify-center rounded-xl bg-orange-50 text-[#FF3B13]">
-          <CreditCard className="h-5 w-5" />
+    <div className="rounded-3xl border border-black/10 bg-white p-8 shadow-sm w-full mx-auto">
+      <div className="flex items-center gap-4 mb-8">
+        <div className="h-12 w-12 flex border border-black/5 items-center justify-center rounded-2xl bg-orange-50 text-[#FF3B13] shadow-sm">
+          <CreditCard className="h-6 w-6" />
         </div>
         <div>
-          <h2 className="text-sm font-bold text-black uppercase tracking-widest">Add Payment Card</h2>
-          <p className="text-[10px] text-black/50 font-medium">Securely stored with Zero-Knowledge</p>
+          <h2 className="text-sm font-bold text-black uppercase tracking-[0.2em]">Card Provisioning</h2>
+          <p className="text-[10px] text-black/50 font-bold uppercase tracking-widest mt-1">Zero-Knowledge Secure Encryption</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Card Details */}
-        <div className="space-y-4 rounded-xl border border-black/5 bg-[#FAFAFB] p-4">
-          <p className="text-[10px] font-bold text-black uppercase tracking-widest border-b border-black/5 pb-2">Card Details</p>
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-black/60 uppercase tracking-widest">Cardholder Name</label>
-            <Input
-              value={cardholderName}
-              onChange={(e) => setCardholderName(e.target.value)}
-              placeholder="e.g. John Doe"
-              className="bg-white border-black/5 text-xs text-black transition-all focus:border-[#FF3B13]/30"
-              autoComplete="off"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-black/60 uppercase tracking-widest">Card Number</label>
-             <Input
-              value={cardNumber}
-              onChange={(e) => setCardNumber(e.target.value)}
-              placeholder="0000 0000 0000 0000"
-              className="bg-white border-black/5 text-xs text-black font-mono transition-all focus:border-[#FF3B13]/30"
-              autoComplete="off"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-black/60 uppercase tracking-widest">Expiration</label>
-              <Input
-                value={expiration}
-                onChange={(e) => setExpiration(e.target.value)}
-                placeholder="MM/YY"
-                className="bg-white border-black/5 text-xs text-black font-mono"
-                autoComplete="off"
-              />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+          
+          {/* Left Column: Bank Selection */}
+          <div className="space-y-6">
+            <div className="space-y-4 rounded-2xl border border-black/5 bg-[#FAFAFB] p-6 h-full">
+              <p className="text-[10px] font-bold text-black uppercase tracking-[0.2em] border-b border-black/5 pb-3">Institution Mapping</p>
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold text-black/40 uppercase tracking-widest px-1">Issuing Bank</label>
+                <BankSelector value={bankName} onSelect={setBankName} />
+              </div>
+              <div className="p-4 rounded-xl border border-dashed border-black/5 bg-white/50 mt-4">
+                <p className="text-[9px] font-bold text-black/30 uppercase tracking-widest leading-relaxed">
+                  Mapping your card to an institution allows for <br />
+                  enhanced vault branding and automated icon fetching.
+                </p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-black/60 uppercase tracking-widest">CVV</label>
-              <Input
-                type="password"
-                value={cvv}
-                onChange={(e) => setCvv(e.target.value)}
-                placeholder="•••"
-                maxLength={4}
-                className="bg-white border-black/5 text-xs text-black font-mono"
-                autoComplete="off"
-              />
+          </div>
+
+          {/* Right Column: Card Details */}
+          <div className="space-y-6">
+            <div className="space-y-4 rounded-2xl border border-black/5 bg-[#FAFAFB] p-6">
+              <p className="text-[10px] font-bold text-black uppercase tracking-[0.2em] border-b border-black/5 pb-3">Security Parameters</p>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold text-black/40 uppercase tracking-widest px-1">Cardholder Name</label>
+                  <Input
+                    value={cardholderName}
+                    onChange={(e) => setCardholderName(e.target.value)}
+                    placeholder="FULL NAME"
+                    className="h-11 bg-white border-black/5 text-[11px] font-bold uppercase tracking-widest transition-all focus:border-[#FF3B13]/30 rounded-xl"
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold text-black/40 uppercase tracking-widest px-1">Primary Account Number</label>
+                  <Input
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(formatCardNumberGroups(e.target.value))}
+                    placeholder="0000 0000 0000 0000"
+                    inputMode="numeric"
+                    maxLength={MAX_CARD_INPUT_LENGTH}
+                    className="h-11 bg-white border-black/5 text-[11px] font-mono font-bold tracking-[0.2em] transition-all focus:border-[#FF3B13]/30 rounded-xl"
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-black/40 uppercase tracking-widest px-1">Expiration</label>
+                    <Input
+                      value={expiration}
+                      onChange={(e) => setExpiration(formatExpiration(e.target.value))}
+                      placeholder="MM/YY"
+                      inputMode="numeric"
+                      maxLength={5}
+                      className="h-11 bg-white border-black/5 text-[11px] font-mono font-bold transition-all focus:border-[#FF3B13]/30 rounded-xl text-center"
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-black/40 uppercase tracking-widest px-1">Security Code</label>
+                    <Input
+                      type="password"
+                      value={cvv}
+                      onChange={(e) => setCvv(e.target.value)}
+                      placeholder="•••"
+                      maxLength={4}
+                      className="h-11 bg-white border-black/5 text-[11px] font-mono font-bold transition-all focus:border-[#FF3B13]/30 rounded-xl text-center"
+                      autoComplete="off"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Bank Details */}
-        <div className="space-y-4 rounded-xl border border-black/5 bg-[#FAFAFB] p-4">
-          <p className="text-[10px] font-bold text-black uppercase tracking-widest border-b border-black/5 pb-2">Bank Detail Linking</p>
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[#FF3B13] uppercase tracking-widest">Account Number *</label>
-            <Input
-              type="password"
-              value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
-              placeholder="e.g. 00000000000"
-              className="bg-white border-black/5 text-xs font-mono transition-all focus:border-[#FF3B13]/30"
-              autoComplete="off"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[#FF3B13] uppercase tracking-widest">IFSC Code *</label>
-            <Input
-              value={ifscCode}
-              onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
-              placeholder="e.g. HDFC0001234"
-              className="bg-white border-black/5 text-xs font-mono uppercase transition-all focus:border-[#FF3B13]/30"
-              autoComplete="off"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="pt-2">
+        <div className="pt-4 flex justify-end">
           <Button
             type="submit"
             disabled={saving}
-            className="w-full h-12 rounded-xl bg-[#FF3B13] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-colors shadow-lg shadow-[#FF3B13]/20"
+            className="w-full md:w-auto min-w-[240px] h-14 rounded-2xl bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-[#FF3B13] transition-all shadow-xl shadow-black/5 hover:scale-[1.02] active:scale-95"
           >
-            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Securely Add Card"}
+            {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : "Encrypt & Push to Vault"}
           </Button>
         </div>
       </form>

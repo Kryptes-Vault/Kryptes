@@ -135,10 +135,7 @@ export default function BankingDashboard() {
                 You haven't added any cards to your vault yet. Start securing your banking credentials now.
               </p>
               <Link to="/vault/banking/new">
-                <Button 
-                  variant="outline" 
-                  className="mt-6 rounded-xl border-primary/30 text-primary hover:bg-primary/10"
-                >
+                <Button className="mt-6 h-11 rounded-xl bg-[#FF3B13] px-6 font-semibold text-white shadow-lg shadow-[#FF3B13]/25 hover:bg-[#e6350f] hover:text-white">
                   Create your first entry
                 </Button>
               </Link>

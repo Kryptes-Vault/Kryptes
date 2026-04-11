@@ -2,24 +2,17 @@ import React, { useState } from "react";
 import {
   User,
   Shield,
-  Settings2,
   Database,
   AlertTriangle,
-  Moon,
-  Sun,
-  Monitor,
-  LayoutGrid,
-  List,
   Clock,
   Fingerprint,
   Key,
   Download,
   Upload,
-  Trash2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-type SettingsTab = "identity" | "account" | "security" | "vault" | "categories" | "data";
+type SettingsTab = "identity" | "account" | "security" | "categories" | "data";
 
 interface SettingsProps {
   user: any;
@@ -51,7 +44,6 @@ const SettingsView = ({
     { id: "identity", label: "Identity Profile", icon: User },
     { id: "account", label: "Account & Identity", icon: User },
     { id: "security", label: "Security & Access", icon: Shield },
-    { id: "vault", label: "Vault Preferences", icon: Settings2 },
     { id: "categories", label: "Vault Categories", icon: Database },
     { id: "data", label: "Data Management", icon: Database },
   ];
@@ -188,55 +180,6 @@ const SettingsView = ({
                   pbkdfDerivedKey={pbkdfDerivedKey}
                   onVaultUnlocked={onVaultUnlocked}
                 />
-              </div>
-            </section>
-          </motion.div>
-        );
-
-      case "vault":
-        return (
-          <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
-            <section className="space-y-6">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#FF3300]">UI Parameters</h3>
-
-              <div className="grid grid-cols-3 gap-4">
-                {[
-                  { id: "light", icon: Sun, label: "Light" },
-                  { id: "dark", icon: Moon, label: "Dark" },
-                  { id: "system", icon: Monitor, label: "System" },
-                ].map((t) => (
-                  <button key={t.id} className="flex flex-col items-center gap-3 p-6 bg-[#f8f8f8] border border-black/5 rounded-2xl hover:border-[#FF3300]/30 transition-all group">
-                    <t.icon className="w-5 h-5 text-black/20 group-hover:text-[#FF3300]" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-black/40 group-hover:text-black">{t.label}</span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between p-6 bg-[#f8f8f8] border border-black/5 rounded-2xl">
-                <div className="flex items-center gap-4">
-                  <LayoutGrid className="w-5 h-5 text-black/40" />
-                  <div>
-                    <p className="text-xs font-bold text-black">Default Layout</p>
-                    <p className="text-[9px] text-black/40 uppercase tracking-wider">Dashboard Grid</p>
-                  </div>
-                </div>
-                <div className="flex bg-black/5 p-1 rounded-lg">
-                  <button className="p-2 bg-white rounded-md shadow-sm"><LayoutGrid className="w-3 h-3" /></button>
-                  <button className="p-2 text-black/20"><List className="w-3 h-3" /></button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-6 bg-[#f8f8f8] border border-black/5 rounded-2xl">
-                <div className="flex items-center gap-4">
-                  <Trash2 className="w-5 h-5 text-black/40" />
-                  <div>
-                    <p className="text-xs font-bold text-black">Clipboard Sanitation</p>
-                    <p className="text-[9px] text-black/40 uppercase tracking-wider">Flush after 30s</p>
-                  </div>
-                </div>
-                <button className="w-10 h-5 bg-[#FF3300] rounded-full relative p-1">
-                  <div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full" />
-                </button>
               </div>
             </section>
           </motion.div>

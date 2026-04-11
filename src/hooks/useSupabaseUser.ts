@@ -1,29 +1,13 @@
-/** Supabase Auth session for RLS-scoped vault and audit queries. */
-import { useEffect, useState } from "react";
+/** Supabase Auth session for RLS-scoped vault and audit queries — backed by {@link AuthProvider}. */
 import type { User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
-export function useSupabaseUser() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    void supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  return { user, loading };
+export function useSupabaseUser(): {
+  user: User | null;
+  /** @deprecated Use `isLoading` — same boolean */
+  loading: boolean;
+  isLoading: boolean;
+} {
+  const { user, isLoading } = useAuth();
+  return { user, loading: isLoading, isLoading };
 }

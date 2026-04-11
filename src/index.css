@@ -82,6 +82,15 @@
   .glow-emerald {
     box-shadow: 0 0 60px -12px hsl(var(--vault-glow) / 0.4);
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* ── Accessibility: skip 3D animation ──────────────────────────── */

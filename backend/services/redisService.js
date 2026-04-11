@@ -64,4 +64,9 @@ const setCachedVault = async (userId, encryptedString) => {
   });
 };
 
-module.exports = { getCachedVault, setCachedVault, whenRedisReadyOrTimeout };
+const deleteCachedVault = async (userId) => {
+  await connectRedis();
+  await redisClient.del(`vault:${userId}`);
+};
+
+module.exports = { getCachedVault, setCachedVault, deleteCachedVault, whenRedisReadyOrTimeout };

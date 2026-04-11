@@ -30,17 +30,21 @@ export function useVaultItems(userId: string | null) {
     }
     setLoading(true);
     setError(null);
-    const { data, error: qErr } = await supabase
-      .from("vault_items")
-      .select("*")
-      .order("updated_at", { ascending: false });
-    if (qErr) {
-      setError(qErr.message);
+    try {
+      const resp = await fetch(`/api/vault/items?userId=${userId}`);
+      if (!resp.ok) {
+        const errorData = await resp.json();
+        throw new Error(errorData.error || "Failed to fetch vault items");
+      }
+      const data = await resp.json();
+      setItems(data.items || []);
+    } catch (err: any) {
+      console.error("[useVaultItems] Error:", err);
+      setError(err.message);
       setItems([]);
-    } else {
-      setItems((data as VaultItemRow[]) ?? []);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [userId]);
 
   useEffect(() => {
