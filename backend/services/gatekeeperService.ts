@@ -16,10 +16,15 @@ export async function checkProfileFlag(userId: string, flag: GatekeeperFlag): Pr
       .from("profiles")
       .select(flag)
       .eq("id", userId)
-      .single();
+      .maybeSingle();
 
-    if (error || !data) {
-      console.warn(`[Gatekeeper] Profile check failed or user not found for ${userId}:`, error?.message);
+    if (error) {
+      console.warn(`[Gatekeeper] Profile check failed for ${userId}:`, error.message);
+      return false;
+    }
+
+    // No profile row yet — treat all gatekeeper flags as off
+    if (!data) {
       return false;
     }
 

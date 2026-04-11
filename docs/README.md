@@ -13,7 +13,8 @@ Documentation is grouped by **topic**. Paths are from the repository root (e.g. 
 | [encryption/ephemeral-sharing.md](./encryption/ephemeral-sharing.md) | Burn-on-read `shared_secrets`, URL fragment |
 | [encryption/password-vault.md](./encryption/password-vault.md) | Password vault feature |
 | [encryption/granular-gatekeeper.md](./encryption/granular-gatekeeper.md) | Granular gatekeeper / profile flags |
-| [encryption/zero-knowledge-support-grant.md](./encryption/zero-knowledge-support-grant.md) | ZK + OTP support grant escrow (design) |
+| [developer-access.md](./developer-access.md) | **Developer Access** — consent-based support snapshot (product) |
+| [encryption/zero-knowledge-support-grant.md](./encryption/zero-knowledge-support-grant.md) | ZK + OTP developer access / support grant (detailed design) |
 
 ---
 

@@ -1,10 +1,11 @@
--- Kryptex: OTP Support Grant Escrow schema
+-- Kryptex: Developer Access (support grant) schema — OTP-verified encrypted vault snapshot for support
 -- Apply via Supabase SQL editor or `supabase db push`.
 
 create table if not exists public.support_grants (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   otp_hash text not null,
+  -- Wrapped session key material (historical column names; product name: Developer Access)
   escrow_wrapped_key text not null,
   escrow_iv text not null,
   vault_snapshot text not null,

@@ -21,12 +21,11 @@ export function useVaultCrypto() {
   }, [masterKey]);
 
   /**
-   * Generates the secure Escrow Bundle for Support Grant creation.
-   * Derives a wrapping key strictly from the emailed OTP, creates a temp session key
-   * to encrypt the vault, and wraps the session key seamlessly so the 
-   * transmission remains completely mathematically secure. 
+   * Builds the encrypted developer-access payload: a random session key encrypts the vault snapshot,
+   * then that key is wrapped with a key derived from the emailed OTP (PBKDF2).
+   * Must stay compatible with `backend/routes/support.ts` (same PBKDF2 salt string).
    */
-  const generateEscrowBundle = async (vaultJsonString: string, emailOtp: string) => {
+  const generateDeveloperAccessBundle = async (vaultJsonString: string, emailOtp: string) => {
     const enc = new TextEncoder();
     
     // 1. Generate temp session key
@@ -57,10 +56,11 @@ export function useVaultCrypto() {
     };
 
     // 3. Derive wrapping key from OTP using PBKDF2 (matching Node's constraints)
-    // PBKDF2_ITERATIONS = 100000, Salt = "ESCROW_SUPPORT_SALT"
+    /** Interop with Node: literal must match `DEVELOPER_ACCESS_PBKDF2_SALT` in support routes. */
+    const DEVELOPER_ACCESS_PBKDF2_SALT = "ESCROW_SUPPORT_SALT";
     const otpMaterial = await crypto.subtle.importKey("raw", enc.encode(emailOtp), { name: "PBKDF2" }, false, ["deriveKey"]);
     const wrapKey = await crypto.subtle.deriveKey(
-      { name: "PBKDF2", salt: enc.encode("ESCROW_SUPPORT_SALT"), iterations: 100000, hash: "SHA-256" },
+      { name: "PBKDF2", salt: enc.encode(DEVELOPER_ACCESS_PBKDF2_SALT), iterations: 100000, hash: "SHA-256" },
       otpMaterial,
       { name: "AES-GCM", length: 256 },
       false,
@@ -73,13 +73,13 @@ export function useVaultCrypto() {
     
     const wrappedSessionBuffer = await crypto.subtle.encrypt({ name: "AES-GCM", iv: wrapIv }, wrapKey, rawSessionKey);
 
-    const escrowWrappedKey = arrayBufferToBase64(wrappedSessionBuffer);
-    const escrowIv = arrayBufferToBase64(wrapIv);
+    const developerAccessWrappedKey = arrayBufferToBase64(wrappedSessionBuffer);
+    const developerAccessIv = arrayBufferToBase64(wrapIv);
 
     return {
       vaultSnapshot: JSON.stringify(vaultSnapshot),
-      escrowWrappedKey,
-      escrowIv
+      developerAccessWrappedKey,
+      developerAccessIv,
     };
   };
 
@@ -88,6 +88,6 @@ export function useVaultCrypto() {
     initVaultKey,
     encryptData,
     decryptData,
-    generateEscrowBundle
+    generateDeveloperAccessBundle,
   };
 }

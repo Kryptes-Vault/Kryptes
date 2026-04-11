@@ -84,14 +84,14 @@ serve(async (req) => {
     const mailOptions = {
       from: \`Kryptes Security <\${Deno.env.get('GMAIL_USER')}>\`,
       to: userEmail,
-      subject: "[ACTION REQUIRED] Confirm Developer Escrow Grant",
+      subject: "[ACTION REQUIRED] Confirm Developer Access",
       html: htmlTemplate,
     };
 
     await transporter.sendMail(mailOptions);
 
     return new Response(
-      JSON.stringify({ success: true, message: "Kryptes Escrow email dispatched successfully." }),
+      JSON.stringify({ success: true, message: "Kryptes developer access verification email dispatched successfully." }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
 

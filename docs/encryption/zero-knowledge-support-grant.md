@@ -12,12 +12,12 @@
 |------|-------------|
 | **Strict zero-knowledge** | Vault plaintext and master password never sent to Node; only ciphertext crosses the wire for normal vault operations. |
 | **Support access only by consent** | Developer can read decrypted support payloads **only** when the user initiates a grant **and** provides a short-lived secret (6-digit code) out of band. |
-| **Time-bounded** | Escrowed material expires automatically (24h default). |
+| **Time-bounded** | Developer-access material expires automatically (24h default). |
 
 **Honest limitations**
 
 - A **6-digit numeric OTP** has at most ~20 bits of entropy. It **must not** be the sole root of trust for wrapping keys. This design combines: **server-side pepper**, **per-grant random salt**, **rate limiting**, **single-use or short TTL**, and **no storage of OTP plaintext** (only a slow hash or HMAC for verification).
-- **Supabase Auth** does **not** expose a supported API like “generate an arbitrary 6-digit OTP for key escrow.” Magic links / email OTP are for **sign-in**, not application key wrapping. This document uses an **application-level OTP** generated on the Node server and (optionally) delivered by your existing email stack. You may **label** it “support code” in the UI to match user expectations.
+- **Supabase Auth** does **not** expose a supported API like “generate an arbitrary 6-digit OTP for application key wrapping.” Magic links / email OTP are for **sign-in**, not developer-access key material. This document uses an **application-level OTP** generated on the Node server and (optionally) delivered by your existing email stack. You may **label** it “support code” or “verification code” in the UI to match user expectations.
 - Moving “AES from Node to React” for vault data: **your vault crypto already lives in the browser** (`vaultCrypto.ts`). The migration work is **policy + cleanup**: ensure **no** Express route accepts master password or derives vault keys; all encryption/decryption for user vaults uses `useVaultCrypto` (or direct imports from `vaultCrypto.ts`) only.
 
 ---
@@ -153,7 +153,7 @@ export function useVaultCrypto(saltB64: string | null) {
 **File:** add `supabase/migrations/007_support_grants.sql` (or next free number).
 
 ```sql
--- Support grant escrow: user-initiated snapshot, OTP-wrapped session key, 24h TTL
+-- Developer access (support grant): user-initiated snapshot, OTP-wrapped session key, 24h TTL
 -- Access: writes via service role (Node API only). No direct client INSERT.
 
 create extension if not exists "pgcrypto";
@@ -206,7 +206,7 @@ comment on table public.support_grants is 'User-consented support snapshots; dec
 
 ---
 
-## 5. OTP escrow — crypto design (Node)
+## 5. OTP developer access — crypto design (Node)
 
 **Wrapping key** (example — use `crypto` from Node):
 

@@ -23,11 +23,24 @@ type SettingsTab = "identity" | "account" | "security" | "vault" | "categories" 
 
 interface SettingsProps {
   user: any;
+  items: VaultItemRow[];
+  pbkdfDerivedKey: CryptoKey | null;
+  onVaultUnlocked: (key: CryptoKey) => void;
   onSignOut: () => void;
   activeTab?: SettingsTab;
 }
 
-const SettingsView = ({ user, onSignOut, activeTab: externalActiveTab }: SettingsProps) => {
+import { DeveloperAccessCard } from "./DeveloperAccessCard";
+import type { VaultItemRow } from "@/hooks/useVaultItems";
+
+const SettingsView = ({
+  user,
+  items,
+  pbkdfDerivedKey,
+  onVaultUnlocked,
+  onSignOut,
+  activeTab: externalActiveTab,
+}: SettingsProps) => {
   const [internalActiveTab, setInternalActiveTab] = useState<SettingsTab>("identity");
   const [confirmDelete, setConfirmDelete] = useState("");
 
@@ -163,6 +176,18 @@ const SettingsView = ({ user, onSignOut, activeTab: externalActiveTab }: Setting
                   </div>
                 </div>
                 <button className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF3300] hover:underline transition-all">Configure</button>
+              </div>
+
+              {/* Developer Access */}
+              <div className="pt-6">
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#FF3300] mb-6">Developer Access</h3>
+                <DeveloperAccessCard
+                  user={user}
+                  userId={user?.id ?? null}
+                  items={items}
+                  pbkdfDerivedKey={pbkdfDerivedKey}
+                  onVaultUnlocked={onVaultUnlocked}
+                />
               </div>
             </section>
           </motion.div>
