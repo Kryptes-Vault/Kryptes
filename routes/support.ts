@@ -8,42 +8,58 @@ const redisClient = new Redis(process.env.REDIS_URL || "redis://localhost:6379")
 
 type AuthedRequest = express.Request & { user: { id: string; email?: string } };
 
-const ESCROW_SALT = "ESCROW_SUPPORT_SALT";
+/** PBKDF2 salt label; must match browser `useVaultCrypto` (historical string — do not change). */
+const DEVELOPER_ACCESS_PBKDF2_SALT = "ESCROW_SUPPORT_SALT";
 const PBKDF2_ITERATIONS = 100000;
 
-// Middleware to mock or grab user from session (Assuming injected via standard middleware elsewhere)
-// For demonstration, we'll extract it from standard Kryptes headers/tokens
+/** Shell user from POST /api/auth/supabase/sync; Supabase auth UUID lives on session. */
 function requireAuth(req: any, res: any, next: any) {
-  const userId = req.headers['x-user-id'] || req.body.userId;
-  if (!userId) return res.status(401).json({ error: "Unauthorized. Missing user mapping." });
-  req.user = { id: userId, email: req.headers['x-user-email'] || req.body.userEmail };
+  const shell = req.user || req.session?.kryptexUser;
+  const userId =
+    req.headers["x-user-id"] || req.body?.userId || shell?.id;
+  const email =
+    req.headers["x-user-email"] || req.body?.userEmail || shell?.email;
+  if (!userId) {
+    return res.status(401).json({ error: "Unauthorized. Missing user mapping." });
+  }
+  req.user = { id: userId, email };
   next();
 }
 
+function getSupabaseAuthUserId(req: any): string | undefined {
+  return req.session?.supabaseUserId;
+}
+
+const DEV_ACCESS_OTP_PREFIX = "developer_access_otp:";
+
 /**
- * Step 3A: Initialize Escrow
- * Generates an OTP, stores the hash, and triggers the Supabase Edge function for email dispatch.
+ * Sends a 6-digit OTP by email: stores SHA-256(otp) in Redis, then calls Edge Function `developer-otp`.
+ * Requires an Express session with `supabaseUserId` (see POST /api/auth/supabase/sync).
  */
 router.post("/initialize", requireAuth, async (req, res) => {
   try {
-    const { id: userId, email: userEmail } = (req as AuthedRequest).user;
+    const authUserId = getSupabaseAuthUserId(req);
+    if (!authUserId) {
+      return res.status(401).json({
+        error: "Missing Supabase session. Sign in and sync your session before requesting developer access.",
+      });
+    }
 
+    const userEmail = (req as AuthedRequest).user.email;
     if (!userEmail) throw new Error("User email is required to dispatch OTP.");
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const hash = crypto.createHash('sha256').update(otp).digest('hex');
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const hash = crypto.createHash("sha256").update(otp).digest("hex");
 
-    // Store hash temporarily (15 minutes)
-    await redisClient.setex(`escrow_otp:${userId}`, 900, hash);
+    await redisClient.setex(`${DEV_ACCESS_OTP_PREFIX}${authUserId}`, 900, hash);
 
-    // Call Supabase Edge Function to deliver the email
-    const edgeCall = await fetch(`${process.env.SUPABASE_URL}/functions/v1/send-escrow-otp`, {
-      method: 'POST',
+    const edgeCall = await fetch(`${process.env.SUPABASE_URL}/functions/v1/developer-otp`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({ userEmail, otpCode: otp })
+      body: JSON.stringify({ userEmail, otpCode: otp }),
     });
 
     if (!edgeCall.ok) {
@@ -52,57 +68,71 @@ router.post("/initialize", requireAuth, async (req, res) => {
       throw new Error("Failed to dispatch Edge Function email.");
     }
 
-    res.status(200).json({ success: true, message: "Escrow initialization successful. OTP Dispatched." });
+    res.status(200).json({ success: true, message: "Verification code sent." });
   } catch (error: any) {
-    console.error("[Support Init]", error.message);
+    console.error("[Developer access init]", error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
 /**
- * Step 3C: Finalize Escrow Grant
- * Validates OTP and inserts escrow bundle directly into the secure Support Grants table.
+ * Validates OTP against Redis, then inserts the encrypted bundle into `support_grants`.
+ * `user_id` must be the Supabase Auth UUID (FK to auth.users), not the opaque shell id.
  */
-router.post("/grant", requireAuth, async (req, res) => {
+async function handleRequestDeveloperAccess(req: any, res: any) {
   try {
-    const userId = (req as AuthedRequest).user.id;
-    const { otp, escrowWrappedKey, escrowIv, vaultSnapshot } = req.body;
-
-    if (!otp || !escrowWrappedKey || !vaultSnapshot) {
-      return res.status(400).json({ error: "Missing escrow payload parameters." });
+    const authUserId = getSupabaseAuthUserId(req);
+    if (!authUserId) {
+      return res.status(401).json({
+        error: "Missing Supabase session. Sign in and sync your session before granting developer access.",
+      });
     }
 
-    const hashedInput = crypto.createHash('sha256').update(otp.toString()).digest('hex');
-    const storedHash = await redisClient.get(`escrow_otp:${userId}`);
+    const otp = req.body?.otp ?? req.body?.otpCode;
+    const developerAccessWrappedKey =
+      req.body?.developerAccessWrappedKey ?? req.body?.escrowWrappedKey;
+    const developerAccessIv = req.body?.developerAccessIv ?? req.body?.escrowIv;
+    const vaultSnapshot = req.body?.vaultSnapshot ?? req.body?.encryptedVaultData;
+
+    if (!otp || !developerAccessWrappedKey || !developerAccessIv || !vaultSnapshot) {
+      return res.status(400).json({
+        error:
+          "Missing developer access payload. Expected otp (or otpCode), developerAccessWrappedKey (or escrowWrappedKey), developerAccessIv (or escrowIv), vaultSnapshot (or encryptedVaultData).",
+      });
+    }
+
+    const hashedInput = crypto.createHash("sha256").update(String(otp)).digest("hex");
+    const storedHash = await redisClient.get(`${DEV_ACCESS_OTP_PREFIX}${authUserId}`);
 
     if (!storedHash || storedHash !== hashedInput) {
-      return res.status(403).json({ error: "Invalid or expired escrow OTP sequence." });
+      return res.status(403).json({ error: "Invalid or expired verification code." });
     }
 
     const supabase = getSupabaseAdmin();
-    // We optionally hash the OTP again to store inside support_grants so we have immutable proof,
-    // though the presence of the row implies explicit grant. We will use a hashed salt for DB resting.
-    const dbHash = crypto.createHash('sha256').update(otp + "DB_SALT").digest('hex');
+    const dbHash = crypto.createHash("sha256").update(String(otp) + "DB_SALT").digest("hex");
 
-    const { error } = await supabase.from('support_grants').insert({
-      user_id: userId,
+    const { error } = await supabase.from("support_grants").insert({
+      user_id: authUserId,
       otp_hash: dbHash,
-      escrow_wrapped_key: escrowWrappedKey,
-      escrow_iv: escrowIv,
-      vault_snapshot: vaultSnapshot
+      escrow_wrapped_key: developerAccessWrappedKey,
+      escrow_iv: developerAccessIv,
+      vault_snapshot: vaultSnapshot,
     });
 
     if (error) throw new Error("Database insertion failed: " + JSON.stringify(error));
 
-    // Clear one-time hash
-    await redisClient.del(`escrow_otp:${userId}`);
+    await redisClient.del(`${DEV_ACCESS_OTP_PREFIX}${authUserId}`);
 
-    res.status(200).json({ success: true, message: "Secure Developer Grant Escalated." });
+    res.status(200).json({ success: true, message: "Developer access bundle stored securely." });
   } catch (error: any) {
-    console.error("[Support Grant]", error.message);
+    console.error("[Developer access grant]", error.message);
     res.status(500).json({ error: error.message });
   }
-});
+}
+
+router.post("/request-developer-access", requireAuth, handleRequestDeveloperAccess);
+/** @deprecated Legacy path name; use POST /request-developer-access */
+router.post("/request-escrow", requireAuth, handleRequestDeveloperAccess);
 
 /**
  * Step 4: Developer Decryption Offline Admin endpoint.
@@ -129,7 +159,7 @@ router.post("/admin/decrypt", async (req, res) => {
       .limit(1);
 
     if (error || !grants || grants.length === 0) {
-      return res.status(404).json({ error: "No active escrow grants found for this user." });
+      return res.status(404).json({ error: "No active developer access grants found for this user." });
     }
 
     const grant = grants[0];
@@ -139,18 +169,17 @@ router.post("/admin/decrypt", async (req, res) => {
       return res.status(403).json({ error: "Invalid decryption OTP for this grant." });
     }
 
-    // 1. Derive the PBKDF2 Wrapping Key using Node Crypto
-    const wrapKey = crypto.pbkdf2Sync(otp, ESCROW_SALT, PBKDF2_ITERATIONS, 32, 'sha256');
+    // 1. Derive the PBKDF2 wrapping key (must match browser developer-access bundle)
+    const wrapKey = crypto.pbkdf2Sync(otp, DEVELOPER_ACCESS_PBKDF2_SALT, PBKDF2_ITERATIONS, 32, "sha256");
 
-    // 2. Decrypt the Escrow string to get the temporary Session Key
-    const escrowIvBuf = Buffer.from(grant.escrow_iv, 'base64');
-    const escrowCipher = Buffer.from(grant.escrow_wrapped_key, 'base64');
-    
-    // We split out auth tag from AES-GCM (usually last 16 bytes in node)
-    const tag = escrowCipher.subarray(escrowCipher.length - 16);
-    const ct = escrowCipher.subarray(0, escrowCipher.length - 16);
+    // 2. Unwrap the session key (columns retain historical names in DB)
+    const wrappedIvBuf = Buffer.from(grant.escrow_iv, "base64");
+    const wrappedSessionCipher = Buffer.from(grant.escrow_wrapped_key, "base64");
 
-    const decipher = crypto.createDecipheriv('aes-256-gcm', wrapKey, escrowIvBuf);
+    const tag = wrappedSessionCipher.subarray(wrappedSessionCipher.length - 16);
+    const ct = wrappedSessionCipher.subarray(0, wrappedSessionCipher.length - 16);
+
+    const decipher = crypto.createDecipheriv("aes-256-gcm", wrapKey, wrappedIvBuf);
     decipher.setAuthTag(tag);
 
     // The raw decrypted temporary session key
@@ -172,13 +201,13 @@ router.post("/admin/decrypt", async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Decrypted successfully via OTP Escrow protocol.",
+      message: "Decrypted successfully via developer access (OTP) protocol.",
       grantId: grant.id,
       vault: vaultData
     });
   } catch (error: any) {
     console.error("[Support Admin Decrypt]", error.message);
-    res.status(500).json({ error: "Escrow Decryption Failed: " + error.message });
+    res.status(500).json({ error: "Developer access decryption failed: " + error.message });
   }
 });
 

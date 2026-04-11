@@ -359,8 +359,15 @@ app.post("/api/convert", upload.single("file"), async (req: KryptexRequest, res:
 });
 
 app.get("/api/documents", async (req: any, res: any) => {
-  const userId = req.query.userId || (req.user && req.user.id);
-  if (!userId) return res.status(400).json({ error: "UserID required" });
+  const q =
+    typeof req.query.userId === "string" && req.query.userId.trim() ? req.query.userId.trim() : "";
+  const userId = q || req.session?.supabaseUserId || (req.user && req.user.id);
+  if (!userId) {
+    return res.status(400).json({
+      error: "UserID required",
+      hint: "Pass ?userId=<Supabase auth user id> or establish a session via POST /api/auth/supabase/sync.",
+    });
+  }
 
   const { checkProfileFlag } = require("./services/gatekeeperService");
   if (!(await checkProfileFlag(userId, 'has_documents'))) {
