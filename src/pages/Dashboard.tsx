@@ -319,7 +319,7 @@ const Dashboard = () => {
 
         <main className="flex-1 overflow-y-auto bg-white">
           <div className={`${viewMode === "documents" ? "p-0" : "p-8 max-w-[1200px] mx-auto"}`}>
-            {viewMode === "documents" && <DocumentLocker />}
+            {viewMode === "documents" && <DocumentLocker userId={user?.id ?? null} />}
             {viewMode === "banking" && <BankingView userId={user.id} filter={bankingCategory} />}
             {/* ... other views ... */}
 
@@ -370,7 +370,16 @@ const Dashboard = () => {
               </div>
             )}
 
-            {viewMode === "settings" && <SettingsView user={user} onSignOut={handleSignOut} activeTab={settingsTab as any} />}
+            {viewMode === "settings" && (
+              <SettingsView
+                user={user}
+                items={items}
+                pbkdfDerivedKey={pbkdfDerivedKey}
+                onVaultUnlocked={setPbkdfDerivedKey}
+                onSignOut={handleSignOut}
+                activeTab={settingsTab as any}
+              />
+            )}
             {viewMode === "authenticator" && <TwoFAMigrationWizard />}
           </div>
         </main>

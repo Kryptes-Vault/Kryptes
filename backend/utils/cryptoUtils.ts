@@ -1,5 +1,23 @@
 import crypto from "crypto";
 
+/* ============================================================================
+ * ⚠️⚠️⚠️  SECURITY: DELETE THIS ENTIRE DEBUG BLOCK BEFORE COMMIT OR DEPLOY  ⚠️⚠️⚠️
+ * Logging REDIS_CACHE_KEY to the console leaks a secret. Temporary local
+ * debugging ONLY — never merge or ship this. Remove as soon as diagnosis is done.
+ * ============================================================================ */
+(() => {
+  const rawKey = process.env.REDIS_CACHE_KEY;
+  console.log("RAW KEY: [" + rawKey + "]");
+  console.log("REDIS_CACHE_KEY raw length:", rawKey === undefined ? "(undefined)" : rawKey.length);
+  const normalized =
+    rawKey === undefined ? "" : String(rawKey).replace(/['"]/g, "").trim();
+  console.log(
+    "REDIS_CACHE_KEY length after .replace(/['\"]/g, '').trim():",
+    normalized.length
+  );
+})();
+/* ===================== END TEMPORARY DEBUG — DELETE BLOCK ABOVE ===================== */
+
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
@@ -58,4 +76,27 @@ export function decryptFromCache(encryptedPayload: string): string {
   decrypted += decipher.final("utf8");
 
   return decrypted;
+}
+
+/** Server-side vault row storage: split IV from authTag+ciphertext for `vault_items.iv` / `vault_items.ciphertext`. */
+export function encryptVaultAtRest(plaintext: string): {
+  iv: string;
+  ciphertext: string;
+  encryptionVersion: string;
+} {
+  const full = encryptForCache(plaintext);
+  const parts = full.split(":");
+  if (parts.length !== 3) {
+    throw new Error("Invalid encrypted payload format from encryptForCache");
+  }
+  const [ivHex, authTagHex, encryptedHex] = parts;
+  return {
+    iv: ivHex,
+    ciphertext: `${authTagHex}:${encryptedHex}`,
+    encryptionVersion: "server_aes256_gcm_v1",
+  };
+}
+
+export function decryptVaultAtRest(iv: string, ciphertext: string): string {
+  return decryptFromCache(`${iv}:${ciphertext}`);
 }

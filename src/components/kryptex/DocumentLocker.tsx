@@ -40,6 +40,8 @@ export type LockerDocument = {
 
 type DocumentLockerProps = {
   activeFormat?: DocumentFormat | "all";
+  /** Supabase `auth.users.id` — sent as `?userId=` so the API can authorize when the session cookie is missing (e.g. cross-origin `VITE_BACKEND_URL`). */
+  userId?: string | null;
 };
 
 type UploadItem = {
@@ -128,7 +130,16 @@ function normalizedExtension(name: string): DocumentFormat | null {
   return null;
 }
 
-export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerProps) {
+function documentsListUrl(base: string, userId?: string | null) {
+  const path = `${base}/api/documents`;
+  if (userId) {
+    const params = new URLSearchParams({ userId });
+    return `${path}?${params.toString()}`;
+  }
+  return path;
+}
+
+export default function DocumentLocker({ activeFormat = "all", userId = null }: DocumentLockerProps) {
   const [documents, setDocuments] = useState<LockerDocument[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -316,7 +327,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
     const loadDocuments = async () => {
       setSyncing(true);
       try {
-        const response = await fetch(`${API_BASE}/api/documents`, { credentials: "include" });
+        const response = await fetch(documentsListUrl(API_BASE, userId), { credentials: "include" });
         let data: { documents?: unknown; error?: string; hint?: string };
         try {
           data = (await response.json()) as { documents?: unknown; error?: string; hint?: string };
@@ -354,7 +365,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
       }
     };
     void loadDocuments();
-  }, []);
+  }, [userId]);
 
   function createFolder() {
     const trimmed = folderName.trim();
@@ -397,6 +408,7 @@ export default function DocumentLocker({ activeFormat = "all" }: DocumentLockerP
       const form = new FormData();
       form.append("file", file);
       form.append("folder", activeFolder);
+      if (userId) form.append("userId", userId);
       const response = await fetch(`${API_BASE}/api/documents/upload`, {
         method: "POST",
         body: form,
