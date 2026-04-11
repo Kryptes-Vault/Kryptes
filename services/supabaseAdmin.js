@@ -21,14 +21,21 @@ function getSupabaseAdmin() {
       },
     });
 
-    // Verify connection status (lightweight check)
-    singleton.from("vault").select("count").limit(1).then(({ error }) => {
-      if (error) {
-        console.error("❌ Supabase: Admin client initialized but table 'vault' health check failed:", error.message);
-      } else {
-        console.log("✅ Supabase Admin Client: Connected and Decrypted!");
-      }
-    });
+    // Verify connection status (lightweight check against real vault storage)
+    singleton
+      .from("vault_items")
+      .select("id")
+      .limit(1)
+      .then(({ error }) => {
+        if (error) {
+          console.error(
+            "❌ Supabase: Admin client initialized but table 'vault_items' health check failed:",
+            error.message
+          );
+        } else {
+          console.log("✅ Supabase Admin Client: Connected (vault_items reachable).");
+        }
+      });
   }
   return singleton;
 }
@@ -42,13 +49,16 @@ async function getUserVaultStatus(userId) {
     .from("profiles")
     .select("has_vault_data")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error(`[Gatekeeper] DB Error checking status for ${userId}:`, error.message);
     return true; // Fail open to allow standard fetch logic if DB is acting up
   }
-  return data?.has_vault_data || false;
+  if (!data) {
+    return false; // No profile row yet — treat as no vault data
+  }
+  return data.has_vault_data === true;
 }
 
 /**
