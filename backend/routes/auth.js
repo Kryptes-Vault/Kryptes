@@ -1,10 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const passport = require("passport");
-const {
-  getPostLoginRedirect,
-  getOAuthFailureRedirect,
-} = require("../config/auth");
+const { ensureShellUser } = require("../services/userShellStore");
+const { getSupabaseAdmin } = require("../services/supabaseAdmin");
 
 /**
  * @route POST /api/auth/send-code
@@ -24,67 +21,86 @@ router.post("/send-code", async (req, res) => {
   }
 });
 
-const successRedirect = (req, res) => {
-  res.redirect(getPostLoginRedirect());
-};
+/**
+ * @route POST /api/auth/supabase/sync
+ * @desc Validates Supabase access token, creates shell user in Redis, sets session cookie.
+ */
+router.post("/supabase/sync", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Missing bearer token" });
+  }
+  const token = authHeader.slice(7).trim();
+  if (!token) {
+    return res.status(401).json({ error: "Empty token" });
+  }
 
-const failureRedirect = getOAuthFailureRedirect();
+  try {
+    const supabase = getSupabaseAdmin();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
+    if (error || !user) {
+      return res.status(401).json({ error: "Invalid or expired token" });
+    }
 
-router.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
-router.get(
-  "/google/callback",
-  passport.authenticate("google", { failureRedirect }),
-  successRedirect
-);
+    const identity = user.identities && user.identities[0];
+    const provider = identity?.provider || "email";
 
-router.get(
-  "/twitter",
-  passport.authenticate("twitter", {
-    scope: ["users.read", "tweet.read", "users.email"],
-  })
-);
-router.get(
-  "/twitter/callback",
-  passport.authenticate("twitter", { failureRedirect }),
-  successRedirect
-);
+    const shell = await ensureShellUser({
+      provider,
+      providerId: user.id,
+      email: user.email,
+      displayName:
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.user_metadata?.user_name ||
+        user.user_metadata?.preferred_username ||
+        null,
+    });
 
-router.get(
-  "/yahoo",
-  passport.authenticate("yahoo", { scope: ["openid", "email", "profile"] })
-);
-router.get(
-  "/yahoo/callback",
-  passport.authenticate("yahoo", { failureRedirect }),
-  successRedirect
-);
+    req.session.kryptexUser = shell;
+    req.session.supabaseUserId = user.id;
+    req.user = shell;
 
-/** Optional: who am I for the SPA (session cookie) */
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error("[Auth] Session save failed:", saveErr.message);
+        return res.status(500).json({ error: "Session save failed" });
+      }
+      res.json({ ok: true, user: shell });
+    });
+  } catch (e) {
+    if (e.message?.includes("SUPABASE_URL")) {
+      return res.status(503).json({ error: "Supabase not configured on server" });
+    }
+    console.error("[Auth] supabase/sync:", e);
+    res.status(500).json({ error: "Sync failed" });
+  }
+});
+
 router.get("/me", (req, res) => {
-  if (!req.user) {
+  const user = req.user || req.session?.kryptexUser;
+  if (!user) {
     return res.status(401).json({ authenticated: false });
   }
   res.json({
     authenticated: true,
     user: {
-      id: req.user.id,
-      provider: req.user.provider,
-      email: req.user.email,
-      displayName: req.user.displayName,
+      id: user.id,
+      provider: user.provider,
+      email: user.email,
+      displayName: user.displayName,
     },
   });
 });
 
 router.post("/logout", (req, res) => {
-  req.logout((err) => {
+  req.session.destroy((err) => {
     if (err) return res.status(500).json({ error: "Logout failed" });
-    req.session.destroy(() => {
-      res.clearCookie("kryptex.sid", { path: "/" });
-      res.json({ success: true });
-    });
+    res.clearCookie("kryptex.sid", { path: "/" });
+    res.json({ success: true });
   });
 });
 
