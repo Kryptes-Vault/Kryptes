@@ -455,9 +455,10 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
         thumbnailSeed: String(d.name || "").slice(0, 1).toUpperCase() || "D",
         source: "upload",
       };
-      syncDocument(uploadedDoc);
+      void reloadVault();
+      toast.success("Document uploaded successfully.");
     } catch (e) {
-      toast.error(networkFetchToastMessage(e));
+      toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       window.clearInterval(interval);
       setUploads((prev) => {
