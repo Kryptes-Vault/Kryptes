@@ -149,13 +149,29 @@ export function loadServiceAccountCredentials(): ServiceAccountCredentials {
 export function parseDriveFolderId(raw: string): string {
   const t = raw.trim();
   if (!t) return t;
+
+  // 1. Handle folders/FOLDER_ID style URLs
   const fromFolders = t.match(/\/folders\/([a-zA-Z0-9_-]+)/);
   if (fromFolders?.[1]) return fromFolders[1];
+
+  // 2. Handle ?id=FOLDER_ID style URLs
   const fromIdParam = t.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   if (fromIdParam?.[1]) return fromIdParam[1];
-  if (/^[a-zA-Z0-9_-]+$/.test(t) && t.length >= 10) return t;
+
+  // 3. Handle bare ID (only if it matches the expected pattern and is not a full URL)
+  if (/^[a-zA-Z0-9_-]+$/.test(t) && t.length >= 10 && !t.includes("://")) return t;
+
+  // 4. Fallback: if it looks like a URL but we failed to parse a specific ID part, 
+  // try to extract the last path segment that looks like an ID
+  if (t.includes("://")) {
+    const parts = t.split("?")[0].split("/");
+    const last = parts[parts.length - 1];
+    if (last && /^[a-zA-Z0-9_-]+$/.test(last) && last.length >= 10) return last;
+  }
+
   throw new Error(
-    "GDRIVE_MASTER_FOLDER_ID must be the folder id (from .../folders/FOLDER_ID) or a full Drive folder URL — not an invalid value."
+    "GDRIVE_MASTER_FOLDER_ID must be a valid Google Drive folder ID or URL. " +
+    "Check your .env and ensure it's not a root Move/Team drive link without a folder segment."
   );
 }
 
@@ -259,32 +275,43 @@ export async function getOrCreateUserFolder(userId: string): Promise<string> {
   const masterId = getMasterFolderId();
   const safe = escapeDriveQueryLiteral(userId);
 
-  const listRes = await drive.files.list({
-    q: `'${masterId}' in parents and name = '${safe}' and mimeType = '${FOLDER_MIME}' and trashed = false`,
-    fields: "files(id, name)",
-    pageSize: 5,
-    supportsAllDrives: true,
-    includeItemsFromAllDrives: true,
-  });
+  try {
+    const listRes = await drive.files.list({
+      q: `'${masterId}' in parents and name = '${safe}' and mimeType = '${FOLDER_MIME}' and trashed = false`,
+      fields: "files(id, name)",
+      pageSize: 5,
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+    });
 
-  const existing = listRes.data.files?.[0]?.id;
-  if (existing) return existing;
+    const existing = listRes.data.files?.[0]?.id;
+    if (existing) return existing;
 
-  const createRes = await drive.files.create({
-    requestBody: {
-      name: userId,
-      mimeType: FOLDER_MIME,
-      parents: [masterId],
-    },
-    fields: "id",
-    supportsAllDrives: true,
-  });
+    const createRes = await drive.files.create({
+      requestBody: {
+        name: userId,
+        mimeType: FOLDER_MIME,
+        parents: [masterId],
+      },
+      fields: "id",
+      supportsAllDrives: true,
+    });
 
-  const id = createRes.data.id;
-  if (!id) {
-    throw new Error("Drive did not return a folder id after create.");
+    const id = createRes.data.id;
+    if (!id) {
+      throw new Error("Drive did not return a folder id after create.");
+    }
+    return id;
+  } catch (err: any) {
+    const status = err.response?.status;
+    if (status === 404) {
+      throw new Error(`Master folder (${masterId}) was not found. Please verify GDRIVE_MASTER_FOLDER_ID.`);
+    }
+    if (status === 403) {
+      throw new Error(`Permission denied for master folder (${masterId}). Ensure the service account email is an Editor.`);
+    }
+    throw err;
   }
-  return id;
 }
 
 /**

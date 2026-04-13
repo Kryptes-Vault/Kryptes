@@ -53,6 +53,7 @@ Documentation is grouped by **topic**. Paths are from the repository root (e.g. 
 | [platform/vercel-env-sync.md](./platform/vercel-env-sync.md) | Vercel / Supabase env sync |
 | [platform/env-template.md](./platform/env-template.md) | Environment variable template |
 | [platform/api-configuration.md](./platform/api-configuration.md) | Final API configuration |
+| [R2_MIGRATION_CHANGELOG.md](./R2_MIGRATION_CHANGELOG.md) | Google Drive → Cloudflare R2 migration, pre-signed URL architecture, ZK lifecycle |
 
 ---
 

@@ -23,19 +23,21 @@ import {
 import { buildJustifiedRows, clampAspect, type AspectItem } from "./documentLocker/justifiedLayout";
 import { DocumentMediaCard } from "./documentLocker/DocumentMediaCard";
 import { DocumentFixedCard } from "./documentLocker/DocumentFixedCard";
+import { encryptFile, decryptFile, generateFileEncryptionKey, validateFileType } from "@/lib/crypto/fileCrypto";
+import { convertDecryptedFile, downloadBlob, type ExportFormat } from "@/lib/crypto/fileExporter";
 
 export type DocumentFormat = "pdf" | "png" | "jpeg" | "webp" | "docx";
 
 export type LockerDocument = {
   id: string;
+  objectKey: string;
   name: string;
   size: number;
   type: DocumentFormat;
   folder: string;
   updatedAt: string;
   thumbnailSeed: string;
-  source: "drive" | "upload";
-  previewUrl?: string;
+  source: "r2" | "upload";
 };
 
 type DocumentLockerProps = {
@@ -51,10 +53,48 @@ type UploadItem = {
   type: DocumentFormat;
 };
 
-const ACCEPTED_EXTENSIONS = ["pdf", "png", "jpg", "jpeg", "webp", "docx"] as const;
+const ACCEPTED_EXTENSIONS = ["pdf", "png", "jpg", "jpeg", "webp"] as const;
 
 const DEFAULT_FOLDERS = ["Education", "Government", "Vehicle", "Certificates"];
 const API_BASE = (import.meta.env.VITE_BACKEND_URL || "http://localhost:4000").replace(/\/$/, "");
+const ZK_VAULT_DOCUMENTS_ENDPOINT = `${API_BASE}/api/vault/documents`;
+
+const ZK_KEY_STORAGE = "kryptes_zk_file_key_v1";
+
+async function getOrCreateFileKey(): Promise<string> {
+  const stored = sessionStorage.getItem(ZK_KEY_STORAGE);
+  if (stored) return stored;
+  const key = await generateFileEncryptionKey();
+  sessionStorage.setItem(ZK_KEY_STORAGE, key);
+  return key;
+}
+
+function mimeForType(type: DocumentFormat): string {
+  switch (type) {
+    case "pdf": return "application/pdf";
+    case "png": return "image/png";
+    case "jpeg": return "image/jpeg";
+    case "webp": return "image/webp";
+    default: return "application/octet-stream";
+  }
+}
+
+async function fetchR2DownloadUrl(objectKey: string): Promise<string> {
+  const res = await fetch(
+    `${ZK_VAULT_DOCUMENTS_ENDPOINT}/download-url/${encodeURIComponent(objectKey)}`,
+    { credentials: "include" }
+  );
+  if (!res.ok) throw new Error(`Failed to get download URL (${res.status})`);
+  const data = (await res.json()) as { downloadUrl: string };
+  return data.downloadUrl;
+}
+
+async function fetchEncryptedBlob(objectKey: string): Promise<Blob> {
+  const url = await fetchR2DownloadUrl(objectKey);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`R2 download failed (${res.status})`);
+  return res.blob();
+}
 
 function networkFetchToastMessage(e: unknown): string {
   if (e instanceof TypeError && /failed to fetch|load failed|networkerror/i.test(String(e.message))) {
@@ -110,13 +150,11 @@ function thumbnailForType(type: DocumentFormat) {
 function getAllowedTargets(original: DocumentFormat): DocumentFormat[] {
   switch (original) {
     case "pdf":
-      return ["pdf", "png", "jpeg"];
+      return ["pdf"];
     case "png":
     case "jpeg":
     case "webp":
       return ["png", "jpeg", "webp", "pdf"];
-    case "docx":
-      return ["docx"];
     default:
       return [original];
   }
@@ -130,8 +168,8 @@ function normalizedExtension(name: string): DocumentFormat | null {
   return null;
 }
 
-function documentsListUrl(base: string, userId?: string | null) {
-  const path = `${base}/api/documents`;
+function documentsListUrl(userId?: string | null) {
+  const path = `${ZK_VAULT_DOCUMENTS_ENDPOINT}/list`;
   if (userId) {
     const params = new URLSearchParams({ userId });
     return `${path}?${params.toString()}`;
@@ -237,22 +275,19 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
 
   useEffect(() => {
     for (const doc of imageDocuments) {
-      if (doc.previewUrl) continue;
       if (thumbFetchedRef.current.has(doc.id)) continue;
+      if (!doc.objectKey) continue;
       thumbFetchedRef.current.add(doc.id);
-      const docId = doc.id;
+      const { id: docId, objectKey, type: docType } = doc;
       setThumbLoadingId(docId);
-      const fmt = doc.type === "jpeg" ? "jpeg" : doc.type === "webp" ? "webp" : "png";
       void (async () => {
         try {
-          const response = await fetch(
-            `${API_BASE}/api/documents/download?id=${encodeURIComponent(docId)}&targetFormat=${fmt}`,
-            { credentials: "include" }
-          );
-          if (!response.ok) return;
-          const blob = await response.blob();
-          const url = URL.createObjectURL(blob);
+          const key = await getOrCreateFileKey();
+          const encryptedBlob = await fetchEncryptedBlob(objectKey);
+          const url = await decryptFile(encryptedBlob, key, mimeForType(docType));
           setThumbById((prev) => (prev[docId] ? prev : { ...prev, [docId]: url }));
+        } catch (err) {
+          console.warn("[ZK-Vault] Thumbnail decrypt failed for", docId, err);
         } finally {
           setThumbLoadingId((cur) => (cur === docId ? null : cur));
         }
@@ -270,17 +305,20 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   }, []);
 
   const downloadDocument = useCallback(async (doc: LockerDocument) => {
-    const targetFormat = doc.type;
-    const url = `${API_BASE}/api/documents/download?id=${encodeURIComponent(doc.id)}&targetFormat=${encodeURIComponent(targetFormat)}`;
-    const response = await fetch(url, { credentials: "include" });
-    if (!response.ok) return;
-    const blob = await response.blob();
-    const dl = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = dl;
-    a.download = doc.name;
-    a.click();
-    URL.revokeObjectURL(dl);
+    if (!doc.objectKey) return;
+    try {
+      const key = await getOrCreateFileKey();
+      const encryptedBlob = await fetchEncryptedBlob(doc.objectKey);
+      const decryptedUrl = await decryptFile(encryptedBlob, key, mimeForType(doc.type));
+      const a = document.createElement("a");
+      a.href = decryptedUrl;
+      a.download = doc.name;
+      a.click();
+      URL.revokeObjectURL(decryptedUrl);
+    } catch (err) {
+      toast.error("Failed to decrypt document for download.");
+      console.error("[ZK-Vault] Download decrypt error:", err);
+    }
   }, []);
 
   useEffect(() => {
@@ -300,17 +338,19 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
 
     let cancelled = false;
     const loadPreview = async () => {
+      if (!previewDoc.objectKey) return;
       setPreviewLoading(true);
       try {
-        const response = await fetch(
-          `${API_BASE}/api/documents/download?id=${encodeURIComponent(previewDoc.id)}&targetFormat=${encodeURIComponent(previewDoc.type)}`,
-          { credentials: "include" }
-        );
-        if (!response.ok) throw new Error("Preview fetch failed");
-        const blob = await response.blob();
+        const key = await getOrCreateFileKey();
+        const encryptedBlob = await fetchEncryptedBlob(previewDoc.objectKey);
         if (cancelled) return;
+        const decryptedUrl = await decryptFile(encryptedBlob, key, mimeForType(previewDoc.type));
+        if (cancelled) {
+          URL.revokeObjectURL(decryptedUrl);
+          return;
+        }
         if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl);
-        setPreviewBlobUrl(URL.createObjectURL(blob));
+        setPreviewBlobUrl(decryptedUrl);
       } finally {
         if (!cancelled) setPreviewLoading(false);
       }
@@ -327,7 +367,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
     const loadDocuments = async () => {
       setSyncing(true);
       try {
-        const response = await fetch(documentsListUrl(API_BASE, userId), { credentials: "include" });
+        const response = await fetch(documentsListUrl(userId), { credentials: "include" });
         let data: { documents?: unknown; error?: string; hint?: string };
         try {
           data = (await response.json()) as { documents?: unknown; error?: string; hint?: string };
@@ -345,16 +385,17 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
         setDocuments(
           raw.map((row) => {
             const doc = row as Record<string, unknown>;
+            const ext = String(doc.fileType ?? doc.type ?? "bin").toLowerCase();
             return {
               id: String(doc.id ?? ""),
+              objectKey: String(doc.objectKey ?? doc.driveFileId ?? ""),
               name: String(doc.name ?? ""),
               size: Number(doc.size ?? 0),
-              type: doc.type as DocumentFormat,
+              type: (ext === "jpg" ? "jpeg" : ext) as DocumentFormat,
               folder: String(doc.folder ?? ""),
               updatedAt: String(doc.updatedAt ?? ""),
               thumbnailSeed: String(doc.name || "").slice(0, 1).toUpperCase() || "D",
-              source: "drive" as const,
-              previewUrl: typeof doc.previewUrl === "string" ? doc.previewUrl : undefined,
+              source: "r2" as const,
             };
           })
         );
@@ -390,53 +431,79 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
     const extension = normalizedExtension(file.name);
     if (!extension) return;
 
+    try {
+      validateFileType(file);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Unsupported file type.");
+      return;
+    }
+
     const tempId = `upload-${crypto.randomUUID()}`;
     setUploads((prev) => [...prev, { id: tempId, name: file.name, progress: 0, type: extension }]);
 
     let progress = 0;
     const interval = window.setInterval(() => {
-      progress += Math.random() * 22;
-      if (progress >= 100) {
-        progress = 100;
+      progress += Math.random() * 15;
+      if (progress >= 90) {
+        progress = 90;
         window.clearInterval(interval);
       }
-
       setUploads((prev) => prev.map((item) => (item.id === tempId ? { ...item, progress: Math.round(progress) } : item)));
-    }, 160);
+    }, 180);
 
     try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("folder", activeFolder);
-      if (userId) form.append("userId", userId);
-      const response = await fetch(`${API_BASE}/api/documents/upload`, {
-        method: "POST",
-        body: form,
-        credentials: "include",
+      // 1. Encrypt client-side
+      const key = await getOrCreateFileKey();
+      const encryptedBlob = await encryptFile(file, key);
+      setUploads((prev) => prev.map((item) => (item.id === tempId ? { ...item, progress: 30 } : item)));
+
+      // 2. Get pre-signed upload URL from backend
+      const qs = userId ? `?userId=${encodeURIComponent(userId)}` : "";
+      const urlRes = await fetch(`${ZK_VAULT_DOCUMENTS_ENDPOINT}/upload-url${qs}`, { credentials: "include" });
+      if (!urlRes.ok) throw new Error(`Failed to get upload URL (${urlRes.status})`);
+      const { uploadUrl, objectKey } = (await urlRes.json()) as { uploadUrl: string; objectKey: string };
+      setUploads((prev) => prev.map((item) => (item.id === tempId ? { ...item, progress: 45 } : item)));
+
+      // 3. PUT encrypted blob directly to R2 (zero backend memory)
+      const putRes = await fetch(uploadUrl, {
+        method: "PUT",
+        body: encryptedBlob,
+        headers: { "Content-Type": "application/octet-stream" },
       });
-      let data: { document?: unknown; error?: string; hint?: string };
-      try {
-        data = (await response.json()) as { document?: unknown; error?: string; hint?: string };
-      } catch {
-        toast.error(`Upload failed (${response.status}).`);
+      if (!putRes.ok) throw new Error(`R2 upload failed (${putRes.status})`);
+      setUploads((prev) => prev.map((item) => (item.id === tempId ? { ...item, progress: 80 } : item)));
+
+      // 4. Commit metadata to Supabase via backend
+      const commitRes = await fetch(`${ZK_VAULT_DOCUMENTS_ENDPOINT}/commit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          objectKey,
+          fileName: file.name,
+          folder: activeFolder,
+          fileType: extension,
+          originalSize: file.size,
+          userId,
+        }),
+      });
+      const data = (await commitRes.json()) as { document?: any; error?: string };
+      if (!commitRes.ok || !data?.document) {
+        toast.error(data?.error || `Upload commit failed (${commitRes.status}).`);
         return;
       }
-      if (!response.ok || !data?.document) {
-        const msg = typeof data?.error === "string" ? data.error : `Upload failed (${response.status}).`;
-        const hint = typeof data?.hint === "string" ? data.hint : "";
-        toast.error(hint ? `${msg}\n\n${hint}` : msg);
-        return;
-      }
+      const d = data.document;
+      const docType = (d.fileType === "jpg" ? "jpeg" : d.fileType) as DocumentFormat;
       const uploadedDoc: LockerDocument = {
-        id: data.document.id,
-        name: data.document.name,
-        size: data.document.size,
-        type: data.document.type,
-        folder: data.document.folder,
-        updatedAt: data.document.updatedAt,
-        thumbnailSeed: data.document.name.slice(0, 1).toUpperCase() || "D",
+        id: d.id,
+        objectKey: d.objectKey,
+        name: d.name,
+        size: d.size,
+        type: docType,
+        folder: d.folder,
+        updatedAt: d.updatedAt,
+        thumbnailSeed: String(d.name || "").slice(0, 1).toUpperCase() || "D",
         source: "upload",
-        previewUrl: data.document.previewUrl,
       };
       syncDocument(uploadedDoc);
     } catch (e) {
@@ -473,21 +540,38 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   }
 
   async function runConversion() {
-    if (!conversionDoc) return;
+    if (!conversionDoc || !conversionDoc.objectKey) return;
     setConverting(true);
     setBusyDocId(conversionDoc.id);
     try {
-      const url = `${API_BASE}/api/documents/download?id=${encodeURIComponent(conversionDoc.id)}&targetFormat=${encodeURIComponent(targetFormat)}`;
-      const response = await fetch(url, { credentials: "include" });
-      if (!response.ok) throw new Error("Download failed");
-      const blob = await response.blob();
-      const downloadUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = `${conversionDoc.name.replace(/\.[^.]+$/, "")}.${targetFormat}`;
-      a.click();
-      URL.revokeObjectURL(downloadUrl);
+      const key = await getOrCreateFileKey();
+      const encryptedBlob = await fetchEncryptedBlob(conversionDoc.objectKey);
+      const decryptedUrl = await decryptFile(encryptedBlob, key, mimeForType(conversionDoc.type));
+
+      // If target format matches source, just download the decrypted original
+      if (targetFormat === conversionDoc.type) {
+        const a = document.createElement("a");
+        a.href = decryptedUrl;
+        a.download = conversionDoc.name;
+        a.click();
+        URL.revokeObjectURL(decryptedUrl);
+        setConversionDoc(null);
+        return;
+      }
+
+      // Client-side conversion via canvas / jsPDF
+      const decRes = await fetch(decryptedUrl);
+      const decBlob = await decRes.blob();
+      URL.revokeObjectURL(decryptedUrl);
+
+      const converted = await convertDecryptedFile(decBlob, mimeForType(conversionDoc.type), targetFormat as ExportFormat);
+      const baseName = conversionDoc.name.replace(/\.[^.]+$/, "");
+      const ext = targetFormat === "jpeg" ? "jpg" : targetFormat;
+      downloadBlob(converted, `${baseName}.${ext}`);
       setConversionDoc(null);
+    } catch (err) {
+      toast.error("Failed to convert document.");
+      console.error("[ZK-Vault] Conversion error:", err);
     } finally {
       setConverting(false);
       setBusyDocId(null);
@@ -495,12 +579,14 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   }
 
   async function deleteDocument(doc: LockerDocument) {
+    if (!doc.objectKey) return;
     setDeletePendingId(doc.id);
     try {
-      const response = await fetch(`${API_BASE}/api/documents?id=${encodeURIComponent(doc.id)}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const params = userId ? `?userId=${encodeURIComponent(userId)}` : "";
+      const response = await fetch(
+        `${ZK_VAULT_DOCUMENTS_ENDPOINT}/${encodeURIComponent(doc.objectKey)}${params}`,
+        { method: "DELETE", credentials: "include" }
+      );
       if (!response.ok) throw new Error("Delete failed");
       setDocuments((prev) => prev.filter((item) => item.id !== doc.id));
       if (previewDoc?.id === doc.id) setPreviewDoc(null);
@@ -594,14 +680,14 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
               >
                 <CloudUpload className="h-4 w-4" /> Upload button
               </button>
-              <input ref={inputRef} type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.docx" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+              <input ref={inputRef} type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
             </div>
           </div>
 
           {/* Gallery (justified flex) or list */}
           {syncing ? (
             <div className="mx-auto flex min-h-[220px] w-full max-w-3xl items-center justify-center rounded-3xl border border-black/5 bg-[#f7f7f7]">
-              <p className="text-xs font-bold uppercase tracking-widest text-black/40">Syncing documents from MEGA...</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-black/40">Syncing encrypted documents...</p>
             </div>
           ) : sortedDocuments.length > 0 ? (
             viewLayout === "list" ? (

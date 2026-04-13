@@ -11,11 +11,12 @@ const sharp = require("sharp") as any;
 const { PDFDocument } = require("pdf-lib") as any;
 
 const vaultRoutes = require("./routes/vault");
+const zkDocumentRoutes = require("./routes/documents");
 const webhookRoutes = require("./routes/webhooks");
 const authRoutes = require("./routes/auth");
 const { handleSendEmailHook } = require("./routes/authEmailHook");
 const { corsOptions, getSessionCookieOptions } = require("./config/auth");
-import { logBitwardenStartupStatus } from "./services/bitwardenService";
+const { encryptVaultAtRest, decryptVaultAtRest } = require("./utils/cryptoUtils");
 const supportRoutes = require("./routes/support");
 const otpRoutes = require("./routes/otp");
 
@@ -51,20 +52,7 @@ type ConvertResult = {
   fileName: string;
 };
 
-type DocumentRecord = {
-  id: string;
-  storedName: string;
-  name: string;
-  folder: string;
-  size: number;
-  updatedAt: string;
-  type: "pdf" | "png" | "jpeg" | "webp" | "docx";
-  previewUrl: string;
-};
-
 const IMAGE_FORMATS = new Set<SupportedImageFormat>(["png", "jpeg", "webp"]);
-const DOCUMENT_PREFIX = "kryptesdocs";
-const SAFE_DOC_EXTENSIONS = new Set(["pdf", "png", "jpg", "jpeg", "webp", "docx"]);
 
 let redisClient: any;
 let redisStore: any;
@@ -119,57 +107,6 @@ function scrubBuffer(buffer: Buffer | null | undefined) {
   if (buffer) buffer.fill(0);
 }
 
-function normalizeDocExtension(name: string): "pdf" | "png" | "jpeg" | "webp" | "docx" | null {
-  const raw = name.split(".").pop()?.toLowerCase();
-  if (!raw) return null;
-  const normalized = raw === "jpg" ? "jpeg" : raw;
-  if (SAFE_DOC_EXTENSIONS.has(normalized)) return normalized as "pdf" | "png" | "jpeg" | "webp" | "docx";
-  return null;
-}
-
-function toStoredName(folder: string, originalName: string) {
-  return `${DOCUMENT_PREFIX}__${encodeURIComponent(folder)}__${Date.now()}__${encodeURIComponent(originalName)}`;
-}
-
-function parseStoredName(storedName: string) {
-  const parts = storedName.split("__");
-  if (parts.length < 4 || parts[0] !== DOCUMENT_PREFIX) return null;
-  const folder = decodeURIComponent(parts[1]);
-  const ts = Number.parseInt(parts[2], 10);
-  const name = decodeURIComponent(parts.slice(3).join("__"));
-  if (!folder || !name || Number.isNaN(ts)) return null;
-  return { folder, name, ts };
-}
-
-function documentsVaultUserId(): string {
-  return (process.env.GDRIVE_DOCUMENTS_USER_ID || "kryptes-documents").trim();
-}
-
-function documentPreviewUrl(req: { get: (name: string) => string | undefined; protocol?: string }, fileId: string, docType: string): string {
-  const host = req.get("x-forwarded-host") || req.get("host") || `127.0.0.1:${process.env.PORT || "4000"}`;
-  const rawProto = req.get("x-forwarded-proto") || req.protocol || "http";
-  const proto = rawProto.includes(",") ? rawProto.split(",")[0]!.trim() : rawProto.trim();
-  return `${proto}://${host}/api/documents/download?id=${encodeURIComponent(fileId)}&targetFormat=${encodeURIComponent(docType)}`;
-}
-
-type GDriveModule = typeof import("./services/googleDriveStorage");
-
-function sendDriveJsonError(res: any, gdrive: GDriveModule, error: unknown, fallback: string) {
-  const d = gdrive.getDriveApiErrorDetails(error);
-  const status = d.isQuotaOrSaStorage
-    ? 507
-    : d.httpStatus && d.httpStatus >= 400 && d.httpStatus <= 499
-      ? d.httpStatus
-      : 500;
-  const body: { error: string; code?: string; hint?: string } = {
-    error: d.message || fallback,
-  };
-  if (d.isQuotaOrSaStorage) {
-    body.code = "DRIVE_STORAGE_QUOTA";
-    body.hint = gdrive.DRIVE_QUOTA_HINT;
-  }
-  return res.status(status).json(body);
-}
 async function convertImageToImage(buffer: Buffer, targetFormat: SupportedImageFormat): Promise<Buffer> {
   const pipeline = sharp(buffer, { failOn: "none" });
 
@@ -358,186 +295,10 @@ app.post("/api/convert", upload.single("file"), async (req: KryptexRequest, res:
   }
 });
 
-app.get("/api/documents", async (req: any, res: any) => {
-  const q =
-    typeof req.query.userId === "string" && req.query.userId.trim() ? req.query.userId.trim() : "";
-  const userId = q || req.session?.supabaseUserId || (req.user && req.user.id);
-  if (!userId) {
-    return res.status(400).json({
-      error: "UserID required",
-      hint: "Pass ?userId=<Supabase auth user id> or establish a session via POST /api/auth/supabase/sync.",
-    });
-  }
-
-  const { checkProfileFlag } = require("./services/gatekeeperService");
-  if (!(await checkProfileFlag(userId, 'has_documents'))) {
-    return res.status(200).json({ documents: [], source: "gatekeeper_documents" });
-  }
-
-  const gdrive = require("./services/googleDriveStorage") as typeof import("./services/googleDriveStorage");
-  if (!gdrive.isDriveDocumentVaultConfigured()) {
-    return res.status(503).json({ error: "Document vault not configured (Google Drive: set GDRIVE_* and GDRIVE_MASTER_FOLDER_ID)." });
-  }
-  try {
-    const rows = await gdrive.listUserFolderBinaryFiles(documentsVaultUserId(), `${DOCUMENT_PREFIX}__`);
-    const docs: DocumentRecord[] = [];
-    for (const row of rows) {
-      const storedName = row.name;
-      const parsed = parseStoredName(storedName);
-      if (!parsed) continue;
-      const type = normalizeDocExtension(parsed.name);
-      if (!type) continue;
-      docs.push({
-        id: row.id,
-        storedName,
-        name: parsed.name,
-        folder: parsed.folder,
-        size: row.size,
-        updatedAt: row.modifiedTime ? new Date(row.modifiedTime).toISOString() : new Date(parsed.ts).toISOString(),
-        type,
-        previewUrl: documentPreviewUrl(req, row.id, type),
-      });
-    }
-
-    return res.status(200).json({ documents: docs.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt)) });
-  } catch (error) {
-    return sendDriveJsonError(res, gdrive, error, "Failed to list documents.");
-  }
-});
-
-app.post("/api/documents/upload", upload.single("file"), async (req: any, res: any) => {
-  const file = req.file;
-  const folder = typeof req.body?.folder === "string" && req.body.folder.trim() ? req.body.folder.trim() : "General";
-
-  if (!file) return res.status(400).json({ error: "File is required." });
-  const type = normalizeDocExtension(file.originalname);
-  if (!type) return res.status(400).json({ error: "Unsupported file type." });
-
-  const sourceBuffer = Buffer.from(file.buffer);
-  scrubBuffer(file.buffer);
-
-  const gdrive = require("./services/googleDriveStorage") as typeof import("./services/googleDriveStorage");
-  if (!gdrive.isDriveDocumentVaultConfigured()) {
-    scrubBuffer(sourceBuffer);
-    return res.status(503).json({ error: "Document vault not configured (Google Drive: set GDRIVE_* and GDRIVE_MASTER_FOLDER_ID)." });
-  }
-
-  try {
-    const storedName = toStoredName(folder, file.originalname);
-    const fileId = await gdrive.uploadToDriveVault(documentsVaultUserId(), sourceBuffer, storedName);
-    scrubBuffer(sourceBuffer);
-
-    const userId = req.body?.userId || req.query?.userId || (req.user && req.user.id);
-    if (userId) {
-      const { setProfileFlagActive } = require("./services/gatekeeperService");
-      await setProfileFlagActive(userId, 'has_documents');
-    }
-
-    return res.status(201).json({
-      document: {
-        id: fileId,
-        storedName,
-        name: file.originalname,
-        folder,
-        size: Number(file.size || 0),
-        updatedAt: new Date().toISOString(),
-        type,
-        previewUrl: documentPreviewUrl(req, fileId, type),
-      },
-    });
-  } catch (error) {
-    scrubBuffer(sourceBuffer);
-    return sendDriveJsonError(res, gdrive, error, "Upload failed.");
-  }
-});
-
-app.get("/api/documents/download", async (req: any, res: any) => {
-  const fileId = typeof req.query?.id === "string" ? req.query.id : "";
-  const targetRaw = normalizeFormat(req.query?.targetFormat);
-  if (!fileId) return res.status(400).json({ error: "Document id is required." });
-
-  const gdrive = require("./services/googleDriveStorage") as typeof import("./services/googleDriveStorage");
-  if (!gdrive.isDriveDocumentVaultConfigured()) {
-    return res.status(503).json({ error: "Document vault not configured." });
-  }
-
-  try {
-    const meta = await gdrive.getDriveFileMetadata(fileId);
-    const fileName = meta.name || "";
-    const parsed = parseStoredName(fileName);
-    if (!parsed) return res.status(404).json({ error: "Document metadata not found." });
-    const sourceFormat = normalizeDocExtension(parsed.name);
-    if (!sourceFormat) return res.status(400).json({ error: "Unsupported source document type." });
-
-    const sourceBuffer = await gdrive.downloadDriveFileBuffer(fileId);
-
-    const requestedTarget = targetRaw ?? sourceFormat;
-    if (!isTargetFormat(requestedTarget)) {
-      scrubBuffer(sourceBuffer);
-      return res.status(400).json({ error: "Unsupported target format." });
-    }
-
-    if (sourceFormat === "docx") {
-      if (requestedTarget !== "pdf") {
-        return res
-          .status(200)
-          .setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-          .setHeader("Content-Disposition", `attachment; filename="${parsed.name}"`)
-          .setHeader("Cache-Control", "no-store")
-          .send(sourceBuffer);
-      }
-      scrubBuffer(sourceBuffer);
-      return res.status(400).json({ error: "DOCX conversion is limited to original download currently." });
-    }
-
-    let outputBuffer: Buffer | null = null;
-    try {
-      const result = await convertBuffer({
-        buffer: sourceBuffer,
-        sourceFormat,
-        targetFormat: requestedTarget,
-      });
-      outputBuffer = result.buffer;
-      const baseName = parsed.name.replace(/\.[^.]+$/, "");
-      const fileName = `${baseName}.${extensionFor(requestedTarget)}`;
-      res.on("finish", () => {
-        scrubBuffer(sourceBuffer);
-        scrubBuffer(outputBuffer);
-      });
-      return res
-        .status(200)
-        .setHeader("Content-Type", contentTypeFor(requestedTarget))
-        .setHeader("Content-Disposition", `attachment; filename="${fileName}"`)
-        .setHeader("Cache-Control", "no-store")
-        .send(outputBuffer);
-    } catch {
-      scrubBuffer(sourceBuffer);
-      scrubBuffer(outputBuffer);
-      return res.status(400).json({ error: "Requested conversion is not supported for this file type." });
-    }
-  } catch (error) {
-    return sendDriveJsonError(res, gdrive, error, "Download failed.");
-  }
-});
-
-app.delete("/api/documents", async (req: any, res: any) => {
-  const fileId = typeof req.query?.id === "string" ? req.query.id : "";
-  if (!fileId) return res.status(400).json({ error: "Document id is required." });
-
-  const gdrive = require("./services/googleDriveStorage") as typeof import("./services/googleDriveStorage");
-  if (!gdrive.isDriveDocumentVaultConfigured()) {
-    return res.status(503).json({ error: "Document vault not configured." });
-  }
-
-  try {
-    await gdrive.deleteDriveFile(fileId);
-    return res.status(200).json({ ok: true });
-  } catch (error) {
-    return sendDriveJsonError(res, gdrive, error, "Delete failed.");
-  }
-});
+/* Legacy /api/documents routes removed — migrated to Cloudflare R2 via /api/vault/documents */
 
 app.use("/api/vault", vaultRoutes);
+app.use("/api/vault/documents", zkDocumentRoutes);
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api/auth", authRoutes);
 app.post("/api/auth/send-email-hook", express.json(), handleSendEmailHook);
@@ -560,37 +321,21 @@ const server = app.listen(PORT, BIND_HOST, () => {
     };
     await redisSvc.whenRedisReadyOrTimeout(15000);
 
-    await logBitwardenStartupStatus();
+    // 3. Supabase Storage Status
+    const { verifySupabaseConnection } = require("./services/supabaseAdmin");
+    await verifySupabaseConnection();
 
-    if (process.env.GDRIVE_STARTUP_VERIFY === "false") {
-      console.log("[Storage] Google Drive: startup verify skipped (GDRIVE_STARTUP_VERIFY=false)");
-      return;
-    }
-
-    const gdrive = require("./services/googleDriveStorage") as typeof import("./services/googleDriveStorage");
-    if (!gdrive.isGoogleDriveConfigured()) {
-      console.log(
-        "[Storage] Google Drive: not configured — set GDRIVE_CLIENT_EMAIL + GDRIVE_PRIVATE_KEY (or GDRIVE_CREDENTIALS_PATH / JSON file).",
-      );
-      return;
-    }
-    console.log("[Storage] Google Drive: verifying service account and API reachability...");
+    // 4. Cloudflare R2 Storage Status
+    const r2 = require("./services/r2Storage") as typeof import("./services/r2Storage");
     try {
-      const drive = gdrive.getDriveClient();
-      const auth = gdrive.getDriveAuthClient();
-      await gdrive.verifyDriveConnection(drive, auth);
-      const masterFolderIdRaw = process.env.GDRIVE_MASTER_FOLDER_ID?.trim();
-      if (masterFolderIdRaw) {
-        const masterId = gdrive.parseDriveFolderId(masterFolderIdRaw);
-        await gdrive.verifyDrivePermissions(drive, masterId);
+      if (!r2.isR2Configured()) {
+        console.warn("[Storage] ⚠️ Cloudflare R2: R2_ENDPOINT_URL / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY not set.");
       } else {
-        console.warn("[Storage] Google Drive: GDRIVE_MASTER_FOLDER_ID is empty — document vault uploads will fail until set.");
+        console.log("[Storage] Cloudflare R2: Verifying bucket reachability...");
+        await r2.verifyR2Connection();
       }
-    } catch (e) {
-      console.error("[Storage] Google Drive: startup verify error:", e instanceof Error ? e.message : e);
-      if (process.env.GDRIVE_STARTUP_FAIL_FAST !== "false") {
-        process.exit(1);
-      }
+    } catch (err: any) {
+      console.error("❌ Storage: Cloudflare R2 verification failed:", err.message);
     }
   })();
 });

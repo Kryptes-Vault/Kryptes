@@ -14,30 +14,33 @@ function getSupabaseAdmin() {
     );
   }
   if (!singleton) {
-    singleton = createClient(url, key, {
+    singleton = createClient(url.trim(), key.trim(), {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
       },
     });
-
-    // Verify connection status (lightweight check against real vault storage)
-    singleton
-      .from("vault_items")
-      .select("id")
-      .limit(1)
-      .then(({ error }) => {
-        if (error) {
-          console.error(
-            "❌ Supabase: Admin client initialized but table 'vault_items' health check failed:",
-            error.message
-          );
-        } else {
-          console.log("✅ Supabase Admin Client: Connected (vault_items reachable).");
-        }
-      });
   }
   return singleton;
+}
+
+/**
+ * Performs a lightweight health check against the vault_items table.
+ */
+async function verifySupabaseConnection() {
+  try {
+    const supabase = getSupabaseAdmin();
+    const { error } = await supabase.from("vault_items").select("id").limit(1);
+    if (error) {
+      console.error("❌ Database: Supabase health check failed:", error.message);
+      return false;
+    }
+    console.log("✅ Database: Supabase Connected and Table 'vault_items' is reachable.");
+    return true;
+  } catch (err) {
+    console.error("❌ Database: Supabase exception during health check:", err instanceof Error ? err.message : err);
+    return false;
+  }
 }
 
 /**
@@ -78,4 +81,4 @@ async function setUserVaultActive(userId) {
   }
 }
 
-module.exports = { getSupabaseAdmin, getUserVaultStatus, setUserVaultActive };
+module.exports = { getSupabaseAdmin, verifySupabaseConnection, getUserVaultStatus, setUserVaultActive };
