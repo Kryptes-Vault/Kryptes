@@ -250,7 +250,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
     [aspectItems, containerWidth, imageDocuments.length, viewLayout]
   );
 
-  const otherFolders = useMemo(() => folderOptions.filter((f) => f !== activeFolder), [folderOptions, activeFolder]);
+
 
   const docById = useMemo(() => {
     const m = new Map<string, LockerDocument>();
@@ -752,25 +752,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
             ) : (
               <LayoutGroup>
                 <div ref={galleryRef} className="space-y-8">
-                  {otherFolders.length > 0 ? (
-                    <section>
-                      <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black/35">Folders</p>
-                      <div className="flex flex-wrap gap-4">
-                        {otherFolders.map((folder) => (
-                          <button
-                            key={folder}
-                            type="button"
-                            onClick={() => setActiveFolder(folder)}
-                            className="flex h-56 w-48 shrink-0 flex-col items-center justify-center rounded-2xl border border-black/5 bg-[#fafafa] px-3 text-center shadow-sm transition hover:border-[#FF3B13]/35 hover:bg-white hover:shadow-md"
-                          >
-                            <FolderOpen className="h-10 w-10 text-[#FF3B13]/80" />
-                            <span className="mt-3 line-clamp-2 text-[13px] font-semibold text-black/85">{folder}</span>
-                            <span className="mt-1 text-[9px] font-bold uppercase tracking-widest text-black/30">Open</span>
-                          </button>
-                        ))}
-                      </div>
-                    </section>
-                  ) : null}
+
 
                   {fileDocuments.length > 0 ? (
                     <section>

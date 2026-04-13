@@ -297,8 +297,8 @@ app.post("/api/convert", upload.single("file"), async (req: KryptexRequest, res:
 
 /* Legacy /api/documents routes removed — migrated to Cloudflare R2 via /api/vault/documents */
 
-app.use("/api/vault", vaultRoutes);
 app.use("/api/vault/documents", zkDocumentRoutes);
+app.use("/api/vault", vaultRoutes);
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api/auth", authRoutes);
 app.post("/api/auth/send-email-hook", express.json(), handleSendEmailHook);
@@ -348,17 +348,38 @@ server.on("error", (err: NodeJS.ErrnoException) => {
   }
 });
 
-function gracefulShutdown(signal: string) {
-  console.log(`[Kryptex] Received ${signal}. Closing HTTP server...`);
-  server.close(() => {
-    if (redisClient && redisClient.status !== "end") {
-      redisClient.quit().finally(() => process.exit(0));
-    } else {
-      process.exit(0);
-    }
-  });
+let isShuttingDown = false;
 
-  setTimeout(() => process.exit(1), 10_000).unref();
+function gracefulShutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`[Kryptex] Received ${signal}. Closing HTTP server…`);
+
+  const forceExit = setTimeout(() => {
+    console.error("[Kryptex] Forced exit after timeout.");
+    process.exit(1);
+  }, 5_000);
+  forceExit.unref();
+
+  server.close(() => {
+    console.log("[Kryptex] HTTP server closed.");
+
+    const teardown: Promise<void>[] = [];
+
+    if (redisClient && redisClient.status !== "end") {
+      teardown.push(
+        redisClient
+          .quit()
+          .then(() => console.log("[Kryptex] Redis disconnected."))
+          .catch(() => {})
+      );
+    }
+
+    Promise.allSettled(teardown).then(() => {
+      clearTimeout(forceExit);
+      process.exit(0);
+    });
+  });
 }
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
