@@ -181,7 +181,6 @@ function documentsListUrl(userId?: string | null) {
 
 export default function DocumentLocker({ activeFormat = "all", userId = null }: DocumentLockerProps) {
   const { items, loading: syncing, reload: reloadVault } = useVaultItems(userId);
-  const [documents, setDocuments] = useState<LockerDocument[]>([]);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [activeFolder, setActiveFolder] = useState<string>(DEFAULT_FOLDERS[0]);
@@ -195,6 +194,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   const [converting, setConverting] = useState(false);
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
+  const [optimisticDeletedIds, setOptimisticDeletedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [viewLayout, setViewLayout] = useState<"grid" | "list">("grid");
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -205,6 +205,28 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   const [thumbLoadingId, setThumbLoadingId] = useState<string | null>(null);
   const [hoveredGalleryId, setHoveredGalleryId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Derive documents directly from global vault items - ONE SOURCE OF TRUTH
+  const documents = useMemo(() => {
+    if (!items) return [];
+    return items
+      .filter((i) => i.item_type === "zk_document" && !optimisticDeletedIds.has(i.id))
+      .map((row) => {
+        const metadata = (row as any).decrypted_data || (row as any).metadata || {};
+        const ext = String(metadata.fileType || "bin").toLowerCase();
+        return {
+          id: String(row.id),
+          objectKey: String(metadata.objectKey || ""),
+          name: String(row.title || ""),
+          size: Number(metadata.originalSize || 0),
+          type: (ext === "jpg" ? "jpeg" : ext) as DocumentFormat,
+          folder: String(metadata.folder || "General"),
+          updatedAt: String(row.updated_at),
+          thumbnailSeed: String(row.title || "").slice(0, 1).toUpperCase() || "D",
+          source: "r2" as const,
+        };
+      });
+  }, [items, optimisticDeletedIds]);
 
   const folderOptions = useMemo(() => {
     const seen = new Set<string>([...DEFAULT_FOLDERS, ...customFolders]);
@@ -365,29 +387,6 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- preview blob is reset when previewDoc changes; avoids reload loops
   }, [previewDoc]);
-
-  useEffect(() => {
-    if (!items) return;
-    const docItems = items.filter((i) => i.item_type === "zk_document");
-    setDocuments(
-      docItems.map((row) => {
-        // Fallback to row.metadata (from Supabase) if decrypted_data is null (due to cache or error)
-        const metadata = (row as any).decrypted_data || (row as any).metadata || {};
-        const ext = String(metadata.fileType || "bin").toLowerCase();
-        return {
-          id: String(row.id),
-          objectKey: String(metadata.objectKey || ""),
-          name: String(row.title || ""),
-          size: Number(metadata.originalSize || 0),
-          type: (ext === "jpg" ? "jpeg" : ext) as DocumentFormat,
-          folder: String(metadata.folder || "General"),
-          updatedAt: String(row.updated_at),
-          thumbnailSeed: String(row.title || "").slice(0, 1).toUpperCase() || "D",
-          source: "r2" as const,
-        };
-      })
-    );
-  }, [items]);
 
   function createFolder() {
     const trimmed = folderName.trim();
@@ -577,6 +576,9 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
     const confirmed = window.confirm(`Are you sure you want to permanently delete "${doc.name}"? This will remove it from the vault and the cloud storage.`);
     if (!confirmed) return;
 
+    // OPTIMISTIC UI: Hide the item immediately
+    setOptimisticDeletedIds(prev => new Set(prev).add(doc.id));
+    
     setDeletePendingId(doc.id);
     try {
       const params = userId ? `?userId=${encodeURIComponent(userId)}` : "";
@@ -586,9 +588,6 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
       );
       if (!response.ok) throw new Error("Delete failed");
       
-      // Update local state by removing the item
-      setDocuments((prev) => prev.filter((item) => item.id !== doc.id));
-      
       // Refresh the unified hook to ensure server sync
       void reloadVault();
 
@@ -597,6 +596,12 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
       
       toast.success("Document deleted successfully.");
     } catch (err) {
+      // ROLLBACK on failure
+      setOptimisticDeletedIds(prev => {
+        const next = new Set(prev);
+        next.delete(doc.id);
+        return next;
+      });
       toast.error("Failed to delete document.");
       console.error("[ZK-Vault] Delete error:", err);
     } finally {

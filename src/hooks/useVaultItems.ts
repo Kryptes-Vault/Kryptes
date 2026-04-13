@@ -68,7 +68,11 @@ export function useVaultItems(userId: string | null) {
           filter: `user_id=eq.${userId}`,
         },
         () => {
-          void load();
+          // Add a small settling delay to ensure Redis cache invalidation has finished
+          // before we attempt to re-fetch the list.
+          setTimeout(() => {
+            void load();
+          }, 500);
         }
       )
       .subscribe();
