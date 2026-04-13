@@ -81,7 +81,7 @@ function mimeForType(type: DocumentFormat): string {
 
 async function fetchR2DownloadUrl(objectKey: string): Promise<string> {
   const res = await fetch(
-    `${ZK_VAULT_DOCUMENTS_ENDPOINT}/generate-download-url/${encodeURIComponent(objectKey)}`,
+    `${ZK_VAULT_DOCUMENTS_ENDPOINT}/download-url?objectKey=${encodeURIComponent(objectKey)}`,
     { credentials: "include" }
   );
   if (!res.ok) throw new Error(`Failed to get download URL (${res.status})`);

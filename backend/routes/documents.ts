@@ -6,8 +6,8 @@
  *
  * GET  /upload-url          — mint a PUT pre-signed URL + objectKey
  * POST /commit              — after a successful PUT, persist metadata in Supabase
- * GET  /generate-download-url/:key — mint a GET pre-signed URL
- * GET  /                    — list all ZK documents for a user
+ * GET  /download-url?objectKey=   — mint a GET pre-signed URL
+ * GET  /list                — list all ZK documents for a user
  * DELETE /:objectKey        — delete blob from R2 + metadata from Supabase
  */
 
@@ -158,14 +158,16 @@ router.post("/commit", docLimiter, async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/vault/documents/generate-download-url/:objectKey
+ * GET /api/vault/documents/download-url?objectKey=<key>
  *
  * Mints a short-lived GET pre-signed URL so the browser can fetch the
  * encrypted blob directly from R2, then decrypt it client-side.
+ * Uses a query parameter to avoid Express 5 path-matching issues with
+ * overlapping mount points.
  */
-router.get("/generate-download-url/:objectKey", docLimiter, async (req: Request, res: Response) => {
-  const objectKey = req.params.objectKey;
-  if (!objectKey) return res.status(400).json({ error: "objectKey is required." });
+router.get("/download-url", docLimiter, async (req: Request, res: Response) => {
+  const objectKey = typeof req.query.objectKey === "string" ? req.query.objectKey.trim() : "";
+  if (!objectKey) return res.status(400).json({ error: "objectKey query parameter is required." });
 
   if (!isR2Configured()) {
     return res.status(503).json({ error: "Cloudflare R2 storage is not configured." });
