@@ -243,25 +243,30 @@ router.delete("/:objectKey", docLimiter, async (req: Request, res: Response) => 
   if (!userId) return res.status(400).json({ error: "userId is required." });
 
   try {
-    await deleteObject(objectKey);
-  } catch (error) {
-    console.warn("[R2-Vault] R2 delete failed (may already be gone):", error);
-  }
+    // 1. Invalidate cache FIRST to prevent race conditions with Realtime listeners
+    try {
+      await deleteCachedVault(userId);
+    } catch (err) {
+      console.warn("[R2-Vault] Redis cache invalidation error:", err);
+    }
 
-  try {
+    // 2. Delete cloud storage blob
+    try {
+      await deleteObject(objectKey);
+    } catch (error) {
+      console.warn("[R2-Vault] R2 delete failed (may already be gone):", error);
+    }
+
+    // 3. Delete metadata from Supabase
     const supabase = getSupabaseAdmin();
-    await supabase
+    const { error: dbErr } = await supabase
       .from("vault_items")
       .delete()
       .eq("user_id", userId)
       .eq("item_type", "zk_document")
       .contains("metadata", { objectKey });
 
-    try {
-      await deleteCachedVault(userId);
-    } catch (err) {
-      console.warn("[R2-Vault] Redis cache invalidation error:", err);
-    }
+    if (dbErr) throw dbErr;
 
     return res.status(200).json({ ok: true });
   } catch (err: any) {
