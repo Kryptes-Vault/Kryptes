@@ -21,7 +21,7 @@ import {
   deleteObject,
 } from "../services/r2Storage";
 
-const { redisClient, connectRedis } = require("../services/redisService");
+const { redisClient, connectRedis, deleteCachedVault } = require("../services/redisService");
 
 const router = express.Router();
 const rateLimit = require("express-rate-limit");
@@ -132,9 +132,7 @@ router.post("/commit", docLimiter, async (req: Request, res: Response) => {
     await setProfileFlagActive(userId, "has_documents");
 
     try {
-      if (redisClient?.isOpen) {
-        await redisClient.del(`documents:${userId}`);
-      }
+      await deleteCachedVault(userId);
     } catch (err) {
       console.warn("[R2-Vault] Redis cache invalidation error:", err);
     }
@@ -260,9 +258,7 @@ router.delete("/:objectKey", docLimiter, async (req: Request, res: Response) => 
       .contains("metadata", { objectKey });
 
     try {
-      if (redisClient?.isOpen) {
-        await redisClient.del(`documents:${userId}`);
-      }
+      await deleteCachedVault(userId);
     } catch (err) {
       console.warn("[R2-Vault] Redis cache invalidation error:", err);
     }
