@@ -891,7 +891,6 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
                 )}
               </div>
             </motion.div>
-          </motion.div>
         )}
       </AnimatePresence>
 
