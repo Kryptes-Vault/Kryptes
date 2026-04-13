@@ -540,6 +540,32 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
     }
   }
 
+  async function handleDownload(doc: LockerDocument) {
+    if (isImageDoc(doc)) {
+      setConversionDoc(doc);
+      return;
+    }
+
+    // Direct download for non-image files (PDF, docx, etc.)
+    if (!doc.objectKey) return;
+    setBusyDocId(doc.id);
+    try {
+      const key = await getOrCreateFileKey();
+      const encryptedBlob = await fetchEncryptedBlob(doc.objectKey);
+      const url = await decryptFile(encryptedBlob, key, mimeForType(doc.type));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = doc.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error("Failed to download document.");
+      console.error("[ZK-Vault] Download error:", err);
+    } finally {
+      setBusyDocId(null);
+    }
+  }
+
   async function deleteDocument(doc: LockerDocument) {
     if (!doc.objectKey) return;
     
@@ -697,7 +723,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
                       <div className="flex shrink-0 items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => void downloadDocument(doc)}
+                          onClick={() => void handleDownload(doc)}
                           className="rounded-lg border border-black/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-black/60 hover:border-[#FF3B13]/30 hover:text-[#FF3B13]"
                         >
                           Download
@@ -741,7 +767,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
                               thumbUrl={src}
                               isThumbLoading={thumbLoadingId === doc.id && !src}
                               onDelete={() => void deleteDocument(doc)}
-                              onDownload={() => void downloadDocument(doc)}
+                              onDownload={() => void handleDownload(doc)}
                               onPreview={() => setPreviewDoc(doc)}
                               deletePending={deletePendingId === doc.id}
                               hoveredId={hoveredGalleryId}
@@ -770,7 +796,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
                               typeLabel={fileTypeLabel(doc.type)}
                               updatedLabel={formatDate(doc.updatedAt)}
                               onDelete={() => void deleteDocument(doc)}
-                              onDownload={() => void downloadDocument(doc)}
+                              onDownload={() => void handleDownload(doc)}
                               onPreview={() => setPreviewDoc(doc)}
                               deletePending={deletePendingId === doc.id}
                               hoveredId={hoveredGalleryId}
