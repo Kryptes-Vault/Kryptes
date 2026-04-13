@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import { useVaultItems } from "@/hooks/useVaultItems";
 import { toast } from "sonner";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import {
@@ -16,6 +17,7 @@ import {
   FolderPlus,
   FolderOpen,
   X,
+  Trash2,
   Search,
   Grid,
   List,
@@ -178,10 +180,10 @@ function documentsListUrl(userId?: string | null) {
 }
 
 export default function DocumentLocker({ activeFormat = "all", userId = null }: DocumentLockerProps) {
+  const { items, loading: syncing, reload: reloadVault } = useVaultItems(userId);
   const [documents, setDocuments] = useState<LockerDocument[]>([]);
-  const [syncing, setSyncing] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
+  const [dragActive, setDragActive] = useState(false);
   const [activeFolder, setActiveFolder] = useState<string>(DEFAULT_FOLDERS[0]);
   const [folderName, setFolderName] = useState("");
   const [customFolders, setCustomFolders] = useState<string[]>([]);
@@ -365,49 +367,27 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   }, [previewDoc]);
 
   useEffect(() => {
-    const loadDocuments = async () => {
-      setSyncing(true);
-      try {
-        const response = await fetch(documentsListUrl(userId), { credentials: "include" });
-        let data: { documents?: unknown; error?: string; hint?: string };
-        try {
-          data = (await response.json()) as { documents?: unknown; error?: string; hint?: string };
-        } catch {
-          if (!response.ok) toast.error(`Could not load documents (${response.status}).`);
-          return;
-        }
-        if (!response.ok) {
-          const msg = typeof data.error === "string" ? data.error : `Could not load documents (${response.status}).`;
-          const hint = typeof data.hint === "string" ? data.hint : "";
-          toast.error(hint ? `${msg}\n\n${hint}` : msg);
-          return;
-        }
-        const raw = Array.isArray(data?.documents) ? data.documents : [];
-        setDocuments(
-          raw.map((row) => {
-            const doc = row as Record<string, unknown>;
-            const ext = String(doc.fileType ?? doc.type ?? "bin").toLowerCase();
-            return {
-              id: String(doc.id ?? ""),
-              objectKey: String(doc.objectKey ?? doc.driveFileId ?? ""),
-              name: String(doc.name ?? ""),
-              size: Number(doc.size ?? 0),
-              type: (ext === "jpg" ? "jpeg" : ext) as DocumentFormat,
-              folder: String(doc.folder ?? ""),
-              updatedAt: String(doc.updatedAt ?? ""),
-              thumbnailSeed: String(doc.name || "").slice(0, 1).toUpperCase() || "D",
-              source: "r2" as const,
-            };
-          })
-        );
-      } catch (e) {
-        toast.error(networkFetchToastMessage(e));
-      } finally {
-        setSyncing(false);
-      }
-    };
-    void loadDocuments();
-  }, [userId]);
+    if (!items) return;
+    const docItems = items.filter((i) => i.item_type === "zk_document");
+    setDocuments(
+      docItems.map((row) => {
+        // Fallback to row.metadata (from Supabase) if decrypted_data is null (due to cache or error)
+        const metadata = (row as any).decrypted_data || (row as any).metadata || {};
+        const ext = String(metadata.fileType || "bin").toLowerCase();
+        return {
+          id: String(row.id),
+          objectKey: String(metadata.objectKey || ""),
+          name: String(row.title || ""),
+          size: Number(metadata.originalSize || 0),
+          type: (ext === "jpg" ? "jpeg" : ext) as DocumentFormat,
+          folder: String(metadata.folder || "General"),
+          updatedAt: String(row.updated_at),
+          thumbnailSeed: String(row.title || "").slice(0, 1).toUpperCase() || "D",
+          source: "r2" as const,
+        };
+      })
+    );
+  }, [items]);
 
   function createFolder() {
     const trimmed = folderName.trim();
@@ -425,7 +405,8 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   }
 
   function syncDocument(document: LockerDocument) {
-    setDocuments((prev) => [document, ...prev.filter((doc) => doc.id !== document.id)]);
+    // Rely on useVaultItems and Supabase Realtime for synchronization
+    void reloadVault();
   }
 
   async function startSimulatedUpload(file: File) {
@@ -591,6 +572,11 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
 
   async function deleteDocument(doc: LockerDocument) {
     if (!doc.objectKey) return;
+    
+    // Safety confirmation as requested by user
+    const confirmed = window.confirm(`Are you sure you want to permanently delete "${doc.name}"? This will remove it from the vault and the cloud storage.`);
+    if (!confirmed) return;
+
     setDeletePendingId(doc.id);
     try {
       const params = userId ? `?userId=${encodeURIComponent(userId)}` : "";
@@ -599,9 +585,20 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
         { method: "DELETE", credentials: "include" }
       );
       if (!response.ok) throw new Error("Delete failed");
+      
+      // Update local state by removing the item
       setDocuments((prev) => prev.filter((item) => item.id !== doc.id));
+      
+      // Refresh the unified hook to ensure server sync
+      void reloadVault();
+
       if (previewDoc?.id === doc.id) setPreviewDoc(null);
       if (conversionDoc?.id === doc.id) setConversionDoc(null);
+      
+      toast.success("Document deleted successfully.");
+    } catch (err) {
+      toast.error("Failed to delete document.");
+      console.error("[ZK-Vault] Delete error:", err);
     } finally {
       setDeletePendingId(null);
     }
@@ -870,62 +867,32 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
         {previewDoc && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 px-4 py-6 backdrop-blur-sm" onClick={() => setPreviewDoc(null)}>
             <motion.div initial={{ scale: 0.96, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.96, y: 16 }} transition={{ type: "spring", stiffness: 220, damping: 22 }} className="w-full max-w-xl rounded-[2.5rem] border border-black/5 bg-white p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="mb-8 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className={`h-12 w-12 flex items-center justify-center rounded-xl ${thumbnailForType(previewDoc.type).bg}`}>
-                    {(() => {
-                      const Thumb = thumbnailForType(previewDoc.type).icon;
-                      return <Thumb className={`h-6 w-6 ${thumbnailForType(previewDoc.type).accent}`} />;
-                    })()}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-[#111]">{previewDoc.name}</h3>
-                    <p className="text-sm font-medium text-black/40">{formatBytes(previewDoc.size)} ┬╖ {formatDate(previewDoc.updatedAt)}</p>
-                  </div>
-                </div>
-                <button type="button" onClick={() => setPreviewDoc(null)} className="h-10 w-10 flex items-center justify-center rounded-full bg-black/5 text-black/40 transition hover:bg-black/10 hover:text-black">
+              <div className="relative">
+                <button 
+                  type="button" 
+                  onClick={() => setPreviewDoc(null)} 
+                  className="absolute -right-4 -top-4 z-[110] h-10 w-10 flex items-center justify-center rounded-full bg-white border border-black/5 text-black/40 shadow-sm transition hover:bg-black/5 hover:text-black"
+                >
                   <X className="h-5 w-5" />
                 </button>
-              </div>
-              
-              {previewLoading ? (
-                <div className="mb-6 flex h-[360px] items-center justify-center rounded-2xl border border-black/5 bg-black/[0.02]">
-                  <Loader2 className="h-6 w-6 animate-spin text-black/40" />
-                </div>
-              ) : previewBlobUrl && (previewDoc.type === "pdf" || previewDoc.type === "png" || previewDoc.type === "jpeg" || previewDoc.type === "webp") ? (
-                <div className="mb-6 overflow-hidden rounded-2xl border border-black/5 bg-black/[0.02]">
-                  {previewDoc.type === "pdf" ? (
-                    <iframe src={previewBlobUrl} title={previewDoc.name} className="h-[360px] w-full" />
-                  ) : (
-                    <img src={previewBlobUrl} alt={previewDoc.name} className="h-[360px] w-full object-contain bg-white" />
-                  )}
-                </div>
-              ) : (
-                <div className="mb-6 rounded-2xl border border-black/5 bg-black/[0.02] p-6 text-center text-xs text-black/50">
-                  Direct preview is not available for this file type.
-                </div>
-              )}
-
-              <div className="flex flex-col gap-3">
-                <button 
-                  onClick={() => {
-                    setConversionDoc(previewDoc);
-                  }}
-                  className="w-full h-14 bg-black text-white rounded-2xl font-bold uppercase tracking-widest text-[12px] shadow-lg shadow-black/10 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-3"
-                >
-                  <ArrowDownToLine className="h-5 w-5" /> Choose Download Format
-                </button>
-                <button
-                  onClick={() => void deleteDocument(previewDoc)}
-                  disabled={deletePendingId === previewDoc.id}
-                  className="w-full h-12 rounded-2xl border border-[#FF3300]/20 text-[#FF3300] text-[11px] font-bold uppercase tracking-widest"
-                >
-                  {deletePendingId === previewDoc.id ? "Deleting..." : "Delete Document"}
-                </button>
-                <div className="flex items-center justify-center gap-4 text-[11px] font-bold uppercase tracking-widest text-black/30 mt-2">
-                  <ShieldCheck className="h-4 w-4 text-emerald-500" /> AES-256 Encrypted
-                  <Lock className="h-4 w-4 text-[#FF3B13]" /> Zero-Knowledge
-                </div>
+                
+                {previewLoading ? (
+                  <div className="flex h-[480px] w-full items-center justify-center rounded-3xl border border-black/5 bg-black/[0.02]">
+                    <Loader2 className="h-8 w-8 animate-spin text-black/20" />
+                  </div>
+                ) : previewBlobUrl && (previewDoc.type === "pdf" || previewDoc.type === "png" || previewDoc.type === "jpeg" || previewDoc.type === "webp") ? (
+                  <div className="overflow-hidden rounded-3xl border border-black/5 bg-black/[0.02]">
+                    {previewDoc.type === "pdf" ? (
+                      <iframe src={previewBlobUrl} title={previewDoc.name} className="h-[640px] w-full" />
+                    ) : (
+                      <img src={previewBlobUrl} alt={previewDoc.name} className="max-h-[80vh] w-full object-contain bg-white" />
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-3xl border border-black/5 bg-black/[0.02] p-12 text-center text-sm text-black/40">
+                    Direct preview is not available for this file type.
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>

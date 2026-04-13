@@ -351,6 +351,16 @@ router.get("/items", vaultLimiter, async (req: Request, res: Response) => {
         }
 
         const decryptedItems = (rows || []).map((row) => {
+            // ZK documents are client-side encrypted and the backend only stores metadata.
+            // We skip server-side decryption for these items.
+            if (row.item_type === "zk_document") {
+                return {
+                    ...row,
+                    decrypted_data: row.metadata || {},
+                    title: row.title || row.metadata?.fileName || "Untitled Document"
+                };
+            }
+
             try {
                 const plain = decryptVaultAtRest(row.iv, row.ciphertext);
                 const payload = JSON.parse(plain);

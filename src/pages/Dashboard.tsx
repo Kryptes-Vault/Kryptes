@@ -310,12 +310,10 @@ const Dashboard = () => {
           </aside>
         )}
 
-        <main className="flex-1 overflow-y-auto bg-white">
-          <div className={`${viewMode === "documents" ? "p-0" : "p-8 max-w-[1200px] mx-auto"}`}>
+        <main className={`flex-1 min-h-0 bg-white ${viewMode === "documents" ? "overflow-hidden" : "overflow-y-auto"}`}>
+          <div className={`${viewMode === "documents" ? "p-0 h-full" : "p-8 max-w-[1200px] mx-auto"}`}>
             {viewMode === "documents" && (
-              <div className="space-y-8">
-                <DocumentLocker userId={user?.id ?? null} />
-              </div>
+              <DocumentLocker userId={user?.id ?? null} />
             )}
             {viewMode === "banking" && (
               <div className="p-8 max-w-[1200px] mx-auto">

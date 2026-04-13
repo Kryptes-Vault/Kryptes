@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from "react";
 import { motion } from "framer-motion";
-import { Download, Loader2, LucideIcon, X } from "lucide-react";
+import { Download, Loader2, LucideIcon, Trash2 } from "lucide-react";
 import type { CardDoc } from "./DocumentMediaCard";
 
 type Props = {
@@ -58,7 +58,7 @@ export function DocumentFixedCard({
         disabled={deletePending}
         className="absolute right-2 top-2 z-20 rounded-full bg-white/95 p-1.5 text-black/35 shadow-sm transition hover:text-[#FF3300] disabled:opacity-40"
       >
-        {deletePending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+        {deletePending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
       </button>
 
       <div

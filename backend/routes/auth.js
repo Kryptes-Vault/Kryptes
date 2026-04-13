@@ -87,9 +87,15 @@ router.post("/supabase/sync", async (req, res) => {
     req.session.save((saveErr) => {
       if (saveErr) {
         console.error("[Auth] Session save failed:", saveErr.message);
-        return res.status(500).json({ error: "Session save failed" });
+        // Fail-open: frontend can continue using the Supabase browser session.
+        return res.status(200).json({
+          ok: true,
+          user: shell,
+          sessionPersisted: false,
+          warning: "Session store unavailable; using Supabase session directly.",
+        });
       }
-      res.json({ ok: true, user: shell });
+      res.json({ ok: true, user: shell, sessionPersisted: true });
     });
   } catch (e) {
     if (e.message?.includes("SUPABASE_URL")) {

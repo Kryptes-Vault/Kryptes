@@ -31,7 +31,7 @@ export function useVaultItems(userId: string | null) {
     setLoading(true);
     setError(null);
     try {
-      const resp = await fetch(`/api/vault/items?userId=${userId}`);
+      const resp = await fetch(`/api/vault/items?userId=${userId}`, { credentials: "include" });
       if (!resp.ok) {
         const errorData = await resp.json();
         throw new Error(errorData.error || "Failed to fetch vault items");
@@ -54,8 +54,11 @@ export function useVaultItems(userId: string | null) {
   useEffect(() => {
     if (!userId) return;
 
+    // Use a unique channel name per-mount to avoid "cannot add callbacks after subscribe" error
+    // which happens in Strict Mode or on fast re-renders if a channel with the same name exists.
+    const channelId = `vault_items:${userId}:${Math.random().toString(36).slice(2, 11)}`;
     const ch: RealtimeChannel = supabase
-      .channel(`vault_items:${userId}`)
+      .channel(channelId)
       .on(
         "postgres_changes",
         {

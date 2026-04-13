@@ -69,4 +69,4 @@ const deleteCachedVault = async (userId) => {
   await redisClient.del(`vault:${userId}`);
 };
 
-module.exports = { getCachedVault, setCachedVault, deleteCachedVault, whenRedisReadyOrTimeout };
+module.exports = { getCachedVault, setCachedVault, deleteCachedVault, whenRedisReadyOrTimeout, redisClient, connectRedis };
