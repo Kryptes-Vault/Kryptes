@@ -866,30 +866,21 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
       <AnimatePresence>
         {previewDoc && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 px-4 py-6 backdrop-blur-sm" onClick={() => setPreviewDoc(null)}>
-            <motion.div initial={{ scale: 0.96, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.96, y: 16 }} transition={{ type: "spring", stiffness: 220, damping: 22 }} className="w-full max-w-xl rounded-[2.5rem] border border-black/5 bg-white p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="relative">
-                <button 
-                  type="button" 
-                  onClick={() => setPreviewDoc(null)} 
-                  className="absolute -right-4 -top-4 z-[110] h-10 w-10 flex items-center justify-center rounded-full bg-white border border-black/5 text-black/40 shadow-sm transition hover:bg-black/5 hover:text-black"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-                
+              <div className="relative w-full h-full flex items-center justify-center">
                 {previewLoading ? (
-                  <div className="flex h-[480px] w-full items-center justify-center rounded-3xl border border-black/5 bg-black/[0.02]">
-                    <Loader2 className="h-8 w-8 animate-spin text-black/20" />
+                  <div className="flex h-[480px] w-full items-center justify-center rounded-3xl bg-black/5">
+                    <Loader2 className="h-8 w-8 animate-spin text-white/40" />
                   </div>
                 ) : previewBlobUrl && (previewDoc.type === "pdf" || previewDoc.type === "png" || previewDoc.type === "jpeg" || previewDoc.type === "webp") ? (
-                  <div className="overflow-hidden rounded-3xl border border-black/5 bg-black/[0.02]">
+                  <div className="overflow-hidden rounded-xl shadow-2xl">
                     {previewDoc.type === "pdf" ? (
-                      <iframe src={previewBlobUrl} title={previewDoc.name} className="h-[640px] w-full" />
+                      <iframe src={previewBlobUrl} title={previewDoc.name} className="h-[85vh] w-[80vw]" />
                     ) : (
-                      <img src={previewBlobUrl} alt={previewDoc.name} className="max-h-[80vh] w-full object-contain bg-white" />
+                      <img src={previewBlobUrl} alt={previewDoc.name} className="max-h-[90vh] max-w-[95vw] object-contain" />
                     )}
                   </div>
                 ) : (
-                  <div className="rounded-3xl border border-black/5 bg-black/[0.02] p-12 text-center text-sm text-black/40">
+                  <div className="rounded-3xl bg-black/40 p-12 text-center text-sm text-white/60 backdrop-blur-md">
                     Direct preview is not available for this file type.
                   </div>
                 )}
