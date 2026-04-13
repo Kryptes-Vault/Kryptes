@@ -267,8 +267,8 @@ export function getDriveClient(): drive_v3.Drive {
  * Returns the Drive folder ID for `userId` under the master app folder, creating it if needed.
  */
 export async function getOrCreateUserFolder(userId: string): Promise<string> {
-  if (!userId.trim()) {
-    throw new Error("userId is required.");
+  if (!userId?.trim()) {
+    throw new Error("Internal Error: User resolution failed for Drive folder lookup.");
   }
 
   const drive = getDriveClient();

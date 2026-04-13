@@ -8,6 +8,7 @@ const Redis = require("ioredis") as any;
 const cors = require("cors") as any;
 const multer = require("multer") as any;
 const sharp = require("sharp") as any;
+const cookieParser = require("cookie-parser");
 const { PDFDocument } = require("pdf-lib") as any;
 
 const vaultRoutes = require("./routes/vault");
@@ -205,6 +206,7 @@ app.post(
   handleSendEmailHook
 );
 
+app.use(cookieParser());
 app.use(express.json({ limit: "2mb" }));
 
 const sessionConfig: any = {

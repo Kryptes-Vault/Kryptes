@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { useVaultItems } from "@/hooks/useVaultItems";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
@@ -10,7 +10,7 @@ import {
   FileImage,
   FileText,
   FileType2,
-  Image,
+  Image as ImageIcon,
   Loader2,
   Lock,
   ShieldCheck,
@@ -18,11 +18,14 @@ import {
   FolderOpen,
   X,
   Trash2,
+  Download,
   Search,
   Grid,
   List,
 } from "lucide-react";
-import { DocumentMediaCard } from "./documentLocker/DocumentMediaCard";
+import PhotoAlbum from "react-photo-album";
+import type { Photo, RenderPhotoContext, RenderPhotoProps } from "react-photo-album";
+import "react-photo-album/masonry.css";
 import { DocumentFixedCard } from "./documentLocker/DocumentFixedCard";
 import { encryptFile, decryptFile, generateFileEncryptionKey, validateFileType } from "@/lib/crypto/fileCrypto";
 import { convertDecryptedFile, downloadBlob, type ExportFormat } from "@/lib/crypto/fileExporter";
@@ -106,6 +109,26 @@ function networkFetchToastMessage(e: unknown): string {
   return "Request failed.";
 }
 
+/** Read intrinsic size from a decrypted blob URL (required by react-photo-album). */
+function probeImageDimensions(src: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth || 1;
+      const h = img.naturalHeight || 1;
+      resolve({ width: w, height: h });
+    };
+    img.onerror = () => resolve({ width: 3, height: 2 });
+    img.src = src;
+  });
+}
+
+/** Photo row item: library shape + vault document for actions */
+type VaultAlbumPhoto = Photo & {
+  key: string;
+  doc: LockerDocument;
+};
+
 
 function isImageDoc(doc: LockerDocument) {
   return doc.type === "png" || doc.type === "jpeg" || doc.type === "webp";
@@ -140,7 +163,7 @@ function thumbnailForType(type: DocumentFormat) {
     case "png":
     case "jpeg":
     case "webp":
-      return { icon: Image, accent: "text-emerald-500", bg: "bg-emerald-500/10" };
+      return { icon: ImageIcon, accent: "text-emerald-500", bg: "bg-emerald-500/10" };
     default:
       return { icon: Archive, accent: "text-black/40", bg: "bg-black/5" };
   }
@@ -177,7 +200,7 @@ function documentsListUrl(userId?: string | null) {
 }
 
 export default function DocumentLocker({ activeFormat = "all", userId = null }: DocumentLockerProps) {
-  const { items, loading: syncing, reload: reloadVault } = useVaultItems(userId);
+  const { items, loading: syncing, reload: reloadVault, deleteItem, commitDocument } = useVaultItems(userId);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [activeFolder, setActiveFolder] = useState<string>(DEFAULT_FOLDERS[0]);
@@ -197,6 +220,10 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [thumbById, setThumbById] = useState<Record<string, string>>({});
   const [thumbLoadingId, setThumbLoadingId] = useState<string | null>(null);
+  /** naturalWidth/height per doc id for react-photo-album (probed from blob URLs). */
+  const [photoDims, setPhotoDims] = useState<Record<string, { width: number; height: number }>>({});
+  /** Avoid duplicate dimension probes when `photoDims` updates incrementally. */
+  const imageProbeKeyRef = useRef<Record<string, string>>({});
   const [hoveredGalleryId, setHoveredGalleryId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -251,16 +278,6 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   const imageDocuments = useMemo(() => sortedDocuments.filter(isImageDoc), [sortedDocuments]);
   const fileDocuments = useMemo(() => sortedDocuments.filter((d) => !isImageDoc(d)), [sortedDocuments]);
 
-
-
-
-
-  const docById = useMemo(() => {
-    const m = new Map<string, LockerDocument>();
-    sortedDocuments.forEach((d) => m.set(d.id, d));
-    return m;
-  }, [sortedDocuments]);
-
   const hasUploads = uploads.length > 0;
 
 
@@ -296,6 +313,80 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
       });
     };
   }, []);
+
+  useEffect(() => {
+    const allowed = new Set(imageDocuments.map((d) => d.id));
+    setPhotoDims((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const k of Object.keys(next)) {
+        if (!allowed.has(k)) {
+          delete next[k];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+    imageProbeKeyRef.current = Object.fromEntries(
+      Object.entries(imageProbeKeyRef.current).filter(([k]) => allowed.has(k))
+    );
+  }, [imageDocuments]);
+
+  useEffect(() => {
+    let cancelled = false;
+    for (const doc of imageDocuments) {
+      const src = thumbById[doc.id];
+      if (!src) continue;
+      if (imageProbeKeyRef.current[doc.id] === src) continue;
+      imageProbeKeyRef.current[doc.id] = src;
+      void probeImageDimensions(src).then((dims) => {
+        if (cancelled) return;
+        setPhotoDims((prev) => ({ ...prev, [doc.id]: dims }));
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [imageDocuments, thumbById]);
+
+  const albumPhotos: VaultAlbumPhoto[] = useMemo(() => {
+    const mapped = imageDocuments
+      .map((doc) => {
+        const src = thumbById[doc.id];
+        const dims = photoDims[doc.id];
+        if (!src || !dims) return null;
+        return {
+          src,
+          width: dims.width,
+          height: dims.height,
+          key: doc.id,
+          doc,
+        } satisfies VaultAlbumPhoto;
+      })
+      .filter((p): p is VaultAlbumPhoto => p !== null);
+
+    // Ignore upload order: group similar shapes for a balanced masonry (after intrinsic size is known).
+    return [...mapped].sort((a, b) => {
+      const aspectA = a.width / a.height;
+      const aspectB = b.width / b.height;
+      const d = aspectA - aspectB;
+      if (d !== 0) return d;
+      const areaA = a.width * a.height;
+      const areaB = b.width * b.height;
+      return areaB - areaA;
+    });
+  }, [imageDocuments, thumbById, photoDims]);
+
+  const albumLayoutPending = useMemo(() => {
+    if (imageDocuments.length === 0) return false;
+    const decryptBusy =
+      thumbLoadingId !== null && imageDocuments.some((d) => d.id === thumbLoadingId);
+    const dimsPending = imageDocuments.some((d) => {
+      const src = thumbById[d.id];
+      return Boolean(src) && !photoDims[d.id];
+    });
+    return decryptBusy || dimsPending;
+  }, [imageDocuments, thumbById, photoDims, thumbLoadingId]);
 
   const downloadDocument = useCallback(async (doc: LockerDocument) => {
     if (!doc.objectKey) return;
@@ -423,39 +514,15 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
       if (!putRes.ok) throw new Error(`R2 upload failed (${putRes.status})`);
       setUploads((prev) => prev.map((item) => (item.id === tempId ? { ...item, progress: 80 } : item)));
 
-      // 4. Commit metadata to Supabase via backend
-      const commitRes = await fetch(`${ZK_VAULT_DOCUMENTS_ENDPOINT}/commit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          objectKey,
-          fileName: file.name,
-          folder: activeFolder,
-          fileType: extension,
-          originalSize: file.size,
-          userId,
-        }),
+      // 4. Commit metadata to Supabase via backend (Using React Query Mutation)
+      await commitDocument({
+        objectKey,
+        fileName: file.name,
+        folder: activeFolder,
+        fileType: extension,
+        originalSize: file.size,
+        userId,
       });
-      const data = (await commitRes.json()) as { document?: any; error?: string };
-      if (!commitRes.ok || !data?.document) {
-        toast.error(data?.error || `Upload commit failed (${commitRes.status}).`);
-        return;
-      }
-      const d = data.document;
-      const docType = (d.fileType === "jpg" ? "jpeg" : d.fileType) as DocumentFormat;
-      const uploadedDoc: LockerDocument = {
-        id: d.id,
-        objectKey: d.objectKey,
-        name: d.name,
-        size: d.size,
-        type: docType,
-        folder: d.folder,
-        updatedAt: d.updatedAt,
-        thumbnailSeed: String(d.name || "").slice(0, 1).toUpperCase() || "D",
-        source: "upload",
-      };
-      void reloadVault();
       toast.success("Document uploaded successfully.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
@@ -580,15 +647,8 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
     
     setDeletePendingId(doc.id);
     try {
-      const params = userId ? `?userId=${encodeURIComponent(userId)}` : "";
-      const response = await fetch(
-        `${ZK_VAULT_DOCUMENTS_ENDPOINT}/${encodeURIComponent(doc.objectKey)}${params}`,
-        { method: "DELETE", credentials: "include" }
-      );
-      if (!response.ok) throw new Error("Delete failed");
-      
-      // Refresh the unified hook to ensure server sync
-      void reloadVault();
+      // Use the React Query mutation
+      await deleteItem(doc.id);
 
       if (previewDoc?.id === doc.id) setPreviewDoc(null);
       if (conversionDoc?.id === doc.id) setConversionDoc(null);
@@ -752,40 +812,124 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
               </div>
             ) : (
                 <div>
-
-                  {/* Media Section - Now First */}
-                  {imageDocuments.length > 0 ? (
-                    <section>
+                  {imageDocuments.length > 0 && (
+                    <section className="mb-10">
                       <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black/35">Media</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {imageDocuments.map((doc) => {
-                          const src = doc.previewUrl || thumbById[doc.id];
-                          return (
-                            <DocumentMediaCard
-                              key={doc.id}
-                              doc={{ id: doc.id, name: doc.name, sizeLabel: formatBytes(doc.size) }}
-                              width={0} // Fixed in component via CSS
-                              height={0} // Fixed in component via CSS
-                              thumbUrl={src}
-                              isThumbLoading={thumbLoadingId === doc.id && !src}
-                              onDelete={() => void deleteDocument(doc)}
-                              onDownload={() => void handleDownload(doc)}
-                              onPreview={() => setPreviewDoc(doc)}
-                              deletePending={deletePendingId === doc.id}
-                              hoveredId={hoveredGalleryId}
-                              onHoverChange={setHoveredGalleryId}
-                            />
-                          );
-                        })}
-                      </div>
+                      {albumLayoutPending ? (
+                        <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 rounded-2xl border border-black/5 bg-[#f7f7f7] dark:border-white/10 dark:bg-white/5">
+                          <Loader2 className="h-8 w-8 animate-spin text-[#FF3B13]" />
+                          <p className="text-sm text-black/50 dark:text-white/50">Preparing gallery layout…</p>
+                        </div>
+                      ) : albumPhotos.length > 0 ? (
+                        <PhotoAlbum
+                          layout="masonry"
+                          photos={albumPhotos}
+                          columns={(containerWidth) => {
+                            if (containerWidth < 640) return 2;
+                            if (containerWidth < 1024) return 3;
+                            return 4;
+                          }}
+                          spacing={12}
+                          render={{
+                            photo: (_props: RenderPhotoProps, context: RenderPhotoContext<VaultAlbumPhoto>) => {
+                              const p = context.photo;
+                              const doc = p.doc;
+                              const { width, height } = context;
+                              const active = hoveredGalleryId === doc.id;
+                              return (
+                                <div
+                                  key={p.key ?? context.index}
+                                  className="group relative overflow-hidden rounded-xl border border-black/5 bg-[#f0f0f0] shadow-sm dark:border-white/10 dark:bg-gray-900"
+                                  style={{ width, height }}
+                                  onMouseEnter={() => setHoveredGalleryId(doc.id)}
+                                  onMouseLeave={() => setHoveredGalleryId(null)}
+                                  onFocus={() => setHoveredGalleryId(doc.id)}
+                                  onBlur={() => setHoveredGalleryId(null)}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      void deleteDocument(doc);
+                                    }}
+                                    disabled={deletePendingId === doc.id}
+                                    className="absolute right-2 top-2 z-20 rounded-full bg-white/90 p-1.5 text-black/35 shadow-sm backdrop-blur-sm transition hover:text-[#FF3300] disabled:opacity-40 dark:bg-gray-800/90 dark:text-white/50"
+                                    aria-label="Remove"
+                                  >
+                                    {deletePendingId === doc.id ? (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    )}
+                                  </button>
+
+                                  <div
+                                    role="button"
+                                    tabIndex={0}
+                                    className="relative flex h-full w-full cursor-pointer flex-col outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/30"
+                                    onClick={() => setPreviewDoc(doc)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        setPreviewDoc(doc);
+                                      }
+                                    }}
+                                  >
+                                    <img
+                                      src={p.src}
+                                      alt=""
+                                      className="h-full w-full object-contain"
+                                      loading="lazy"
+                                      decoding="async"
+                                      draggable={false}
+                                    />
+                                  </div>
+
+                                  <div
+                                    className={`pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/85 via-black/35 to-transparent transition-opacity ${
+                                      active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                    }`}
+                                  />
+                                  <div
+                                    className={`absolute inset-x-0 bottom-0 z-10 flex flex-col gap-2 p-3 transition-opacity ${
+                                      active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                    }`}
+                                  >
+                                    <div className="pointer-events-none min-w-0">
+                                      <p className="truncate text-[12px] font-bold text-white drop-shadow-sm">{doc.name}</p>
+                                      <p className="text-[10px] font-medium text-white/75">{formatBytes(doc.size)}</p>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      aria-label={`Download ${doc.name}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        void handleDownload(doc);
+                                      }}
+                                      className="pointer-events-auto inline-flex items-center justify-center gap-2 self-start rounded-xl bg-white py-2 pl-3 pr-4 text-[10px] font-bold uppercase tracking-widest text-black shadow-md transition hover:bg-white/95 dark:bg-gray-100"
+                                    >
+                                      <Download className="h-3.5 w-3.5" />
+                                      Download
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            },
+                          }}
+                        />
+                      ) : (
+                        <div className="flex min-h-[120px] items-center justify-center rounded-2xl border border-dashed border-black/10 bg-[#fafafa] px-4 py-8 text-center text-sm text-black/45 dark:border-white/15 dark:bg-white/5 dark:text-white/45">
+                          Preview unavailable. Check your connection and try refreshing the vault.
+                        </div>
+                      )}
                     </section>
-                  ) : null}
+                  )}
 
                   {/* Documents Section - Now Second */}
                   {fileDocuments.length > 0 ? (
                     <section>
                       <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black/35">Documents</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                         {fileDocuments.map((doc) => {
                           const thumb = thumbnailForType(doc.type);
                           return (

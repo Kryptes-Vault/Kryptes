@@ -1,4 +1,4 @@
-export { buildJustifiedRows, clampAspect } from "./justifiedLayout";
+export { buildJustifiedRows, buildFixedColumnJustifiedRows, clampAspect } from "./justifiedLayout";
 export type { AspectItem, JustifiedRow, PlacedItem } from "./justifiedLayout";
 export { DocumentMediaCard } from "./DocumentMediaCard";
 export type { CardDoc } from "./DocumentMediaCard";

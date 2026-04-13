@@ -3,6 +3,8 @@ import { getUserVaultStatus, setUserVaultActive } from "../services/supabaseAdmi
 import { redisCacheService } from "../services/redisCacheService";
 // @ts-ignore - bitwardenService is currently JS and may not have type declarations
 import { fetchCardsFromBitwarden, saveCardToBitwarden } from "../services/bitwardenService";
+import { resolveUserId } from "../utils/authUtils";
+import { Request, Response } from "express";
 
 /**
  * bankingController handles the secure data flow for Banking & Cards assets.
@@ -14,10 +16,10 @@ export const bankingController = {
    * Retrieves user's cards using a secure cache-aside pattern.
    */
   async getCards(req: Request, res: Response) {
-    const { userId } = req.query;
+    const userId = resolveUserId(req);
 
-    if (!userId || typeof userId !== "string") {
-      return res.status(400).json({ error: "userId is required as a query parameter." });
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized: Session required." });
     }
 
     try {
@@ -62,8 +64,8 @@ export const bankingController = {
    * Persists a new card to Bitwarden and invalidates the stale cache.
    */
   async addCard(req: Request, res: Response) {
+    const userId = resolveUserId(req);
     const { 
-      userId, 
       cardholderName, 
       cardNumber, 
       expMonth, 
@@ -75,7 +77,7 @@ export const bankingController = {
 
     // Strict validation for required banking identifiers
     if (!userId || !accountNumber || !ifscCode) {
-      return res.status(400).json({ error: "Missing required fields (userId, accountNumber, ifscCode)" });
+      return res.status(400).json({ error: "Missing required fields (session, accountNumber, ifscCode)" });
     }
 
     try {

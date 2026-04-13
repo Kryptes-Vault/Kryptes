@@ -69,7 +69,7 @@ export function buildJustifiedRows(
 
     if (isLast) {
       const naturalTotal = sumAr * rowHeight + gaps;
-      const shouldStretch = r.length > 1 && naturalTotal >= containerWidth * 0.92;
+      const shouldStretch = r.length > 1 && naturalTotal >= containerWidth * 0.5;
       if (!shouldStretch) {
         return {
           isLast: true,
@@ -83,6 +83,43 @@ export function buildJustifiedRows(
 
     const available = containerWidth - gaps;
     const scale = available / (sumAr * rowHeight);
+    return {
+      isLast,
+      items: r.map((it) => {
+        const a = clampAspect(it.aspect);
+        return { ...it, width: a * rowHeight * scale, height: rowHeight };
+      }),
+    };
+  });
+}
+
+/**
+ * Justified rows with a fixed maximum number of images per row (e.g. 4).
+ * Each row stretches to `containerWidth`; cell widths scale with aspect ratio like a full justified row.
+ */
+export function buildFixedColumnJustifiedRows(
+  items: AspectItem[],
+  containerWidth: number,
+  rowHeight: number,
+  gap: number,
+  columnsPerRow: number
+): JustifiedRow[] {
+  if (containerWidth <= 0 || items.length === 0 || columnsPerRow < 1) return [];
+
+  const normalized = items.map((it) => ({ ...it, aspect: clampAspect(it.aspect) }));
+  const rows: AspectItem[][] = [];
+  for (let i = 0; i < normalized.length; i += columnsPerRow) {
+    rows.push(normalized.slice(i, i + columnsPerRow));
+  }
+
+  return rows.map((r, idx) => {
+    const isLast = idx === rows.length - 1;
+    const n = r.length;
+    const gaps = gap * Math.max(0, n - 1);
+    const sumAr = r.reduce((s, it) => s + clampAspect(it.aspect), 0);
+    const available = containerWidth - gaps;
+    const scale = available / (sumAr * rowHeight);
+
     return {
       isLast,
       items: r.map((it) => {
