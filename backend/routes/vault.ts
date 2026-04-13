@@ -2,7 +2,6 @@ import express, { Request, Response } from "express";
 const router = express.Router();
 const { vaultSchema } = require("../models/vaultSchema");
 const { getCachedVault, setCachedVault, deleteCachedVault } = require("../services/redisService");
-import { saveToBitwarden, fetchFromBitwarden, saveCardToBitwarden, fetchCardsFromBitwarden } from "../services/bitwardenService";
 import { getSupabaseAdmin } from "../services/supabaseAdmin";
 import { encryptVaultAtRest, decryptVaultAtRest } from "../utils/cryptoUtils";
 import { insertVaultItemCreatedAudit } from "../services/vaultAuditService";
@@ -17,17 +16,25 @@ const vaultLimiter = rateLimit({
     message: "Too many vault requests from this IP"
 });
 
-/**
- * @route   POST /api/vault/add
- * @desc    Encrypts and persists data to Bitwarden (Write-through pattern)
- */
 router.post("/add", vaultLimiter, async (req: Request, res: Response) => {
     try {
         const validatedData = vaultSchema.parse(req.body);
-        const { userId, encryptedData, referenceId } = validatedData;
+        const { userId, encryptedData } = validatedData;
 
-        // 1. Bitwarden Persistence (Single Source of Truth)
-        await saveToBitwarden(userId, encryptedData, referenceId);
+        // 1. Supabase Persistence (Single Source of Truth)
+        const supabase = getSupabaseAdmin();
+        const { error } = await supabase
+            .from("vault_items")
+            .upsert({
+                user_id: userId,
+                item_type: "vault_blob",
+                ciphertext: encryptedData,
+                iv: "client_encrypted", // Client sends a full composite blob
+                encryption_version: "client_v1",
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id,item_type' }); // Ensure only one master blob per user/type
+
+        if (error) throw error;
 
         // 2. Redis Update (Invalidate/Update Cache)
         await setCachedVault(userId, encryptedData);
@@ -37,14 +44,11 @@ router.post("/add", vaultLimiter, async (req: Request, res: Response) => {
 
         return res.json({ success: true, message: "Kryptex Vault Synchronized" });
     } catch (error: any) {
+        console.error("[Vault] POST /add error:", error.message);
         return res.status(400).json({ error: error.message });
     }
 });
 
-/**
- * @route   GET /api/vault/get
- * @desc    Fetch encrypted data (Read-aside pattern with Redis)
- */
 router.get("/get", vaultLimiter, async (req: Request, res: Response) => {
     const userId = req.query.userId as string;
     if (!userId) return res.status(400).json({ error: "UserID required" });
@@ -56,23 +60,34 @@ router.get("/get", vaultLimiter, async (req: Request, res: Response) => {
         }
 
         // 2. Check Redis Cache
-        let data = await getCachedVault(userId);
-
-        if (data) {
+        let cached = await getCachedVault(userId);
+        if (cached) {
             console.log(`[Cache Hit] Serving encrypted data for: ${userId}`);
-            return res.json({ encryptedData: data, source: "cache" });
+            return res.json({ encryptedData: cached, source: "cache" });
         }
 
-        // 3. Cache Miss - Fetch from Bitwarden
-        console.log(`[Cache Miss] Calling Bitwarden for: ${userId}`);
-        data = await fetchFromBitwarden(userId);
+        // 3. Cache Miss - Fetch from Supabase
+        console.log(`[Cache Miss] Fetching from Supabase for: ${userId}`);
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase
+            .from("vault_items")
+            .select("ciphertext")
+            .eq("user_id", userId)
+            .eq("item_type", "vault_blob")
+            .order("updated_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (error) throw error;
+        
+        const encryptedData = data?.ciphertext || "";
 
         // 4. Populate Cache
-        if (data && data.length > 0) {
-            await setCachedVault(userId, data);
+        if (encryptedData) {
+            await setCachedVault(userId, encryptedData);
         }
 
-        return res.json({ encryptedData: data || [], source: "vault" });
+        return res.json({ encryptedData, source: "vault" });
     } catch (error: any) {
         console.error("Vault Retrieval Error:", error);
         return res.status(500).json({ error: "Vault Retrieval Error - Please retry later" });

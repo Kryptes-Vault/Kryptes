@@ -100,14 +100,28 @@ export function PaymentCard({
               </div>
             </div>
             <div className="flex items-center gap-4">
-              {/* Modernized Chip Design */}
-              <div className="h-9 w-12 rounded-lg bg-gradient-to-br from-amber-200 via-amber-400 to-amber-500 shadow-sm border border-amber-600/20 relative">
-                <div className="absolute inset-2 border-t border-black/10" />
-                <div className="absolute inset-2 border-l border-black/10" />
-              </div>
-              <div className="flex flex-col items-center">
-                <Vault className="h-5 w-5 text-black/10" />
-              </div>
+              {/* Peek/Hide Reveal Toggle moved to top-right */}
+              <button
+                onClick={() => setIsRevealed(!isRevealed)}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 p-2 px-3 rounded-2xl transition-all duration-500 group border",
+                  isRevealed 
+                    ? "bg-[#FF3B13] border-[#FF3B13]/30 shadow-lg shadow-[#FF3B13]/20 text-white" 
+                    : "bg-white border-black/5 shadow-sm hover:border-[#FF3B13]/20 text-black/20"
+                )}
+              >
+                {isRevealed ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4 group-hover:text-[#FF3B13]" />
+                )}
+                <span className={cn(
+                  "text-[8px] font-bold uppercase tracking-tighter transition-colors",
+                  isRevealed ? "text-white/80" : "group-hover:text-[#FF3B13]"
+                )}>
+                  {isRevealed ? "Hide" : "Peek"}
+                </span>
+              </button>
             </div>
           </div>
  
@@ -178,28 +192,6 @@ export function PaymentCard({
           </div>
         </div>
  
-        {/* Global Reveal Toggle - Floating Pill Style */}
-        <button
-          onClick={() => setIsRevealed(!isRevealed)}
-          className={cn(
-            "absolute right-8 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 p-2 rounded-2xl transition-all duration-500 group border",
-            isRevealed 
-              ? "bg-[#FF3B13] border-[#FF3B13]/30 shadow-lg shadow-[#FF3B13]/20" 
-              : "bg-white border-black/5 shadow-sm hover:border-[#FF3B13]/20"
-          )}
-        >
-          {isRevealed ? (
-            <EyeOff className="h-5 w-5 text-white" />
-          ) : (
-            <Eye className="h-5 w-5 text-black/20 group-hover:text-[#FF3B13]" />
-          )}
-          <span className={cn(
-            "text-[8px] font-bold uppercase tracking-tighter transition-colors",
-            isRevealed ? "text-white/80" : "text-black/20 group-hover:text-[#FF3B13]"
-          )}>
-            {isRevealed ? "Hide" : "Peek"}
-          </span>
-        </button>
       </motion.div>
 
       {/* Account Info Details (Revealed below) */}

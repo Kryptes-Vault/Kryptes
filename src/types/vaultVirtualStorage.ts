@@ -1,6 +1,6 @@
 /**
  * Virtual vault document model — mirrors `public.vault_files` / `public.vault_folders`.
- * Binary payloads live in MEGA; Postgres holds structure and links only.
+ * Binary payloads live in Google Drive; Postgres holds structure and links only.
  */
 
 export type VaultFolderRow = {

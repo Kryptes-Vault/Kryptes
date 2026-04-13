@@ -1,6 +1,5 @@
-/**
  * Browser-side retrieval for virtual vault files (RLS enforces ownership).
- * Does not call MEGA for listing — only Supabase.
+ * Does not call Google Drive for listing — only Supabase.
  */
 import { supabase } from "@/lib/supabase";
 import type { VaultFileRow } from "@/types/vaultVirtualStorage";
