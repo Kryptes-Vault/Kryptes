@@ -1,5 +1,13 @@
 import express, { Request, Response } from "express";
 const router = express.Router();
+
+router.use((req, res, next) => {
+  if (req.path.includes("documents")) {
+    console.log("VAULT ROUTER INTERCEPTED DOCUMENT REQUEST:", req.method, req.path);
+  }
+  next();
+});
+
 const { vaultSchema } = require("../models/vaultSchema");
 const { getCachedVault, setCachedVault, deleteCachedVault } = require("../services/redisService");
 import { getSupabaseAdmin } from "../services/supabaseAdmin";
@@ -7,7 +15,7 @@ import { encryptVaultAtRest, decryptVaultAtRest } from "../utils/cryptoUtils";
 import { insertVaultItemCreatedAudit } from "../services/vaultAuditService";
 const rateLimit = require("express-rate-limit");
 import { checkProfileFlag, setProfileFlagActive } from "../services/gatekeeperService";
-import { insertVaultItemCreatedAudit } from "../services/vaultAuditService";
+import { resolveUserId } from "../utils/authUtils";
 
 // Prevent Brute Force
 const vaultLimiter = rateLimit({
@@ -18,10 +26,13 @@ const vaultLimiter = rateLimit({
 
 router.post("/add", vaultLimiter, async (req: Request, res: Response) => {
     try {
-        const validatedData = vaultSchema.parse(req.body);
-        const { userId, encryptedData } = validatedData;
+        const userId = resolveUserId(req);
+        if (!userId) return res.status(401).json({ error: "Unauthorized: Session required." });
 
-        // 1. Supabase Persistence (Single Source of Truth)
+        const validatedData = vaultSchema.parse(req.body);
+        const { encryptedData } = validatedData;
+
+        // 1. Supabase Persistence
         const supabase = getSupabaseAdmin();
         const { error } = await supabase
             .from("vault_items")
@@ -29,17 +40,14 @@ router.post("/add", vaultLimiter, async (req: Request, res: Response) => {
                 user_id: userId,
                 item_type: "vault_blob",
                 ciphertext: encryptedData,
-                iv: "client_encrypted", // Client sends a full composite blob
+                iv: "client_encrypted",
                 encryption_version: "client_v1",
                 updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id,item_type' }); // Ensure only one master blob per user/type
+            }, { onConflict: 'user_id,item_type' });
 
         if (error) throw error;
 
-        // 2. Redis Update (Invalidate/Update Cache)
         await setCachedVault(userId, encryptedData);
-
-        // 3. Update Gatekeeper
         await setProfileFlagActive(userId, 'has_passwords');
 
         return res.json({ success: true, message: "Kryptex Vault Synchronized" });
@@ -50,8 +58,8 @@ router.post("/add", vaultLimiter, async (req: Request, res: Response) => {
 });
 
 router.get("/get", vaultLimiter, async (req: Request, res: Response) => {
-    const userId = req.query.userId as string;
-    if (!userId) return res.status(400).json({ error: "UserID required" });
+    const userId = resolveUserId(req);
+    if (!userId) return res.status(401).json({ error: "Unauthorized: Session required." });
 
     try {
         // 1. Gatekeeper Check
@@ -100,10 +108,11 @@ router.get("/get", vaultLimiter, async (req: Request, res: Response) => {
  */
 router.post("/cards", vaultLimiter, async (req: Request, res: Response) => {
     try {
-        const { userId, cardholderName, cardNumber, bankName, expMonth, expYear, code } = req.body;
+        const userId = resolveUserId(req);
+        const { cardholderName, cardNumber, bankName, expMonth, expYear, code } = req.body;
 
         if (!userId || !cardNumber) {
-            return res.status(400).json({ error: "Missing required fields (userId, cardNumber)" });
+            return res.status(400).json({ error: "Missing required fields (session, cardNumber)" });
         }
 
         const cardPayload = {
@@ -177,8 +186,8 @@ router.post("/cards", vaultLimiter, async (req: Request, res: Response) => {
  */
 router.post("/banks", vaultLimiter, async (req: Request, res: Response) => {
     try {
+        const userId = resolveUserId(req);
         const { 
-            userId, 
             bankName, 
             domain,
             isAutoFetch, 
@@ -188,7 +197,7 @@ router.post("/banks", vaultLimiter, async (req: Request, res: Response) => {
         } = req.body;
 
         if (!userId || !bankName) {
-            return res.status(400).json({ error: "Missing required fields (userId, bankName)" });
+            return res.status(400).json({ error: "Missing required fields (session, bankName)" });
         }
 
         const bankPayload = {
@@ -245,8 +254,8 @@ router.post("/banks", vaultLimiter, async (req: Request, res: Response) => {
  */
 router.get("/cards", vaultLimiter, async (req: Request, res: Response) => {
     try {
-        const userId = req.query.userId as string;
-        if (!userId) return res.status(400).json({ error: "userId is required." });
+        const userId = resolveUserId(req);
+        if (!userId) return res.status(401).json({ error: "Unauthorized: Session required." });
 
         if (!(await checkProfileFlag(userId, "has_cards"))) {
             return res.status(200).json({ cards: [], source: "gatekeeper_cards" });
@@ -327,8 +336,8 @@ router.get("/cards", vaultLimiter, async (req: Request, res: Response) => {
  */
 router.get("/items", vaultLimiter, async (req: Request, res: Response) => {
     try {
-        const userId = req.query.userId as string;
-        if (!userId) return res.status(400).json({ error: "userId is required." });
+        const userId = resolveUserId(req);
+        if (!userId) return res.status(401).json({ error: "Unauthorized: Session required." });
 
         // 1. Check Redis Cache
         const cachedData = await getCachedVault(userId);
@@ -351,6 +360,16 @@ router.get("/items", vaultLimiter, async (req: Request, res: Response) => {
         }
 
         const decryptedItems = (rows || []).map((row) => {
+            // ZK documents are client-side encrypted and the backend only stores metadata.
+            // We skip server-side decryption for these items.
+            if (row.item_type === "zk_document") {
+                return {
+                    ...row,
+                    decrypted_data: row.metadata || {},
+                    title: row.title || row.metadata?.fileName || "Untitled Document"
+                };
+            }
+
             try {
                 const plain = decryptVaultAtRest(row.iv, row.ciphertext);
                 const payload = JSON.parse(plain);

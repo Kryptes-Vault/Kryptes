@@ -6,9 +6,8 @@
  *
  * GET  /upload-url          — mint a PUT pre-signed URL + objectKey
  * POST /commit              — after a successful PUT, persist metadata in Supabase
- * GET  /download-url/:key   — mint a GET pre-signed URL
  * GET  /list                — list all ZK documents for a user
- * DELETE /:objectKey        — delete blob from R2 + metadata from Supabase
+ * DELETE /:docId            — delete metadata from Supabase and blob from R2
  */
 
 import express, { Request, Response } from "express";
@@ -18,9 +17,11 @@ import { insertVaultItemCreatedAudit } from "../services/vaultAuditService";
 import {
   isR2Configured,
   generateUploadUrl,
-  generateDownloadUrl,
   deleteObject,
 } from "../services/r2Storage";
+import { resolveUserId } from "../utils/authUtils";
+
+const { deleteCachedVault } = require("../services/redisService");
 
 const router = express.Router();
 const rateLimit = require("express-rate-limit");
@@ -31,17 +32,7 @@ const docLimiter = rateLimit({
   message: "Too many document vault requests from this IP",
 });
 
-function resolveUserId(req: Request): string | null {
-  const q = typeof req.query.userId === "string" ? req.query.userId.trim() : "";
-  const body = typeof req.body?.userId === "string" ? req.body.userId.trim() : "";
-  return (
-    q ||
-    body ||
-    (req as any).session?.supabaseUserId ||
-    ((req as any).user && (req as any).user.id) ||
-    null
-  );
-}
+// resolveUserId is now imported from ../utils/authUtils
 
 /**
  * GET /api/vault/documents/upload-url
@@ -57,12 +48,12 @@ router.get("/upload-url", docLimiter, async (req: Request, res: Response) => {
 
   const userId = resolveUserId(req);
   if (!userId) {
-    return res.status(400).json({ error: "userId is required." });
+    return res.status(401).json({ error: "Unauthorized: Session required." });
   }
 
   try {
-    // Keep object keys slash-free so standard `:objectKey` params work on Express 5.
-    const objectKey = `${userId}__${crypto.randomUUID()}`;
+    // Use slash for R2 object storage hierarchy
+    const objectKey = `${userId}/${crypto.randomUUID()}`;
     const uploadUrl = await generateUploadUrl(objectKey, 300);
 
     return res.status(200).json({ uploadUrl, objectKey });
@@ -80,7 +71,7 @@ router.get("/upload-url", docLimiter, async (req: Request, res: Response) => {
  */
 router.post("/commit", docLimiter, async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
-  if (!userId) return res.status(400).json({ error: "userId is required." });
+  if (!userId) return res.status(401).json({ error: "Unauthorized: Session required." });
 
   const objectKey = typeof req.body?.objectKey === "string" ? req.body.objectKey.trim() : "";
   const fileName = typeof req.body?.fileName === "string" ? req.body.fileName.trim() : "encrypted_document";
@@ -130,6 +121,13 @@ router.post("/commit", docLimiter, async (req: Request, res: Response) => {
 
     await setProfileFlagActive(userId, "has_documents");
 
+    try {
+      await deleteCachedVault(userId);
+      console.log(`[R2-Vault] Cache invalidated for ${userId}`);
+    } catch (err) {
+      console.warn("[R2-Vault] Redis cache invalidation error:", err);
+    }
+
     return res.status(201).json({
       document: {
         id: created.id,
@@ -148,29 +146,6 @@ router.post("/commit", docLimiter, async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/vault/documents/download-url/:objectKey
- *
- * Mints a short-lived GET pre-signed URL so the browser can fetch the
- * encrypted blob directly from R2, then decrypt it client-side.
- */
-router.get("/download-url/:objectKey", docLimiter, async (req: Request, res: Response) => {
-  const objectKey = req.params.objectKey;
-  if (!objectKey) return res.status(400).json({ error: "objectKey is required." });
-
-  if (!isR2Configured()) {
-    return res.status(503).json({ error: "Cloudflare R2 storage is not configured." });
-  }
-
-  try {
-    const downloadUrl = await generateDownloadUrl(objectKey, 300);
-    return res.status(200).json({ downloadUrl });
-  } catch (err: any) {
-    console.error("[R2-Vault] Failed to generate download URL:", err.message);
-    return res.status(500).json({ error: "Failed to generate download URL." });
-  }
-});
-
-/**
  * GET /api/vault/documents/list
  *
  * Returns metadata for all ZK documents belonging to this user.
@@ -178,7 +153,7 @@ router.get("/download-url/:objectKey", docLimiter, async (req: Request, res: Res
  */
 router.get("/list", docLimiter, async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
-  if (!userId) return res.status(400).json({ error: "userId is required." });
+  if (!userId) return res.status(401).json({ error: "Unauthorized: Session required." });
 
   if (!(await checkProfileFlag(userId, "has_documents"))) {
     return res.status(200).json({ documents: [], source: "gatekeeper" });
@@ -208,7 +183,7 @@ router.get("/list", docLimiter, async (req: Request, res: Response) => {
       updatedAt: row.updated_at,
     }));
 
-    return res.status(200).json({ documents });
+    return res.status(200).json({ documents, source: "db" });
   } catch (err: any) {
     console.error("[R2-Vault] List exception:", err);
     return res.status(500).json({ error: "Server error listing documents." });
@@ -216,36 +191,70 @@ router.get("/list", docLimiter, async (req: Request, res: Response) => {
 });
 
 /**
- * DELETE /api/vault/documents/:objectKey
+ * DELETE /api/vault/documents/:docId
  *
- * Synchronous deletion: removes the encrypted blob from R2 AND the
- * metadata row from Supabase in a single request.
+ * Securely deletes a ZK document:
+ * 1. Resolves user from session.
+ * 2. Fetches item to get objectKey (verifying ownership).
+ * 3. Deletes from R2 and Supabase.
+ * 4. Invalidates Redis cache.
  */
-router.delete("/:objectKey", docLimiter, async (req: Request, res: Response) => {
-  const objectKey = req.params.objectKey;
-  if (!objectKey) return res.status(400).json({ error: "objectKey is required." });
-
+router.delete("/:docId", docLimiter, async (req: Request, res: Response) => {
+  console.log("TRIPWIRE TRIGGERED! Method:", req.method, "Params:", req.params, "Cookies:", req.cookies, "RawCookie:", req.headers.cookie);
+  const { docId } = req.params;
   const userId = resolveUserId(req);
-  if (!userId) return res.status(400).json({ error: "userId is required." });
-
-  try {
-    await deleteObject(objectKey);
-  } catch (error) {
-    console.warn("[R2-Vault] R2 delete failed (may already be gone):", error);
-  }
+  
+  // Note: We remove the strict 400 bouncer here to allow session-based 
+  // authorization to proceed to the Supabase lookup, which will fail 
+  // with a 404/401 naturally if the userId is resolved to null.
 
   try {
     const supabase = getSupabaseAdmin();
-    await supabase
+    
+    // 1. Secure Lookup: Get metadata to retrieve objectKey
+    const { data: item, error: fetchErr } = await supabase
+      .from("vault_items")
+      .select("ciphertext, metadata")
+      .eq("id", docId)
+      .eq("user_id", userId)
+      .single();
+
+    if (fetchErr || !item) {
+      console.warn(`[R2-Vault] Delete blocked: Item ${docId} not found or unauthorized for user ${userId}`);
+      return res.status(404).json({ error: "Document not found or unauthorized." });
+    }
+
+    // We store objectKey in ciphertext for documents (logic from /commit)
+    const objectKey = item.ciphertext || item.metadata?.objectKey;
+
+    // 2. Delete from R2
+    if (objectKey) {
+      try {
+        await deleteObject(objectKey);
+      } catch (error) {
+        console.warn("[R2-Vault] R2 delete failed (may already be gone):", error);
+      }
+    }
+
+    // 3. Delete from Supabase
+    const { error: dbErr } = await supabase
       .from("vault_items")
       .delete()
-      .eq("user_id", userId)
-      .eq("item_type", "zk_document")
-      .contains("metadata", { objectKey });
+      .eq("id", docId)
+      .eq("user_id", userId);
+
+    if (dbErr) throw dbErr;
+
+    // 4. Redis Invalidation
+    try {
+      await deleteCachedVault(userId);
+    } catch (err) {
+      console.warn("[R2-Vault] Redis invalidation failed during delete:", err);
+    }
 
     return res.status(200).json({ ok: true });
   } catch (err: any) {
-    console.error("[R2-Vault] Supabase delete error:", err);
+    console.error("[R2-Vault] Delete exception:", err);
     return res.status(500).json({ error: "Failed to delete document metadata." });
   }
 });

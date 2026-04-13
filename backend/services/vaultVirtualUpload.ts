@@ -73,7 +73,7 @@ export async function uploadAndLinkFile(
   fileName: string,
   targetFolderCode: string
 ): Promise<UploadAndLinkResult> {
-  if (!userId?.trim()) throw new Error("userId is required.");
+  if (!userId?.trim()) throw new Error("Internal Error: User resolution failed for Drive upload.");
   if (!Buffer.isBuffer(fileBuffer) || fileBuffer.length === 0) throw new Error("fileBuffer must be a non-empty Buffer.");
   if (!fileName?.trim()) throw new Error("fileName is required.");
   if (!targetFolderCode?.trim()) throw new Error("targetFolderCode is required.");

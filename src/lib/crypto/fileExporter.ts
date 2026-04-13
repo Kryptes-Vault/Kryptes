@@ -5,9 +5,10 @@
  * in the browser. Uses HTML5 Canvas for image-to-image and jsPDF for image-to-PDF.
  */
 
+import { Document, Packer, Paragraph, ImageRun } from "docx";
 import { jsPDF } from "jspdf";
 
-export type ExportFormat = "png" | "jpeg" | "webp" | "pdf";
+export type ExportFormat = "png" | "jpeg" | "webp" | "pdf" | "docx";
 
 /**
  * Load an image `Blob` into an `HTMLImageElement` on an off-screen canvas.
@@ -98,6 +99,42 @@ export async function convertImageToPdf(sourceBlob: Blob): Promise<Blob> {
 }
 
 /**
+ * Convert a decrypted image `Blob` into a Word document (.docx) using the docx library.
+ */
+export async function convertImageToDocx(sourceBlob: Blob): Promise<Blob> {
+  const img = await loadImage(sourceBlob);
+  const w = img.naturalWidth;
+  const h = img.naturalHeight;
+
+  // Word usually handles images at 72dpi or 96dpi. Setting a reasonable limit.
+  // We'll scale the image to fit a standard A4 page (roughly 450-500 points wide).
+  const maxWidth = 500;
+  const scale = w > maxWidth ? maxWidth / w : 1;
+
+  const doc = new Document({
+    sections: [
+      {
+        children: [
+          new Paragraph({
+            children: [
+              new ImageRun({
+                data: await sourceBlob.arrayBuffer(),
+                transformation: {
+                  width: w * scale,
+                  height: h * scale,
+                },
+              }),
+            ],
+          }),
+        ],
+      },
+    ],
+  });
+
+  return Packer.toBlob(doc);
+}
+
+/**
  * High-level conversion dispatcher. Takes a decrypted Blob and a target format,
  * returns a new Blob in the requested format.
  */
@@ -114,6 +151,10 @@ export async function convertDecryptedFile(
 
   if (targetFormat === "pdf") {
     return convertImageToPdf(sourceBlob);
+  }
+
+  if (targetFormat === "docx") {
+    return convertImageToDocx(sourceBlob);
   }
 
   return convertImageToImage(sourceBlob, targetFormat);

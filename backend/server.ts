@@ -8,6 +8,7 @@ const Redis = require("ioredis") as any;
 const cors = require("cors") as any;
 const multer = require("multer") as any;
 const sharp = require("sharp") as any;
+const cookieParser = require("cookie-parser");
 const { PDFDocument } = require("pdf-lib") as any;
 
 const vaultRoutes = require("./routes/vault");
@@ -19,6 +20,7 @@ const { corsOptions, getSessionCookieOptions } = require("./config/auth");
 const { encryptVaultAtRest, decryptVaultAtRest } = require("./utils/cryptoUtils");
 const supportRoutes = require("./routes/support");
 const otpRoutes = require("./routes/otp");
+const { isR2Configured, generateDownloadUrl } = require("./services/r2Storage");
 
 const app = express();
 const upload = multer({
@@ -204,6 +206,7 @@ app.post(
   handleSendEmailHook
 );
 
+app.use(cookieParser());
 app.use(express.json({ limit: "2mb" }));
 
 const sessionConfig: any = {
@@ -297,8 +300,22 @@ app.post("/api/convert", upload.single("file"), async (req: KryptexRequest, res:
 
 /* Legacy /api/documents routes removed — migrated to Cloudflare R2 via /api/vault/documents */
 
-app.use("/api/vault", vaultRoutes);
+app.get("/api/vault/documents/download-url", async (req: any, res: any) => {
+  const objectKey = typeof req.query.objectKey === "string" ? req.query.objectKey.trim() : "";
+  if (!objectKey) return res.status(400).json({ error: "objectKey query parameter is required." });
+  if (!isR2Configured()) return res.status(503).json({ error: "Cloudflare R2 storage is not configured." });
+  try {
+    const downloadUrl = await generateDownloadUrl(objectKey, 300);
+    console.log(`[R2-Vault] Pre-signed download URL issued for: ${objectKey.slice(0, 20)}…`);
+    return res.status(200).json({ downloadUrl });
+  } catch (err: any) {
+    console.error("[R2-Vault] Failed to generate download URL:", err.message);
+    return res.status(500).json({ error: "Failed to generate download URL." });
+  }
+});
+
 app.use("/api/vault/documents", zkDocumentRoutes);
+app.use("/api/vault", vaultRoutes);
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api/auth", authRoutes);
 app.post("/api/auth/send-email-hook", express.json(), handleSendEmailHook);
@@ -348,17 +365,38 @@ server.on("error", (err: NodeJS.ErrnoException) => {
   }
 });
 
-function gracefulShutdown(signal: string) {
-  console.log(`[Kryptex] Received ${signal}. Closing HTTP server...`);
-  server.close(() => {
-    if (redisClient && redisClient.status !== "end") {
-      redisClient.quit().finally(() => process.exit(0));
-    } else {
-      process.exit(0);
-    }
-  });
+let isShuttingDown = false;
 
-  setTimeout(() => process.exit(1), 10_000).unref();
+function gracefulShutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`[Kryptex] Received ${signal}. Closing HTTP server…`);
+
+  const forceExit = setTimeout(() => {
+    console.error("[Kryptex] Forced exit after timeout.");
+    process.exit(1);
+  }, 5_000);
+  forceExit.unref();
+
+  server.close(() => {
+    console.log("[Kryptex] HTTP server closed.");
+
+    const teardown: Promise<void>[] = [];
+
+    if (redisClient && redisClient.status !== "end") {
+      teardown.push(
+        redisClient
+          .quit()
+          .then(() => console.log("[Kryptex] Redis disconnected."))
+          .catch(() => {})
+      );
+    }
+
+    Promise.allSettled(teardown).then(() => {
+      clearTimeout(forceExit);
+      process.exit(0);
+    });
+  });
 }
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));

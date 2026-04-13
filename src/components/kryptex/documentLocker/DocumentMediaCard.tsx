@@ -1,6 +1,6 @@
 import type { KeyboardEvent, SyntheticEvent } from "react";
 import { motion } from "framer-motion";
-import { Download, Loader2, X } from "lucide-react";
+import { Download, Loader2, Trash2 } from "lucide-react";
 
 export type CardDoc = {
   id: string;
@@ -10,8 +10,6 @@ export type CardDoc = {
 
 type Props = {
   doc: CardDoc;
-  width: number;
-  height: number;
   thumbUrl?: string | null;
   isThumbLoading?: boolean;
   onImageLoad?: (ev: SyntheticEvent<HTMLImageElement>) => void;
@@ -23,10 +21,12 @@ type Props = {
   onHoverChange: (id: string | null) => void;
 };
 
+/**
+ * Grid tile: fixed aspect frame, image uses object-contain so nothing is cropped
+ * (important for screenshots and document previews with text).
+ */
 export function DocumentMediaCard({
   doc,
-  width,
-  height,
   thumbUrl,
   isThumbLoading,
   onImageLoad,
@@ -49,8 +49,7 @@ export function DocumentMediaCard({
   return (
     <motion.article
       layout
-      style={{ width, height }}
-      className="relative shrink-0 overflow-hidden rounded-2xl border border-black/5 bg-[#f7f7f7] shadow-sm"
+      className="group relative aspect-square w-full min-w-0 overflow-hidden rounded-lg border border-black/5 bg-gray-100 shadow-sm dark:border-white/10 dark:bg-gray-900"
       onMouseEnter={() => onHoverChange(doc.id)}
       onMouseLeave={() => onHoverChange(null)}
       onFocus={() => onHoverChange(doc.id)}
@@ -63,36 +62,39 @@ export function DocumentMediaCard({
           onDelete();
         }}
         disabled={deletePending}
-        className="absolute right-2 top-2 z-20 rounded-full bg-white/90 p-1.5 text-black/35 shadow-sm backdrop-blur-sm transition hover:text-[#FF3300] disabled:opacity-40"
+        className="absolute right-2 top-2 z-20 rounded-full bg-white/90 p-1.5 text-black/35 shadow-sm backdrop-blur-sm transition hover:text-[#FF3300] disabled:opacity-40 dark:bg-gray-800/90 dark:text-white/50"
         aria-label="Remove"
       >
-        {deletePending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+        {deletePending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
       </button>
 
       <div
         role="button"
         tabIndex={0}
-        className="relative block h-full w-full cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-black/20"
+        className="relative flex h-full w-full cursor-pointer flex-col text-left outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/30"
         onClick={onPreview}
         onKeyDown={handlePreviewKeyDown}
       >
-        {isThumbLoading ? (
-          <div className="flex h-full w-full items-center justify-center bg-black/[0.03]">
-            <Loader2 className="h-6 w-6 animate-spin text-black/25" />
-          </div>
-        ) : thumbUrl ? (
-          <img
-            src={thumbUrl}
-            alt=""
-            className="h-full w-full object-cover"
-            loading="lazy"
-            decoding="async"
-            draggable={false}
-            onLoad={onImageLoad}
-          />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-black/[0.06] to-black/[0.02]" />
-        )}
+        {/* Image area: full tile; object-contain preserves entire image */}
+        <div className="relative min-h-0 flex-1 p-2">
+          {isThumbLoading ? (
+            <div className="flex h-full w-full items-center justify-center rounded-md bg-black/[0.03] dark:bg-white/[0.04]">
+              <Loader2 className="h-6 w-6 animate-spin text-black/25 dark:text-white/30" />
+            </div>
+          ) : thumbUrl ? (
+            <img
+              src={thumbUrl}
+              alt=""
+              className="h-full w-full object-contain"
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+              onLoad={onImageLoad}
+            />
+          ) : (
+            <div className="h-full w-full rounded-md bg-gradient-to-br from-black/[0.06] to-black/[0.02] dark:from-white/[0.08] dark:to-white/[0.02]" />
+          )}
+        </div>
 
         <motion.div
           className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/85 via-black/35 to-transparent"
@@ -107,10 +109,12 @@ export function DocumentMediaCard({
           animate={{ opacity: active ? 1 : 0, y: active ? 0 : 6 }}
           transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
         >
-          <div className="pointer-events-none min-w-0">
-            <p className="truncate text-[12px] font-bold text-white drop-shadow-sm">{doc.name}</p>
-            <p className="text-[10px] font-medium text-white/75">{doc.sizeLabel}</p>
-          </div>
+          {!active && (
+            <div className="pointer-events-none min-w-0">
+              <p className="truncate text-[12px] font-bold text-white drop-shadow-sm">{doc.name}</p>
+              <p className="text-[10px] font-medium text-white/75">{doc.sizeLabel}</p>
+            </div>
+          )}
           <button
             type="button"
             aria-label={`Download ${doc.name}`}
@@ -118,7 +122,7 @@ export function DocumentMediaCard({
               e.stopPropagation();
               onDownload();
             }}
-            className="pointer-events-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white py-2 text-[10px] font-bold uppercase tracking-widest text-black shadow-md transition hover:bg-white/95"
+            className="pointer-events-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white py-2 text-[10px] font-bold uppercase tracking-widest text-black shadow-md transition hover:bg-white/95 dark:bg-gray-100"
           >
             <Download className="h-3.5 w-3.5" />
             Download

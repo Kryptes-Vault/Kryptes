@@ -41,6 +41,7 @@ try {
     console.warn("[Status] Redis initialization failed. Using memory store.");
 }
 
+const zkDocumentRoutes = require("./routes/documents");
 const vaultRoutes = require("./routes/vault");
 const webhookRoutes = require("./routes/webhooks");
 const authRoutes = require("./routes/auth");
@@ -53,6 +54,7 @@ const app = express();
 // Placed BEFORE any middleware so it has zero overhead (no CORS, no session,
 // no body parsing). Render health checks and cron pings hit this only.
 app.get("/ping", (_req, res) => {
+  console.log("SERVER.JS TRIPWIRE: Ping received.");
   res.status(200).setHeader("Cache-Control", "no-store").send("pong");
 });
 
@@ -142,6 +144,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.use("/api/vault/documents", zkDocumentRoutes);
 app.use("/api/vault", vaultRoutes);
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api/auth", authRoutes);
