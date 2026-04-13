@@ -19,6 +19,7 @@ const { corsOptions, getSessionCookieOptions } = require("./config/auth");
 const { encryptVaultAtRest, decryptVaultAtRest } = require("./utils/cryptoUtils");
 const supportRoutes = require("./routes/support");
 const otpRoutes = require("./routes/otp");
+const { isR2Configured, generateDownloadUrl } = require("./services/r2Storage");
 
 const app = express();
 const upload = multer({
@@ -296,6 +297,20 @@ app.post("/api/convert", upload.single("file"), async (req: KryptexRequest, res:
 });
 
 /* Legacy /api/documents routes removed — migrated to Cloudflare R2 via /api/vault/documents */
+
+app.get("/api/vault/documents/download-url", async (req: any, res: any) => {
+  const objectKey = typeof req.query.objectKey === "string" ? req.query.objectKey.trim() : "";
+  if (!objectKey) return res.status(400).json({ error: "objectKey query parameter is required." });
+  if (!isR2Configured()) return res.status(503).json({ error: "Cloudflare R2 storage is not configured." });
+  try {
+    const downloadUrl = await generateDownloadUrl(objectKey, 300);
+    console.log(`[R2-Vault] Pre-signed download URL issued for: ${objectKey.slice(0, 20)}…`);
+    return res.status(200).json({ downloadUrl });
+  } catch (err: any) {
+    console.error("[R2-Vault] Failed to generate download URL:", err.message);
+    return res.status(500).json({ error: "Failed to generate download URL." });
+  }
+});
 
 app.use("/api/vault/documents", zkDocumentRoutes);
 app.use("/api/vault", vaultRoutes);

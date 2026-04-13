@@ -6,7 +6,7 @@
  *
  * GET  /upload-url          — mint a PUT pre-signed URL + objectKey
  * POST /commit              — after a successful PUT, persist metadata in Supabase
- * GET  /download-url?objectKey=   — mint a GET pre-signed URL
+ * (download-url is on the app directly — see server.ts)
  * GET  /list                — list all ZK documents for a user
  * DELETE /:objectKey        — delete blob from R2 + metadata from Supabase
  */
@@ -18,7 +18,6 @@ import { insertVaultItemCreatedAudit } from "../services/vaultAuditService";
 import {
   isR2Configured,
   generateUploadUrl,
-  generateDownloadUrl,
   deleteObject,
 } from "../services/r2Storage";
 
@@ -157,30 +156,8 @@ router.post("/commit", docLimiter, async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/vault/documents/download-url?objectKey=<key>
- *
- * Mints a short-lived GET pre-signed URL so the browser can fetch the
- * encrypted blob directly from R2, then decrypt it client-side.
- * Uses a query parameter to avoid Express 5 path-matching issues with
- * overlapping mount points.
- */
-router.get("/download-url", docLimiter, async (req: Request, res: Response) => {
-  const objectKey = typeof req.query.objectKey === "string" ? req.query.objectKey.trim() : "";
-  if (!objectKey) return res.status(400).json({ error: "objectKey query parameter is required." });
-
-  if (!isR2Configured()) {
-    return res.status(503).json({ error: "Cloudflare R2 storage is not configured." });
-  }
-
-  try {
-    const downloadUrl = await generateDownloadUrl(objectKey, 300);
-    return res.status(200).json({ downloadUrl });
-  } catch (err: any) {
-    console.error("[R2-Vault] Failed to generate download URL:", err.message);
-    return res.status(500).json({ error: "Failed to generate download URL." });
-  }
-});
+/* download-url is registered directly on the Express app in server.ts
+   to bypass Express 5 sub-router prefix matching issues. */
 
 /**
  * GET /api/vault/documents/list
