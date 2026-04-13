@@ -26,6 +26,7 @@ import { DocumentMediaCard } from "./documentLocker/DocumentMediaCard";
 import { DocumentFixedCard } from "./documentLocker/DocumentFixedCard";
 import { encryptFile, decryptFile, generateFileEncryptionKey, validateFileType } from "@/lib/crypto/fileCrypto";
 import { convertDecryptedFile, downloadBlob, type ExportFormat } from "@/lib/crypto/fileExporter";
+import { Check } from "lucide-react";
 
 export type DocumentFormat = "pdf" | "png" | "jpeg" | "webp" | "docx";
 
@@ -875,68 +876,159 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
 
       <AnimatePresence>
         {conversionDoc && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-md" onClick={() => !converting && setConversionDoc(null)}>
-            <motion.div initial={{ scale: 0.96, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.96, y: 16 }} transition={{ type: "spring", stiffness: 220, damping: 22 }} className="w-full max-w-2xl rounded-3xl border border-white/10 bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="mb-6 flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/35">Conversion Modal</p>
-                  <h3 className="mt-1 text-2xl font-bold tracking-tight">Decrypt & Download</h3>
-                </div>
-                <button type="button" onClick={() => !converting && setConversionDoc(null)} className="rounded-full p-2 text-black/40 transition hover:bg-black/5 hover:text-black">
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl border border-black/5 bg-black/[0.02] p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/30">Original Format</p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white">
-                      <FileImage className="h-6 w-6 text-[#FF3300]" />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-xl" onClick={() => !converting && setConversionDoc(null)}>
+            <motion.div 
+              initial={{ scale: 0.9, y: 30, opacity: 0 }} 
+              animate={{ scale: 1, y: 0, opacity: 1 }} 
+              exit={{ scale: 0.9, y: 30, opacity: 0 }} 
+              transition={{ type: "spring", stiffness: 280, damping: 28 }} 
+              className="w-full max-w-3xl overflow-hidden rounded-[2.5rem] border border-white/20 bg-white shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)]" 
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="relative border-b border-black/5 px-10 py-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#FF3B13]/10">
+                        <ArrowDownToLine className="h-5 w-5 text-[#FF3B13]" />
+                      </div>
+                      <h3 className="text-3xl font-black tracking-tighter text-black">Export Asset</h3>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold">{fileTypeLabel(conversionDoc.type)}</p>
-                      <p className="text-xs text-black/40">{conversionDoc.name}</p>
+                    <p className="mt-2 text-sm font-medium text-black/40">Select one or more formats to decrypt and export.</p>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => !converting && setConversionDoc(null)} 
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black/5 text-black/40 transition hover:bg-black/10 hover:text-black"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="p-10">
+                <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_2fr]">
+                  {/* Left: Original Info */}
+                  <div className="flex flex-col">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/30">Source Asset</p>
+                    <div className="group mt-4 flex flex-col items-center rounded-3xl border border-black/5 bg-[#fbfbfb] p-8 text-center transition-all hover:bg-white hover:shadow-xl">
+                      <div className="relative mb-6">
+                        <div className="relative z-10 flex h-24 w-20 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/10">
+                          {thumbById[conversionDoc.id] ? (
+                            <img src={thumbById[conversionDoc.id]} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <FileImage className="h-10 w-10 text-[#FF3B13]" />
+                          )}
+                        </div>
+                        <div className="absolute -bottom-2 -right-2 z-20 flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF3B13] text-white shadow-lg">
+                          <Lock className="h-4 w-4" />
+                        </div>
+                      </div>
+                      <p className="max-w-[140px] truncate text-sm font-black text-black">{conversionDoc.name}</p>
+                      <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-black/40">{fileTypeLabel(conversionDoc.type)} • {formatBytes(conversionDoc.size)}</p>
+                    </div>
+                  </div>
+
+                  {/* Right: Format Grid */}
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/30">Target Formats</p>
+                    <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                      {getAllowedTargets(conversionDoc.type).map((format) => {
+                        const isSelected = selectedFormats.has(format as ExportFormat);
+                        const colors: Record<string, string> = {
+                          pdf: "bg-[#F43F5E]", // Rose-500 (Red)
+                          jpeg: "bg-[#F59E0B]", // Amber-500 (Orange)
+                          png: "bg-[#3B82F6]", // Blue-500
+                          webp: "bg-[#10B981]", // Emerald-500
+                          docx: "bg-[#2563EB]", // Indigo-600 (Word Blue)
+                        };
+                        const colorClass = colors[format] || "bg-black/40";
+
+                        return (
+                          <motion.button
+                            key={format}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                              const next = new Set(selectedFormats);
+                              if (isSelected) next.delete(format as ExportFormat);
+                              else next.add(format as ExportFormat);
+                              setSelectedFormats(next);
+                            }}
+                            className={`group relative flex flex-col items-center justify-center overflow-hidden rounded-3xl p-6 transition-all ring-inset ${
+                              isSelected 
+                                ? "bg-white shadow-[0_12px_24px_-8px_rgba(0,0,0,0.1)] ring-2 ring-[#FF3B13]" 
+                                : "bg-[#fbfbfb] ring-1 ring-black/5 grayscale opacity-60 hover:grayscale-0 hover:opacity-100"
+                            }`}
+                          >
+                            {/* Document Shape */}
+                            <div className="relative flex flex-col items-center">
+                              <svg width="60" height="74" viewBox="0 0 60 74" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm">
+                                <path d="M4 0C1.79086 0 0 1.79086 0 4V70C0 72.2091 1.79086 74 4 74H56C58.2091 74 60 72.2091 60 70V18L42 0H4Z" fill="white" fillOpacity="0.8" />
+                                <path d="M42 0V14C42 16.2091 43.7909 18 46 18H60L42 0Z" fill="black" fillOpacity="0.05" />
+                                <path d="M4 0.5C2.067 0.5 0.5 2.067 0.5 4V70C0.5 71.933 2.067 73.5 4 73.5H56C57.933 73.5 59.5 71.933 59.5 70V18.2071L41.7929 0.5H4Z" stroke="black" strokeOpacity="0.08" />
+                              </svg>
+
+                              {/* Label Pill */}
+                              <div className={`absolute left-1/2 top-1/2 h-7 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-center shadow-lg transition-transform ${colorClass} ${isSelected ? "scale-110" : "scale-100"}`}>
+                                <span className="text-[10px] font-black tracking-widest text-white">{format.toUpperCase()}</span>
+                              </div>
+                            </div>
+
+                            {/* Selection Indicatpr */}
+                            {isSelected && (
+                              <motion.div 
+                                initial={{ scale: 0 }} 
+                                animate={{ scale: 1 }} 
+                                className="absolute right-4 top-4 flex h-5 w-5 items-center justify-center rounded-full bg-[#FF3B13] p-1 text-white shadow-md shadow-[#FF3B13]/20"
+                              >
+                                <Check className="h-2.5 w-2.5 stroke-[4]" />
+                              </motion.div>
+                            )}
+                          </motion.button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
-                <div className="col-span-full rounded-2xl border border-black/5 bg-black/[0.02] p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/30">Select Target Formats</p>
-                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {getAllowedTargets(conversionDoc.type).map((format) => (
-                      <label 
-                        key={format} 
-                        className={`group relative flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all ${
-                          selectedFormats.has(format as ExportFormat) 
-                            ? "border-[#FF3300]/30 bg-[#FF3300]/5" 
-                            : "border-black/5 bg-white hover:border-black/20"
-                        }`}
-                      >
-                        <input 
-                          type="checkbox"
-                          className="h-4 w-4 rounded-md border-gray-300 text-[#FF3300] focus:ring-[#FF3300]"
-                          checked={selectedFormats.has(format as ExportFormat)}
-                          onChange={(e) => {
-                            const next = new Set(selectedFormats);
-                            if (e.target.checked) next.add(format as ExportFormat);
-                            else next.delete(format as ExportFormat);
-                            setSelectedFormats(next);
-                          }}
-                        />
-                        <span className={`text-xs font-bold uppercase tracking-wide transition-colors ${
-                          selectedFormats.has(format as ExportFormat) ? "text-[#FF3300]" : "text-black/60"
-                        }`}>
-                          {format.toUpperCase()}
-                        </span>
-                      </label>
-                    ))}
+              </div>
+
+              {/* Footer */}
+              <div className="bg-[#f7f7f7] px-10 py-8">
+                <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-black/30">{selectedFormats.size} format(s) selected</span>
+                  </div>
+                  <div className="flex gap-3">
+                    <button 
+                      type="button" 
+                      onClick={() => !converting && setConversionDoc(null)} 
+                      className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-black/50 transition hover:text-black"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => void runConversion()} 
+                      disabled={converting || selectedFormats.size === 0} 
+                      className="group flex flex-1 items-center justify-center gap-3 rounded-[1.5rem] bg-[#FF3B13] px-10 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-[0_12px_24px_-8px_rgba(255,59,19,0.3)] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:opacity-50 sm:flex-none"
+                    >
+                      {converting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Decrypting Assets...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="h-4 w-4" />
+                          <span>Decrypt & Export</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
-              </div>
-              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <button type="button" onClick={() => !converting && setConversionDoc(null)} className="rounded-xl border border-black/5 px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-black/50">Cancel</button>
-                <button type="button" onClick={() => void runConversion()} disabled={converting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#FF3300] px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white">
-                  {converting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowDownToLine className="h-4 w-4" />} Decrypt & Download
-                </button>
               </div>
             </motion.div>
           </motion.div>
