@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { AppAutocomplete } from "./AppAutocomplete";
+import { AppAutocomplete } from "../ui/AppAutocomplete";
 
 type Category = "web" | "dev" | "financial" | "note";
 
@@ -32,6 +32,7 @@ const AddNodeModal = ({ onClose, onSave }: AddNodeModalProps) => {
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -58,7 +59,8 @@ const AddNodeModal = ({ onClose, onSave }: AddNodeModalProps) => {
     for (let i = 0; i < passLength; i++) {
         generated += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    setFormData({ ...formData, password: generated });
+    setFormData(prev => ({ ...prev, password: generated }));
+    setShowPassword(true);
     toast.success("Secure password generated");
   };
 
@@ -188,17 +190,25 @@ const AddNodeModal = ({ onClose, onSave }: AddNodeModalProps) => {
                   {/* Category Specific Fields */}
                   {category === "web" && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40 ml-1">Company / Website App</label>
                         <AppAutocomplete 
-                          onSelect={(brand) => {
-                            setFormData({
-                              ...formData,
-                              title: brand.name,
-                              website: brand.domain
-                            });
+                          value={formData.title}
+                          placeholder="Search for Service (e.g. Netflix, Amazon)"
+                          onChange={(name, domain) => {
+                            setFormData(prev => ({
+                              ...prev,
+                              title: name,
+                              website: domain
+                            }));
                           }}
                         />
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40 ml-1">Domain / URL</label>
+                           <input 
+                            value={formData.website}
+                          onChange={e => setFormData({...formData, website: e.target.value})}
+                          className="w-full bg-[#f8f8f8] border border-black/5 rounded-xl px-4 py-4 text-xs font-bold tracking-widest focus:ring-1 focus:ring-[#FF3B13]/30 outline-none transition-all"
+                          placeholder="https://example.com"
+                         />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
@@ -216,15 +226,19 @@ const AddNodeModal = ({ onClose, onSave }: AddNodeModalProps) => {
                           <div className="relative">
                             <input 
                               required
-                              type={showGen ? "text" : "password"}
+                              type={showPassword ? "text" : "password"}
                               value={formData.password}
                               onChange={e => setFormData({...formData, password: e.target.value})}
                               className="w-full bg-[#f8f8f8] border border-black/5 rounded-xl px-4 py-4 text-xs font-bold tracking-widest focus:ring-1 focus:ring-[#FF3B13]/30 outline-none transition-all"
                               placeholder="••••••••••••"
                             />
                             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                              <button type="button" onClick={() => setShowGen(!showGen)} className="p-2 text-black/20 hover:text-black transition-colors"><Eye className="w-4 h-4" /></button>
-                              <button type="button" onClick={generatePassword} className="p-2 text-black/20 hover:text-[#FF3B13] transition-colors"><RefreshCcw className="w-4 h-4" /></button>
+                              <button type="button" onClick={() => setShowPassword(!showPassword)} className="p-2 text-black/20 hover:text-black transition-colors" title={showPassword ? "Hide" : "Show"}>
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                              <button type="button" onClick={generatePassword} className="p-2 text-black/20 hover:text-[#FF3B13] transition-colors" title="Generate Password">
+                                <RefreshCcw className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
                         </div>

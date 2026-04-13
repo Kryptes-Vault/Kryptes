@@ -8,7 +8,7 @@ import {
   Landmark,
   Zap
 } from "lucide-react";
-import { PaymentCard } from "@/components/kryptex/PaymentCard";
+import { PaymentCard } from "@/components/kryptex/banking/PaymentCard";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";

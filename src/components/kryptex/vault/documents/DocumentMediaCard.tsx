@@ -62,7 +62,7 @@ export function DocumentMediaCard({
           onDelete();
         }}
         disabled={deletePending}
-        className="absolute right-2 top-2 z-20 rounded-full bg-white/90 p-1.5 text-black/35 shadow-sm backdrop-blur-sm transition hover:text-[#FF3300] disabled:opacity-40 dark:bg-gray-800/90 dark:text-white/50"
+        className="absolute right-2 top-2 z-20 opacity-0 group-hover:opacity-100 rounded-full bg-white/90 p-1.5 text-black/35 shadow-sm backdrop-blur-sm transition hover:text-[#FF3300] disabled:opacity-40 dark:bg-gray-800/90 dark:text-white/50"
         aria-label="Remove"
       >
         {deletePending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}

@@ -26,7 +26,7 @@ import {
 import PhotoAlbum from "react-photo-album";
 import type { Photo, RenderPhotoContext, RenderPhotoProps } from "react-photo-album";
 import "react-photo-album/masonry.css";
-import { DocumentFixedCard } from "./documentLocker/DocumentFixedCard";
+import { DocumentFixedCard } from "./DocumentFixedCard";
 import { encryptFile, decryptFile, generateFileEncryptionKey, validateFileType } from "@/lib/crypto/fileCrypto";
 import { convertDecryptedFile, downloadBlob, type ExportFormat } from "@/lib/crypto/fileExporter";
 import { Check } from "lucide-react";
@@ -210,7 +210,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [conversionDoc, setConversionDoc] = useState<LockerDocument | null>(null);
-  const [selectedFormats, setSelectedFormats] = useState<Set<ExportFormat>>(new Set(["pdf"]));
+  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("pdf");
   const [converting, setConverting] = useState(false);
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
@@ -567,35 +567,31 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   }
 
   async function runConversion() {
-    if (!conversionDoc || !conversionDoc.objectKey || selectedFormats.size === 0) return;
+    if (!conversionDoc || !conversionDoc.objectKey || !selectedFormat) return;
     setConverting(true);
     setBusyDocId(conversionDoc.id);
     try {
       const key = await getOrCreateFileKey();
       const encryptedBlob = await fetchEncryptedBlob(conversionDoc.objectKey);
       
-      const formats = Array.from(selectedFormats);
-      for (const format of formats) {
-        const decryptedUrl = await decryptFile(encryptedBlob, key, mimeForType(conversionDoc.type));
+      const decryptedUrl = await decryptFile(encryptedBlob, key, mimeForType(conversionDoc.type));
 
-        // If target format matches source, just download the decrypted original
-        if (format === conversionDoc.type) {
-          const a = document.createElement("a");
-          a.href = decryptedUrl;
-          a.download = conversionDoc.name;
-          a.click();
-          URL.revokeObjectURL(decryptedUrl);
-          continue;
-        }
-
+      // If target format matches source, just download the decrypted original
+      if (selectedFormat === (conversionDoc.type as any)) {
+        const a = document.createElement("a");
+        a.href = decryptedUrl;
+        a.download = conversionDoc.name;
+        a.click();
+        URL.revokeObjectURL(decryptedUrl);
+      } else {
         // Client-side conversion
         const decRes = await fetch(decryptedUrl);
         const decBlob = await decRes.blob();
         URL.revokeObjectURL(decryptedUrl);
 
-        const converted = await convertDecryptedFile(decBlob, mimeForType(conversionDoc.type), format as ExportFormat);
+        const converted = await convertDecryptedFile(decBlob, mimeForType(conversionDoc.type), selectedFormat);
         const baseName = conversionDoc.name.replace(/\.[^.]+$/, "");
-        const ext = format === "jpeg" ? "jpg" : format;
+        const ext = selectedFormat === "jpeg" ? "jpg" : selectedFormat;
         downloadBlob(converted, `${baseName}.${ext}`);
       }
       
@@ -853,7 +849,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
                                       void deleteDocument(doc);
                                     }}
                                     disabled={deletePendingId === doc.id}
-                                    className="absolute right-2 top-2 z-20 rounded-full bg-white/90 p-1.5 text-black/35 shadow-sm backdrop-blur-sm transition hover:text-[#FF3300] disabled:opacity-40 dark:bg-gray-800/90 dark:text-white/50"
+                                    className="absolute right-2 top-2 z-20 opacity-0 group-hover:opacity-100 rounded-full bg-white/90 p-1.5 text-black/35 shadow-sm backdrop-blur-sm transition hover:text-[#FF3300] disabled:opacity-40 dark:bg-gray-800/90 dark:text-white/50"
                                     aria-label="Remove"
                                   >
                                     {deletePendingId === doc.id ? (
@@ -895,10 +891,6 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
                                       active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                                     }`}
                                   >
-                                    <div className="pointer-events-none min-w-0">
-                                      <p className="truncate text-[12px] font-bold text-white drop-shadow-sm">{doc.name}</p>
-                                      <p className="text-[10px] font-medium text-white/75">{formatBytes(doc.size)}</p>
-                                    </div>
                                     <button
                                       type="button"
                                       aria-label={`Download ${doc.name}`}
@@ -1081,27 +1073,21 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
                     <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/30">Target Formats</p>
                     <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
                       {getAllowedTargets(conversionDoc.type).map((format) => {
-                        const isSelected = selectedFormats.has(format as ExportFormat);
+                        const isSelected = selectedFormat === format;
                         const colors: Record<string, string> = {
-                          pdf: "bg-[#F43F5E]", // Rose-500 (Red)
-                          jpeg: "bg-[#F59E0B]", // Amber-500 (Orange)
-                          png: "bg-[#3B82F6]", // Blue-500
-                          webp: "bg-[#10B981]", // Emerald-500
-                          docx: "bg-[#2563EB]", // Indigo-600 (Word Blue)
+                          pdf: "bg-[#F43F5E]",
+                          jpeg: "bg-[#F59E0B]",
+                          png: "bg-[#3B82F6]",
+                          webp: "bg-[#10B981]",
+                          docx: "bg-[#2563EB]",
                         };
                         const colorClass = colors[format] || "bg-black/40";
-
                         return (
                           <motion.button
                             key={format}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => {
-                              const next = new Set(selectedFormats);
-                              if (isSelected) next.delete(format as ExportFormat);
-                              else next.add(format as ExportFormat);
-                              setSelectedFormats(next);
-                            }}
+                            onClick={() => setSelectedFormat(format as ExportFormat)}
                             className={`group relative flex flex-col items-center justify-center overflow-hidden rounded-3xl p-6 transition-all ring-inset ${
                               isSelected 
                                 ? "bg-white shadow-[0_12px_24px_-8px_rgba(0,0,0,0.1)] ring-2 ring-[#FF3B13]" 
@@ -1144,7 +1130,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
               <div className="bg-[#f7f7f7] px-10 py-8">
                 <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <span className="text-xs font-bold text-black/30">{selectedFormats.size} format(s) selected</span>
+                    <span className="text-xs font-bold text-black/30">Target: {selectedFormat.toUpperCase()}</span>
                   </div>
                   <div className="flex gap-3">
                     <button 
@@ -1157,7 +1143,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
                     <button 
                       type="button" 
                       onClick={() => void runConversion()} 
-                      disabled={converting || selectedFormats.size === 0} 
+                      disabled={converting || !selectedFormat} 
                       className="group flex flex-1 items-center justify-center gap-3 rounded-[1.5rem] bg-[#FF3B13] px-10 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-[0_12px_24px_-8px_rgba(255,59,19,0.3)] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:opacity-50 sm:flex-none"
                     >
                       {converting ? (

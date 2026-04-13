@@ -56,7 +56,7 @@ export function DocumentFixedCard({
           onDelete();
         }}
         disabled={deletePending}
-        className="absolute right-2 top-2 z-20 rounded-full bg-white/95 p-1.5 text-black/35 shadow-sm transition hover:text-[#FF3300] disabled:opacity-40 dark:bg-gray-800/90 dark:text-white/50"
+        className="absolute right-2 top-2 z-20 opacity-0 group-hover:opacity-100 rounded-full bg-white/95 p-1.5 text-black/35 shadow-sm transition hover:text-[#FF3300] disabled:opacity-40 dark:bg-gray-800/90 dark:text-white/50"
       >
         {deletePending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
       </button>
@@ -87,10 +87,6 @@ export function DocumentFixedCard({
           animate={{ opacity: active ? 1 : 0, y: active ? 0 : 6 }}
           transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
         >
-          <div className="pointer-events-none min-w-0">
-            <p className="truncate text-[10px] font-bold uppercase tracking-widest text-white/90">{typeLabel}</p>
-            <p className="text-[10px] text-white/75">{doc.sizeLabel}</p>
-          </div>
           <button
             type="button"
             aria-label={`Download ${doc.name}`}

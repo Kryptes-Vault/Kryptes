@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { ArrowLeft, ShieldCheck, CreditCard, Landmark, Shield, Lock, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { AddDebitCardForm } from "@/components/kryptex/AddDebitCardForm";
-import { AddBankForm } from "@/components/kryptex/AddBankForm";
+import { AddDebitCardForm } from "@/components/kryptex/banking/AddDebitCardForm";
+import { AddBankForm } from "@/components/kryptex/banking/AddBankForm";
 import { Button } from "@/components/ui/button";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

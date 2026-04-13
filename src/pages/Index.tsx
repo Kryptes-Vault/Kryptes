@@ -2,7 +2,7 @@ import { Lock, Shield, Smartphone, Zap, ArrowRight } from "lucide-react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { lazy, Suspense, useRef, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import Login from "@/components/kryptex/Login";
+import Login from "@/components/kryptex/auth/Login";
 import { AnimatedWord } from "@/components/AnimatedWord";
 
 /* ── Lazy-load the 3D canvas so Three.js never blocks initial paint ── */

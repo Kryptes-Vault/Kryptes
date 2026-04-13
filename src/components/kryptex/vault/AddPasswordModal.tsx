@@ -4,7 +4,7 @@ import { ArrowRight, ChevronDown, Globe, Key, Loader2, Mail, Shield, Wand2 } fro
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { addPasswordEntry, inferCategory, type PasswordCategory } from "@/lib/passwordVaultService";
-import { PasswordGenerator } from "@/components/kryptex/PasswordGenerator";
+import { PasswordGenerator } from "@/components/kryptex/vault/PasswordGenerator";
 
 type Props = {
   open: boolean;
