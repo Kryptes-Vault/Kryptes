@@ -6,8 +6,8 @@
  *
  * GET  /upload-url          — mint a PUT pre-signed URL + objectKey
  * POST /commit              — after a successful PUT, persist metadata in Supabase
- * GET  /download-url/:key   — mint a GET pre-signed URL
- * GET  /list                — list all ZK documents for a user
+ * GET  /generate-download-url/:key — mint a GET pre-signed URL
+ * GET  /                    — list all ZK documents for a user
  * DELETE /:objectKey        — delete blob from R2 + metadata from Supabase
  */
 
@@ -21,6 +21,8 @@ import {
   generateDownloadUrl,
   deleteObject,
 } from "../services/r2Storage";
+
+const { redisClient, connectRedis } = require("../services/redisService");
 
 const router = express.Router();
 const rateLimit = require("express-rate-limit");
@@ -130,6 +132,14 @@ router.post("/commit", docLimiter, async (req: Request, res: Response) => {
 
     await setProfileFlagActive(userId, "has_documents");
 
+    try {
+      if (redisClient?.isOpen) {
+        await redisClient.del(`documents:${userId}`);
+      }
+    } catch (err) {
+      console.warn("[R2-Vault] Redis cache invalidation error:", err);
+    }
+
     return res.status(201).json({
       document: {
         id: created.id,
@@ -148,12 +158,12 @@ router.post("/commit", docLimiter, async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/vault/documents/download-url/:objectKey
+ * GET /api/vault/documents/generate-download-url/:objectKey
  *
  * Mints a short-lived GET pre-signed URL so the browser can fetch the
  * encrypted blob directly from R2, then decrypt it client-side.
  */
-router.get("/download-url/:objectKey", docLimiter, async (req: Request, res: Response) => {
+router.get("/generate-download-url/:objectKey", docLimiter, async (req: Request, res: Response) => {
   const objectKey = req.params.objectKey;
   if (!objectKey) return res.status(400).json({ error: "objectKey is required." });
 
@@ -175,6 +185,7 @@ router.get("/download-url/:objectKey", docLimiter, async (req: Request, res: Res
  *
  * Returns metadata for all ZK documents belonging to this user.
  * No file bytes are returned — only Supabase row metadata.
+ * Cached in Redis for 1 hour to reduce DB load.
  */
 router.get("/list", docLimiter, async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
@@ -182,6 +193,20 @@ router.get("/list", docLimiter, async (req: Request, res: Response) => {
 
   if (!(await checkProfileFlag(userId, "has_documents"))) {
     return res.status(200).json({ documents: [], source: "gatekeeper" });
+  }
+
+  const cacheKey = `documents:${userId}`;
+
+  try {
+    await connectRedis();
+    if (redisClient?.isOpen) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.status(200).json(JSON.parse(cached));
+      }
+    }
+  } catch (err) {
+    console.warn("[R2-Vault] Redis cache get error:", err);
   }
 
   try {
@@ -208,7 +233,19 @@ router.get("/list", docLimiter, async (req: Request, res: Response) => {
       updatedAt: row.updated_at,
     }));
 
-    return res.status(200).json({ documents });
+    const responseData = { documents, source: "db" };
+
+    try {
+      if (redisClient?.isOpen) {
+        await redisClient.set(cacheKey, JSON.stringify({ ...responseData, source: "cache" }), {
+          EX: 3600,
+        });
+      }
+    } catch (err) {
+      console.warn("[R2-Vault] Redis cache set error:", err);
+    }
+
+    return res.status(200).json(responseData);
   } catch (err: any) {
     console.error("[R2-Vault] List exception:", err);
     return res.status(500).json({ error: "Server error listing documents." });
@@ -242,6 +279,14 @@ router.delete("/:objectKey", docLimiter, async (req: Request, res: Response) => 
       .eq("user_id", userId)
       .eq("item_type", "zk_document")
       .contains("metadata", { objectKey });
+
+    try {
+      if (redisClient?.isOpen) {
+        await redisClient.del(`documents:${userId}`);
+      }
+    } catch (err) {
+      console.warn("[R2-Vault] Redis cache invalidation error:", err);
+    }
 
     return res.status(200).json({ ok: true });
   } catch (err: any) {

@@ -81,7 +81,7 @@ function mimeForType(type: DocumentFormat): string {
 
 async function fetchR2DownloadUrl(objectKey: string): Promise<string> {
   const res = await fetch(
-    `${ZK_VAULT_DOCUMENTS_ENDPOINT}/download-url/${encodeURIComponent(objectKey)}`,
+    `${ZK_VAULT_DOCUMENTS_ENDPOINT}/generate-download-url/${encodeURIComponent(objectKey)}`,
     { credentials: "include" }
   );
   if (!res.ok) throw new Error(`Failed to get download URL (${res.status})`);
@@ -202,6 +202,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   const [thumbById, setThumbById] = useState<Record<string, string>>({});
   const [thumbLoadingId, setThumbLoadingId] = useState<string | null>(null);
   const [hoveredGalleryId, setHoveredGalleryId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const folderOptions = useMemo(() => {
     const seen = new Set<string>([...DEFAULT_FOLDERS, ...customFolders]);
@@ -440,6 +441,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
 
     const tempId = `upload-${crypto.randomUUID()}`;
     setUploads((prev) => [...prev, { id: tempId, name: file.name, progress: 0, type: extension }]);
+    setIsUploading(true);
 
     let progress = 0;
     const interval = window.setInterval(() => {
@@ -510,7 +512,11 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
       toast.error(networkFetchToastMessage(e));
     } finally {
       window.clearInterval(interval);
-      setUploads((prev) => prev.filter((item) => item.id !== tempId));
+      setUploads((prev) => {
+        const next = prev.filter((item) => item.id !== tempId);
+        if (next.length === 0) setIsUploading(false);
+        return next;
+      });
     }
   }
 
@@ -521,6 +527,11 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
       if (!extension) return;
       startSimulatedUpload(file);
     });
+
+    // Reset the input value so the same file can be selected again
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
   }
 
   function handleDrop(e: DragEvent<HTMLDivElement>) {
@@ -598,11 +609,11 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
 
   return (
     <>
-    <div className="bg-white text-black min-h-full">
-      <div className="w-full flex flex-col md:flex-row">
+    <div className="bg-white text-black h-full overflow-hidden">
+      <div className="w-full h-full flex flex-col md:flex-row divide-x divide-black/5">
         {/* Left Sidebar for Folders - Matches Main Sidebar Geometry */}
         <aside
-          className={`w-full md:w-64 flex flex-col pt-8 px-6 rounded-tr-[2.5rem] min-h-screen transition-colors ${
+          className={`w-full md:w-64 flex flex-col pt-8 px-6 rounded-tr-[2.5rem] h-full overflow-y-auto transition-colors ${
             dragActive ? "bg-[#FF3B13]/10" : "bg-[#f7f7f7]"
           }`}
           onDrop={handleDrop}
@@ -637,51 +648,52 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
 
         {/* Main Content Area */}
         <div
-          className={`flex-1 py-8 px-4 rounded-3xl transition-colors ${dragActive ? "bg-[#FF3B13]/5" : ""}`}
+          className={`flex-1 flex flex-col h-full overflow-y-auto pt-8 pb-16 px-4 transition-colors ${dragActive ? "bg-[#FF3B13]/5" : ""}`}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
         >
           {/* Header Controls */}
-          <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-1 items-center gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-black/20" />
-                <input
-                  type="text"
-                  placeholder="Search here"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-12 w-full pl-12 pr-4 rounded-xl border border-black/5 bg-[#f7f7f7] text-[13px] outline-none shadow-sm"
-                />
+          <div className="mb-8 w-full">
+            <div className="flex w-full items-center bg-[#f7f7f7] rounded-xl border border-black/5 overflow-hidden group focus-within:bg-white focus-within:border-[#FF3B13]/30 focus-within:ring-4 focus-within:ring-[#FF3B13]/5 transition-all">
+              <div className="pl-5 pr-2 flex items-center justify-center text-black/20 group-focus-within:text-[#FF3B13]/40 transition-colors">
+                <Search className="h-5 w-5" />
+              </div>
+              
+              <input
+                type="text"
+                placeholder="Search your encrypted vault..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-12 flex-1 bg-transparent text-[14px] outline-none px-2"
+              />
+
+              <div className="flex items-center gap-2 pr-1.5">
+                {isUploading && (
+                  <div className="flex items-center gap-2 px-2 py-1 bg-black/5 rounded-lg animate-pulse">
+                    <Loader2 className="h-3 w-3 animate-spin text-[#FF3B13]" />
+                    <span className="text-[9px] font-bold uppercase tracking-tighter text-black/40">Syncing</span>
+                  </div>
+                )}
+                
+                <button 
+                  onClick={() => inputRef.current?.click()}
+                  disabled={isUploading}
+                  className="flex items-center gap-2 h-9 px-5 bg-[#FF3B13] text-white rounded-lg text-[12px] font-bold shadow-sm hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100"
+                >
+                  <CloudUpload className="h-4 w-4" />
+                  <span>Upload</span>
+                </button>
               </div>
             </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex items-center border border-black/5 rounded-xl bg-white overflow-hidden shadow-sm h-12">
-                <button 
-                  onClick={() => setViewLayout("list")}
-                  className={`flex h-12 w-12 items-center justify-center transition-colors ${viewLayout === "list" ? "bg-[#FF3B13]/5 text-[#FF3B13]" : "text-black/30 hover:bg-black/[0.02]"}`}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-                <div className="w-[1px] h-6 bg-black/5" />
-                <button 
-                  onClick={() => setViewLayout("grid")}
-                  className={`flex h-12 w-12 items-center justify-center transition-colors ${viewLayout === "grid" ? "bg-[#FF3B13]/5 text-[#FF3B13]" : "text-black/30 hover:bg-black/[0.02]"}`}
-                >
-                  <Grid className="h-4 w-4" />
-                </button>
-              </div>
-
-              <button 
-                onClick={() => inputRef.current?.click()}
-                className="flex items-center gap-2 h-12 px-6 bg-[#FF3B13] text-white rounded-xl text-[13px] font-bold shadow-lg shadow-[#FF3B13]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
-                <CloudUpload className="h-4 w-4" /> Upload button
-              </button>
-              <input ref={inputRef} type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
-            </div>
+            <input 
+              ref={inputRef} 
+              type="file" 
+              multiple 
+              accept=".pdf,.png,.jpg,.jpeg,.webp" 
+              className="hidden" 
+              onChange={(e) => handleFiles(e.target.files)} 
+            />
           </div>
 
           {/* Gallery (justified flex) or list */}
