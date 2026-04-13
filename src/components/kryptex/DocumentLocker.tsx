@@ -152,7 +152,7 @@ function getAllowedTargets(original: DocumentFormat): DocumentFormat[] {
     case "png":
     case "jpeg":
     case "webp":
-      return ["png", "jpeg", "webp", "pdf"];
+      return ["png", "jpeg", "webp", "pdf", "docx"];
     default:
       return [original];
   }
@@ -186,7 +186,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [conversionDoc, setConversionDoc] = useState<LockerDocument | null>(null);
-  const [targetFormat, setTargetFormat] = useState<DocumentFormat>("pdf");
+  const [selectedFormats, setSelectedFormats] = useState<Set<ExportFormat>>(new Set(["pdf"]));
   const [converting, setConverting] = useState(false);
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
@@ -498,34 +498,38 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   }
 
   async function runConversion() {
-    if (!conversionDoc || !conversionDoc.objectKey) return;
+    if (!conversionDoc || !conversionDoc.objectKey || selectedFormats.size === 0) return;
     setConverting(true);
     setBusyDocId(conversionDoc.id);
     try {
       const key = await getOrCreateFileKey();
       const encryptedBlob = await fetchEncryptedBlob(conversionDoc.objectKey);
-      const decryptedUrl = await decryptFile(encryptedBlob, key, mimeForType(conversionDoc.type));
+      
+      const formats = Array.from(selectedFormats);
+      for (const format of formats) {
+        const decryptedUrl = await decryptFile(encryptedBlob, key, mimeForType(conversionDoc.type));
 
-      // If target format matches source, just download the decrypted original
-      if (targetFormat === conversionDoc.type) {
-        const a = document.createElement("a");
-        a.href = decryptedUrl;
-        a.download = conversionDoc.name;
-        a.click();
+        // If target format matches source, just download the decrypted original
+        if (format === conversionDoc.type) {
+          const a = document.createElement("a");
+          a.href = decryptedUrl;
+          a.download = conversionDoc.name;
+          a.click();
+          URL.revokeObjectURL(decryptedUrl);
+          continue;
+        }
+
+        // Client-side conversion
+        const decRes = await fetch(decryptedUrl);
+        const decBlob = await decRes.blob();
         URL.revokeObjectURL(decryptedUrl);
-        setConversionDoc(null);
-        return;
+
+        const converted = await convertDecryptedFile(decBlob, mimeForType(conversionDoc.type), format as ExportFormat);
+        const baseName = conversionDoc.name.replace(/\.[^.]+$/, "");
+        const ext = format === "jpeg" ? "jpg" : format;
+        downloadBlob(converted, `${baseName}.${ext}`);
       }
-
-      // Client-side conversion via canvas / jsPDF
-      const decRes = await fetch(decryptedUrl);
-      const decBlob = await decRes.blob();
-      URL.revokeObjectURL(decryptedUrl);
-
-      const converted = await convertDecryptedFile(decBlob, mimeForType(conversionDoc.type), targetFormat as ExportFormat);
-      const baseName = conversionDoc.name.replace(/\.[^.]+$/, "");
-      const ext = targetFormat === "jpeg" ? "jpg" : targetFormat;
-      downloadBlob(converted, `${baseName}.${ext}`);
+      
       setConversionDoc(null);
     } catch (err) {
       toast.error("Failed to convert document.");
@@ -869,15 +873,36 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
                     </div>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-black/5 bg-black/[0.02] p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/30">Target Format</p>
-                  <div className="relative mt-2">
-                    <select value={targetFormat} onChange={(e) => setTargetFormat(e.target.value as DocumentFormat)} className="w-full appearance-none rounded-xl border border-black/5 bg-white px-4 py-3 pr-10 text-sm outline-none transition focus:border-[#FF3300]/30">
-                      {getAllowedTargets(conversionDoc.type).map((format) => (
-                        <option key={format} value={format}>{format.toUpperCase()}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/25" />
+                <div className="col-span-full rounded-2xl border border-black/5 bg-black/[0.02] p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/30">Select Target Formats</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {getAllowedTargets(conversionDoc.type).map((format) => (
+                      <label 
+                        key={format} 
+                        className={`group relative flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all ${
+                          selectedFormats.has(format as ExportFormat) 
+                            ? "border-[#FF3300]/30 bg-[#FF3300]/5" 
+                            : "border-black/5 bg-white hover:border-black/20"
+                        }`}
+                      >
+                        <input 
+                          type="checkbox"
+                          className="h-4 w-4 rounded-md border-gray-300 text-[#FF3300] focus:ring-[#FF3300]"
+                          checked={selectedFormats.has(format as ExportFormat)}
+                          onChange={(e) => {
+                            const next = new Set(selectedFormats);
+                            if (e.target.checked) next.add(format as ExportFormat);
+                            else next.delete(format as ExportFormat);
+                            setSelectedFormats(next);
+                          }}
+                        />
+                        <span className={`text-xs font-bold uppercase tracking-wide transition-colors ${
+                          selectedFormats.has(format as ExportFormat) ? "text-[#FF3300]" : "text-black/60"
+                        }`}>
+                          {format.toUpperCase()}
+                        </span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               </div>

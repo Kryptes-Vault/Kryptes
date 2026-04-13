@@ -106,10 +106,12 @@ export function DocumentMediaCard({
           animate={{ opacity: active ? 1 : 0, y: active ? 0 : 6 }}
           transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
         >
-          <div className="pointer-events-none min-w-0">
-            <p className="truncate text-[12px] font-bold text-white drop-shadow-sm">{doc.name}</p>
-            <p className="text-[10px] font-medium text-white/75">{doc.sizeLabel}</p>
-          </div>
+          {!active && (
+            <div className="pointer-events-none min-w-0">
+              <p className="truncate text-[12px] font-bold text-white drop-shadow-sm">{doc.name}</p>
+              <p className="text-[10px] font-medium text-white/75">{doc.sizeLabel}</p>
+            </div>
+          )}
           <button
             type="button"
             aria-label={`Download ${doc.name}`}
