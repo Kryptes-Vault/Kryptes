@@ -45,7 +45,7 @@ export function DocumentFixedCard({
   return (
     <motion.article
       layout
-      className="group relative h-56 w-48 shrink-0 overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm"
+      className="group relative h-56 w-full overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm"
       onMouseEnter={() => onHoverChange(doc.id)}
       onMouseLeave={() => onHoverChange(null)}
     >

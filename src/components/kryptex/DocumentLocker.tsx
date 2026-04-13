@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { useVaultItems } from "@/hooks/useVaultItems";
 import { toast } from "sonner";
-import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Archive,
   ArrowDownToLine,
@@ -22,7 +22,6 @@ import {
   Grid,
   List,
 } from "lucide-react";
-import { buildJustifiedRows, clampAspect, type AspectItem } from "./documentLocker/justifiedLayout";
 import { DocumentMediaCard } from "./documentLocker/DocumentMediaCard";
 import { DocumentFixedCard } from "./documentLocker/DocumentFixedCard";
 import { encryptFile, decryptFile, generateFileEncryptionKey, validateFileType } from "@/lib/crypto/fileCrypto";
@@ -106,9 +105,6 @@ function networkFetchToastMessage(e: unknown): string {
   return "Request failed.";
 }
 
-/** Gallery row height (Tailwind h-56 = 14rem) — keeps rows even. */
-const GALLERY_ROW_HEIGHT = 224;
-const GALLERY_GAP_PX = 16;
 
 function isImageDoc(doc: LockerDocument) {
   return doc.type === "png" || doc.type === "jpeg" || doc.type === "webp";
@@ -198,9 +194,6 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   const [searchQuery, setSearchQuery] = useState("");
   const [viewLayout, setViewLayout] = useState<"grid" | "list">("grid");
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const galleryRef = useRef<HTMLDivElement | null>(null);
-  const [containerWidth, setContainerWidth] = useState(1200);
-  const [aspectById, setAspectById] = useState<Record<string, number>>({});
   const [thumbById, setThumbById] = useState<Record<string, string>>({});
   const [thumbLoadingId, setThumbLoadingId] = useState<string | null>(null);
   const [hoveredGalleryId, setHoveredGalleryId] = useState<string | null>(null);
@@ -257,22 +250,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   const imageDocuments = useMemo(() => sortedDocuments.filter(isImageDoc), [sortedDocuments]);
   const fileDocuments = useMemo(() => sortedDocuments.filter((d) => !isImageDoc(d)), [sortedDocuments]);
 
-  const aspectItems: AspectItem[] = useMemo(
-    () =>
-      imageDocuments.map((d) => ({
-        id: d.id,
-        aspect: aspectById[d.id] ?? 1,
-      })),
-    [imageDocuments, aspectById]
-  );
 
-  const justifiedRows = useMemo(
-    () =>
-      viewLayout === "grid" && imageDocuments.length > 0
-        ? buildJustifiedRows(aspectItems, Math.max(320, containerWidth), GALLERY_ROW_HEIGHT, GALLERY_GAP_PX)
-        : [],
-    [aspectItems, containerWidth, imageDocuments.length, viewLayout]
-  );
 
 
 
@@ -284,17 +262,6 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
 
   const hasUploads = uploads.length > 0;
 
-  useLayoutEffect(() => {
-    const el = galleryRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect.width;
-      if (w && w > 0) setContainerWidth(w);
-    });
-    ro.observe(el);
-    setContainerWidth(el.getBoundingClientRect().width);
-    return () => ro.disconnect();
-  }, [viewLayout, sortedDocuments.length]);
 
   const thumbFetchedRef = useRef<Set<string>>(new Set());
 
@@ -752,14 +719,41 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
                 })}
               </div>
             ) : (
-              <LayoutGroup>
-                <div ref={galleryRef} className="space-y-8">
+                <div>
 
+                  {/* Media Section - Now First */}
+                  {imageDocuments.length > 0 ? (
+                    <section>
+                      <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black/35">Media</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {imageDocuments.map((doc) => {
+                          const src = doc.previewUrl || thumbById[doc.id];
+                          return (
+                            <DocumentMediaCard
+                              key={doc.id}
+                              doc={{ id: doc.id, name: doc.name, sizeLabel: formatBytes(doc.size) }}
+                              width={0} // Fixed in component via CSS
+                              height={0} // Fixed in component via CSS
+                              thumbUrl={src}
+                              isThumbLoading={thumbLoadingId === doc.id && !src}
+                              onDelete={() => void deleteDocument(doc)}
+                              onDownload={() => void downloadDocument(doc)}
+                              onPreview={() => setPreviewDoc(doc)}
+                              deletePending={deletePendingId === doc.id}
+                              hoveredId={hoveredGalleryId}
+                              onHoverChange={setHoveredGalleryId}
+                            />
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ) : null}
 
+                  {/* Documents Section - Now Second */}
                   {fileDocuments.length > 0 ? (
                     <section>
                       <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black/35">Documents</p>
-                      <div className="flex flex-wrap gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {fileDocuments.map((doc) => {
                           const thumb = thumbnailForType(doc.type);
                           return (
@@ -783,52 +777,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
                       </div>
                     </section>
                   ) : null}
-
-                  {imageDocuments.length > 0 ? (
-                    <section>
-                      <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black/35">Media</p>
-                      <div className="flex flex-col gap-4">
-                        {justifiedRows.map((row, rowIdx) => (
-                          <div
-                            key={`row-${rowIdx}`}
-                            className={`flex w-full flex-wrap gap-4 ${row.isLast ? "justify-start" : "justify-start"}`}
-                            style={{ gap: GALLERY_GAP_PX }}
-                          >
-                            {row.items.map((item) => {
-                              const doc = docById.get(item.id);
-                              if (!doc) return null;
-                              const src = doc.previewUrl || thumbById[doc.id];
-                              return (
-                                <DocumentMediaCard
-                                  key={doc.id}
-                                  doc={{ id: doc.id, name: doc.name, sizeLabel: formatBytes(doc.size) }}
-                                  width={item.width}
-                                  height={item.height}
-                                  thumbUrl={src}
-                                  isThumbLoading={thumbLoadingId === doc.id && !src}
-                                  onImageLoad={(e) => {
-                                    const el = e.currentTarget;
-                                    if (el.naturalWidth > 0 && el.naturalHeight > 0) {
-                                      const ar = el.naturalWidth / el.naturalHeight;
-                                      setAspectById((m) => ({ ...m, [doc.id]: clampAspect(ar) }));
-                                    }
-                                  }}
-                                  onDelete={() => void deleteDocument(doc)}
-                                  onDownload={() => void downloadDocument(doc)}
-                                  onPreview={() => setPreviewDoc(doc)}
-                                  deletePending={deletePendingId === doc.id}
-                                  hoveredId={hoveredGalleryId}
-                                  onHoverChange={setHoveredGalleryId}
-                                />
-                              );
-                            })}
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  ) : null}
-                </div>
-              </LayoutGroup>
+            </div>
             )
           ) : (
             <button

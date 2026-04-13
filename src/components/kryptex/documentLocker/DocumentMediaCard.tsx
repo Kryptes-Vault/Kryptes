@@ -49,8 +49,7 @@ export function DocumentMediaCard({
   return (
     <motion.article
       layout
-      style={{ width, height }}
-      className="relative shrink-0 overflow-hidden rounded-2xl border border-black/5 bg-[#f7f7f7] shadow-sm"
+      className="group relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-black/5 bg-[#f7f7f7] shadow-sm"
       onMouseEnter={() => onHoverChange(doc.id)}
       onMouseLeave={() => onHoverChange(null)}
       onFocus={() => onHoverChange(doc.id)}
