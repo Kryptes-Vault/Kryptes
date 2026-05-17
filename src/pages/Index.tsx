@@ -1,300 +1,349 @@
-import { Lock, Shield, Smartphone, Zap, ArrowRight } from "lucide-react";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { lazy, Suspense, useRef, useState, useCallback } from "react";
-import { Link } from "react-router-dom";
-import Login from "@/components/kryptex/auth/Login";
-import { AnimatedWord } from "@/components/AnimatedWord";
+import { motion } from "framer-motion";
+import {
+  Database,
+  Github,
+  Lock,
+  ShieldCheck,
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
-/* ── Lazy-load the 3D canvas so Three.js never blocks initial paint ── */
-const VaultIntroCanvas = lazy(
-  () => import("@/components/vault-intro/VaultIntroCanvas")
-);
-
-/* ── Stagger orchestration for hero content reveal ─────────────────── */
-const heroReveal = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({
+const fadeUp = {
+  hidden: { opacity: 0, y: 40 },
+  show: {
     opacity: 1,
     y: 0,
-    transition: {
-      delay: i * 0.15,
-      duration: 0.8,
-      ease: [0.16, 1, 0.3, 1] as const,
-    },
-  }),
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const },
+  },
 };
 
+const featureCards = [
+  {
+    title: "Simple to use",
+    description: "Generate, save, and autofill strong passwords for all your accounts with ease.",
+    icon: Lock,
+  },
+  {
+    title: "Easy to manage",
+    description: "Organize credentials in a centralized vault with intuitive controls.",
+    icon: Database,
+  },
+  {
+    title: "Trusted security",
+    description: "Zero-knowledge encryption with industry-grade protection and privacy.",
+    icon: ShieldCheck,
+  },
+];
+
+const featureCardsMore = [
+  {
+    title: "Easy imports",
+    description: "Move passwords from browsers or other managers to Kryptes in minutes.",
+    icon: Lock,
+  },
+  {
+    title: "Share with others",
+    description: "Share secrets with teammates using controlled access and secure encrypted sharing.",
+    icon: Database,
+  },
+  {
+    title: "Self-host option",
+    description: "Deploy Kryptes on-premises or in your private cloud for full data ownership.",
+    icon: ShieldCheck,
+  },
+];
+
+const architecture = [
+  "Client-side encryption",
+  "Zero-knowledge model",
+  "Secure sync",
+  "Supabase Auth",
+  "Protected session layer",
+];
+
+const stats = [
+  { value: "AES-256-GCM", label: "Encryption standard" },
+  { value: "Zero Knowledge", label: "Architecture model" },
+  { value: "Local Encryption", label: "Encryption execution" },
+  { value: "Secure Sync", label: "Protected sync workflow" },
+];
+
 const Index = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isAuthVisible, setIsAuthVisible] = useState(false);
-  const [isIntroComplete, setIsIntroComplete] = useState(false);
-
-  const handleAnimationComplete = useCallback(() => {
-    setIsIntroComplete(true);
-  }, []);
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "end start"],
-  });
-
-  // Floating card animation transforms
-  const x1 = useTransform(scrollYProgress, [0.3, 0.6], [0, -100]);
-  const y1 = useTransform(scrollYProgress, [0.3, 0.6], [0, -80]);
-  const x2 = useTransform(scrollYProgress, [0.3, 0.6], [0, 100]);
-  const y2 = useTransform(scrollYProgress, [0.3, 0.6], [0, -80]);
-  const x3 = useTransform(scrollYProgress, [0.3, 0.6], [0, -100]);
-  const y3 = useTransform(scrollYProgress, [0.3, 0.6], [0, 80]);
-  const x4 = useTransform(scrollYProgress, [0.3, 0.6], [0, 100]);
-  const y4 = useTransform(scrollYProgress, [0.3, 0.6], [0, 80]);
-
-  const toggleAuth = () => {
-    setIsAuthVisible(!isAuthVisible);
-  };
+  const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-white text-black font-sans selection:bg-[#FF3B13] selection:text-white overflow-x-hidden">
+    <div className="min-h-screen bg-white text-gray-900">
+      <div className="fixed inset-0 -z-20 bg-[linear-gradient(rgba(15,23,42,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.05)_1px,transparent_1px)] bg-[size:48px_48px] opacity-[0.09]" />
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_85%_8%,rgba(34,211,238,0.2),transparent_32%),radial-gradient(circle_at_15%_12%,rgba(37,99,235,0.2),transparent_30%)]" />
 
-      {/* ══════════════════════════════════════════════════════════════
-          3D Vault Intro Overlay — fixed fullscreen, z-50
-          Unmounts from DOM once animation fires isIntroComplete.
-          AnimatePresence handles the exit fade.
-          ══════════════════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {!isIntroComplete && (
-          <Suspense
-            fallback={
-              /* Subtle loader dot while Three.js chunk downloads */
-              <motion.div
-                key="intro-loader"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center bg-white pointer-events-none"
+      <header className="sticky top-0 z-40 border-b border-gray-200/70 bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4 sm:px-8 lg:px-10">
+          <Link to="/" className="text-lg font-bold tracking-tight text-gray-900">
+            Kryptes
+          </Link>
+
+          <nav className="hidden items-center gap-8 text-sm font-medium text-gray-500 md:flex">
+            <a href="#features" className="transition-colors hover:text-gray-900">
+              Features
+            </a>
+            <a href="#security" className="transition-colors hover:text-gray-900">
+              Security
+            </a>
+            <a href="#docs" className="transition-colors hover:text-gray-900">
+              Docs
+            </a>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-[0_0_28px_rgba(37,99,235,0.35)]"
+            >
+              Get Started
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section className="relative overflow-hidden bg-gradient-to-b from-white to-blue-50 py-24">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-56 opacity-20 bg-[repeating-radial-gradient(circle_at_50%_0,rgba(37,99,235,0.25)_0,rgba(37,99,235,0.25)_1px,transparent_1px,transparent_22px)]" />
+
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="text-xs tracking-widest text-gray-500 uppercase">THE MOST SECURE DIGITAL VAULT</p>
+            <h1 className="mt-4 text-5xl font-bold text-blue-700 md:text-6xl leading-tight">
+              Protect your data from breaches and unauthorized access
+            </h1>
+            <p className="mt-4 text-gray-600 text-lg">
+              Secure passwords, documents, banking details, and 2FA with zero-knowledge encryption. Only you can access your vault.
+            </p>
+
+            <div className="mt-6 flex justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
+                className="bg-blue-600 text-white rounded-full px-6 py-3 shadow-md hover:bg-blue-700 transition"
               >
-                <div className="w-3 h-3 rounded-full bg-[#10B981] animate-pulse" />
-              </motion.div>
-            }
-          >
-            <VaultIntroCanvas
-              key="vault-intro"
-              onAnimationComplete={handleAnimationComplete}
-            />
-          </Suspense>
-        )}
-      </AnimatePresence>
+                Get Started Free
+              </button>
+              <a
+                href="mailto:support@kryptes.com?subject=Kryptes%20Sales"
+                className="border border-blue-600 text-blue-600 rounded-full px-6 py-3 hover:bg-blue-50 transition"
+              >
+                Talk to Sales
+              </a>
+            </div>
+          </div>
 
-      {/* ── Background Grid ────────────────────────────────────────── */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white" />
-      </div>
+          <div className="relative mx-auto mt-16 max-w-6xl -mb-16">
+            <div className="pointer-events-none absolute -inset-6 blur-3xl opacity-10 bg-gradient-to-r from-blue-400/40 to-cyan-400/40" />
 
-      {/* ══════════════════════════════════════════════════════════════
-          Main Page Content — hidden until intro completes.
-          Uses AnimatePresence to fade in the hero section ONLY after
-          the 3D sequence signals completion and unmounts.
-          ══════════════════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {isIntroComplete && (
-          <motion.main
-            key="main-content"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="relative z-10 mx-auto max-w-7xl px-6 sm:px-12 pt-8 sm:pt-16 font-mono"
-          >
-            {/* ── Hero Section ─────────────────────────────────────── */}
-            <section className="relative pb-20 pt-16">
-              <div className="hidden lg:flex absolute left-[-40px] top-12 flex-col items-center text-[10px] text-black/20 uppercase tracking-[0.3em] font-black">
-                <span className="[writing-mode:vertical-rl] rotate-180">Initialize protocol</span>
-                <span className="mt-4 text-xs">//</span>
-              </div>
+            <div className="relative rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
+              <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+                <aside className="rounded-2xl bg-blue-600/5 border border-blue-600/10 p-5">
+                  <p className="text-sm font-semibold text-blue-700">Vault</p>
+                  <nav className="mt-4 space-y-2 text-sm font-medium text-gray-600">
+                    <div className="rounded-lg bg-blue-600/10 px-3 py-2 text-blue-700">Vault</div>
+                    <div className="rounded-lg px-3 py-2 hover:bg-blue-600/5">Send</div>
+                    <div className="rounded-lg px-3 py-2 hover:bg-blue-600/5">Tools</div>
+                    <div className="rounded-lg px-3 py-2 hover:bg-blue-600/5">Settings</div>
+                  </nav>
+                </aside>
 
-              <div className="flex flex-col items-center text-center relative z-40">
-                <motion.div
-                  initial="hidden"
-                  animate="visible"
-                  className="flex flex-col items-center"
-                >
-                  <div className="flex items-center justify-center gap-4 flex-wrap">
-                    <motion.h1
-                      custom={0}
-                      variants={heroReveal}
-                      className="text-black max-w-[1000px] flex flex-col items-center tracking-tighter leading-[0.8] font-black uppercase"
-                    >
-                      <span className="italic font-black scale-x-125 inline-flex origin-center text-[11vw] sm:text-[5rem] lg:text-[7.5rem]">
-                        <AnimatedWord text="ZERO" isAuthVisible={isAuthVisible} splitAt={2} distance={100} />
-                      </span>
-                      <span className="italic font-black scale-x-125 inline-flex origin-center mt-2 text-[11vw] sm:text-[5rem] lg:text-[7.5rem] text-[#FF3B13]">
-                        <AnimatedWord text="KNOWLEDGE" isAuthVisible={isAuthVisible} splitAt={4} distance={100} />
-                      </span>
-                    </motion.h1>
+                <div className="relative rounded-2xl border border-gray-200 bg-white p-5">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-gray-900 font-semibold">Passwords</h3>
+                    <span className="rounded-full bg-blue-50 text-blue-700 px-3 py-1 text-xs font-semibold border border-blue-100">
+                      Protected
+                    </span>
                   </div>
 
-                  <motion.div
-                    custom={1}
-                    variants={heroReveal}
-                    className="relative z-[60] mt-12 mb-12"
-                  >
-                    <button
-                      onClick={toggleAuth}
-                      className="h-10 sm:h-20 px-6 sm:px-10 rounded-full border border-black/10 bg-white hover:border-[#FF3B13] group flex items-center gap-2 sm:gap-6 transition-all shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_rgba(255,59,19,0.15)] active:scale-95"
-                    >
-                      <span className="h-8 w-8 sm:h-12 sm:w-12 rounded-full bg-[#FF3B13] text-white flex items-center justify-center group-hover:bg-black transition-colors">
-                        <Lock className="h-4 w-4 sm:h-6 sm:w-6" />
-                      </span>
-                      <span className="text-xs sm:text-base text-black font-black tracking-[0.3em] uppercase">ACCESS VAULT</span>
-                    </button>
-                  </motion.div>
-
-                  <div className="relative">
-                    <motion.h1
-                      custom={2}
-                      variants={heroReveal}
-                      className="text-black max-w-[1000px] flex flex-col items-center tracking-tighter leading-[0.8] font-black uppercase"
-                    >
-                      <span className="inline-flex text-[11vw] sm:text-[5rem] lg:text-[7.5rem]">
-                        <AnimatedWord text="DIGITAL" isAuthVisible={isAuthVisible} splitAt={4} distance={150} />
-                      </span>
-                      <span className="inline-flex mt-2 text-[11vw] sm:text-[5rem] lg:text-[7.5rem]">
-                        <AnimatedWord text="ECOSYSTEM" isAuthVisible={isAuthVisible} splitAt={4} distance={150} />
-                      </span>
-                    </motion.h1>
-                    <motion.p
-                      custom={3}
-                      variants={heroReveal}
-                      className="mt-8 sm:mt-16 max-w-lg mx-auto text-[10px] sm:text-xs text-black/40 font-bold px-4 leading-loose tracking-[0.2em] uppercase"
-                    >
-                      KRYPTEX_PROTOCOL_V2.0 // DEPLOYING UNIFIED ZERO-KNOWLEDGE INFRASTRUCTURE. YOUR IDENTITY IS YOUR KEY. PRIVACY IS THE STANDARD.
-                    </motion.p>
-                  </div>
-                </motion.div>
-              </div>
-
-              <Login isVisible={isAuthVisible} onClose={() => setIsAuthVisible(false)} />
-
-              {/* ── Interactive Vault Visualization ────────────────── */}
-              <div ref={containerRef} className="mt-24 sm:mt-32 relative rounded-[3rem] bg-white border border-black/5 h-[450px] sm:h-[650px] w-full overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.05)] flex items-center justify-center">
-                <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                  <div className="w-[80%] h-[150%] sm:w-[600px] sm:h-[600px] rounded-full blur-[120px] bg-[radial-gradient(circle_at_50%_50%,#FF3B13_0%,#8b1e0a_40%,transparent_80%)]" />
-                </div>
-
-                <div className="relative z-10 w-full max-w-4xl px-8 flex flex-col items-center justify-center">
-                   <div className="relative">
-                     <div className="flex gap-2 relative z-20">
-                       <motion.div
-                         animate={{ rotateY: isAuthVisible ? -110 : 0, x: isAuthVisible ? -50 : 0, scale: isAuthVisible ? 0.9 : 1 }}
-                         transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                         className="w-16 h-32 sm:w-28 sm:h-56 rounded-l-full bg-white border-y border-l border-black/5 flex items-center justify-end overflow-hidden origin-right shadow-[0_20px_50px_rgba(0,0,0,0.05)]"
-                       >
-                          <div className="relative translate-x-1/2 text-[#FF3B13] opacity-20"><Lock className="w-12 h-12 sm:w-20 sm:h-20" /></div>
-                       </motion.div>
-                       <motion.div
-                         animate={{ rotateY: isAuthVisible ? 110 : 0, x: isAuthVisible ? 50 : 0, scale: isAuthVisible ? 0.9 : 1 }}
-                         transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                         className="w-16 h-32 sm:w-28 sm:h-56 rounded-r-full bg-white border-y border-r border-black/5 flex items-center justify-start overflow-hidden origin-left shadow-[0_20px_50px_rgba(0,0,0,0.05)]"
-                       >
-                          <div className="relative -translate-x-1/2 text-[#FF3B13] opacity-20"><Lock className="w-12 h-12 sm:w-20 sm:h-20" /></div>
-                       </motion.div>
-                     </div>
-
-                     {/* Floating Metric Cards */}
-                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none">
-                        <motion.div style={{ x: x1, y: y1 }} className="absolute -top-24 -left-24 sm:-top-28 sm:-left-56 bg-white/80 backdrop-blur-xl border border-black/5 p-4 rounded-2xl flex items-center gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.03)]">
-                           <div className="w-10 h-10 rounded-xl bg-[#FF3B13]/5 flex items-center justify-center text-[#FF3B13]"><Smartphone className="w-5 h-5" /></div>
-                           <div><p className="text-black text-[10px] font-black tracking-widest leading-none">LOCAL_SYNC</p><p className="text-black/30 text-[9px] mt-1 font-mono">ENCRYPTED_ON_DEVICE</p></div>
-                        </motion.div>
-
-                        <motion.div style={{ x: x2, y: y2 }} className="absolute -top-24 -right-24 sm:-top-28 sm:-right-56 bg-white/80 backdrop-blur-xl border border-black/5 p-4 rounded-2xl flex items-center gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.03)]">
-                           <div className="w-10 h-10 rounded-xl bg-[#FF3B13]/5 flex items-center justify-center text-[#FF3B13]"><Shield className="w-5 h-5" /></div>
-                           <div><p className="text-black text-[10px] font-black tracking-widest leading-none">AES_GCM_256</p><p className="text-black/30 text-[9px] mt-1 font-mono">MILITARY_GRADE</p></div>
-                        </motion.div>
-
-                        <motion.div style={{ x: x3, y: y3 }} className="absolute top-36 -left-24 sm:top-40 sm:-left-64 bg-white/80 backdrop-blur-xl border border-black/5 p-4 rounded-2xl flex items-center gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.03)]">
-                           <div className="w-10 h-10 rounded-xl bg-[#FF3B13]/5 flex items-center justify-center text-[#FF3B13]"><Zap className="w-5 h-5" /></div>
-                           <div><p className="text-black text-[10px] font-black tracking-widest leading-none">ZERO_CALL</p><p className="text-black/30 text-[9px] mt-1 font-mono">ULTRA_LOW_LATENCY</p></div>
-                        </motion.div>
-
-                        <motion.div style={{ x: x4, y: y4 }} className="absolute top-36 -right-24 sm:top-40 sm:-right-64 bg-white/80 backdrop-blur-xl border border-black/5 p-4 rounded-2xl flex items-center gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.03)]">
-                           <div className="w-10 h-10 rounded-xl bg-[#FF3B13]/5 flex items-center justify-center text-[#FF3B13]"><Lock className="w-5 h-5" /></div>
-                           <div><p className="text-black text-[10px] font-black tracking-widest leading-none">MASTER_KEY</p><p className="text-black/30 text-[9px] mt-1 font-mono">CLIENT_SIDE_ONLY</p></div>
-                        </motion.div>
-                     </div>
+                  <div className="mt-4 space-y-3">
+                    {["GitHub", "Banking Portal", "Google Workspace", "AWS Console"].map((item) => (
+                      <div
+                        key={item}
+                        className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3"
+                      >
+                        <span className="text-sm font-medium text-gray-900">{item}</span>
+                        <Lock className="h-4 w-4 text-gray-400" />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
-            </section>
 
-            {/* ── Problem/Solution Section ─────────────────────────── */}
-            <section className="bg-white border-y border-black/5 text-black py-24 sm:py-48 px-4 flex flex-col lg:flex-row lg:items-end justify-between gap-16">
-              <div className="max-w-4xl">
-                <p className="text-[10px] text-[#FF3B13] font-black uppercase tracking-[0.4em] mb-12 italic">// SYSTEM_OVERVIEW</p>
-                <h2 className="text-[2.5rem] sm:text-[4rem] lg:text-[5rem] leading-[0.95] tracking-tight font-black text-black uppercase italic">
-                  IDENTITY IS FRAGMENTED.
-                  <span className="text-black/10"> KRYPTEX IS THE SINGULARITY.</span>
-                </h2>
-              </div>
-              <div className="flex flex-col gap-10 lg:pb-6 min-w-[320px]">
-                <p className="text-sm text-black/40 border-l-2 border-[#FF3B13] pl-8 leading-relaxed max-w-sm uppercase font-bold tracking-widest text-[9px] sm:text-[10px]">
-                  Platform economics depend on the gap between your intent and your data. We collapse that gap into an offline-first, zero-knowledge vault.
-                </p>
+              <div className="absolute right-5 top-16 w-64 rounded-2xl border border-gray-200 bg-white shadow-lg p-4">
+                <p className="text-xs font-medium text-gray-500">Generator</p>
+                <p className="mt-1 text-sm font-semibold text-gray-900">Password Generator</p>
+                <div className="mt-3 space-y-2">
+                  <div className="h-2.5 rounded bg-blue-50 border border-blue-100" />
+                  <div className="h-2.5 w-4/5 rounded bg-blue-100 border border-blue-200" />
+                  <div className="h-2.5 w-3/4 rounded bg-blue-200 border border-blue-100" />
+                </div>
                 <button
-                  onClick={toggleAuth}
-                  className="inline-flex items-center gap-6 text-xs text-[#FF3B13] font-black w-fit hover:text-black transition-all group tracking-[0.3em] uppercase italic"
+                  type="button"
+                  className="mt-4 w-full rounded-lg bg-blue-600 text-white py-2 text-sm font-semibold hover:bg-blue-700 transition"
                 >
-                  <span className="h-12 w-12 rounded-full border border-black/5 bg-[#FF3B13]/5 text-[#FF3B13] flex items-center justify-center group-hover:bg-[#FF3B13] group-hover:text-white transition-all transform group-hover:scale-110 shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
-                    <ArrowRight className="h-5 w-5" />
-                  </span>
-                  Initialize Entry
+                  Generate & Copy
                 </button>
               </div>
-            </section>
-          </motion.main>
-        )}
-      </AnimatePresence>
-
-      {/* ── Footer (always mounted, fades with main) ─────────────── */}
-      {isIntroComplete && (
-        <motion.footer
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="relative z-10 mx-auto max-w-7xl px-6 sm:px-12 py-24 border-t border-black/5 flex flex-col sm:flex-row items-center justify-between gap-12 text-black/40"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#FF3B13]/5 border border-black/5 flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.03)]">
-              <Shield className="w-6 h-6 text-[#FF3B13]" />
-            </div>
-            <div className="flex flex-col text-black">
-              <span className="text-base font-black tracking-[0.4em] uppercase italic leading-none">KRYPTEX</span>
-              <span className="text-[8px] font-black text-black/20 uppercase tracking-widest mt-1">Zero-Knowledge Vault</span>
             </div>
           </div>
+        </section>
 
-          <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.25em]">
-            <Link to="/privacy" className="hover:text-[#FF3B13] transition-colors">Privacy</Link>
-            <Link to="/terms" className="hover:text-[#FF3B13] transition-colors">Terms</Link>
-            <a href="mailto:support@kryptes.com" className="hover:text-[#FF3B13] transition-colors">Contact</a>
+        <section id="features" className="bg-gradient-to-b from-white to-blue-50 px-6 py-20">
+          <div className="mx-auto w-full max-w-7xl">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {featureCards.map((card) => (
+                <article
+                  key={card.title}
+                  className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+                >
+                  <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                    <card.icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mt-4">{card.title}</h3>
+                  <p className="text-gray-600 mt-2 leading-relaxed">{card.description}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto w-full max-w-7xl px-6 pb-20 md:px-12">
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={fadeUp}
+            className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg sm:p-8"
+          >
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">Product showcase</h2>
+              <span className="rounded-lg bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">Dashboard preview</span>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+              <div className="rounded-xl border border-gray-200 p-4 transition duration-300 hover:scale-105 hover:shadow-xl">
+                <p className="text-sm font-semibold text-gray-900">Vault Items</p>
+                <p className="mt-1 text-sm text-gray-500">Passwords, documents, cards, and secure notes in one place.</p>
+              </div>
+              <div className="rounded-xl border border-gray-200 p-4 transition duration-300 hover:scale-105 hover:shadow-xl">
+                <p className="text-sm font-semibold text-gray-900">Security Score</p>
+                <p className="mt-1 text-sm text-gray-500">Track weak credentials and monitor risk in real time.</p>
+              </div>
+              <div className="rounded-xl border border-gray-200 p-4 transition duration-300 hover:scale-105 hover:shadow-xl">
+                <p className="text-sm font-semibold text-gray-900">Recent Activity</p>
+                <p className="mt-1 text-sm text-gray-500">See encrypted updates and controlled vault access logs.</p>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        <section id="security" className="border-y border-gray-200 bg-gray-50/70">
+          <div className="mx-auto w-full max-w-7xl px-6 py-20 sm:px-8 lg:px-10">
+            <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }} variants={fadeUp}>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Security architecture</p>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                Enterprise-ready by design
+              </h2>
+            </motion.div>
+
+            <div className="mt-10 grid gap-4 lg:grid-cols-5">
+              {architecture.map((item) => (
+                <div key={item} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-lg transition duration-300 hover:scale-105 hover:shadow-xl">
+                  <Database className="h-5 w-5 text-blue-600" />
+                  <p className="mt-3 text-sm font-semibold text-gray-900">{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto w-full max-w-7xl px-6 py-20 md:px-12">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {stats.map((stat) => (
+              <motion.div
+                key={stat.value}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.2 }}
+                variants={fadeUp}
+                className="rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-lg transition duration-300 hover:scale-105 hover:shadow-xl"
+              >
+                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="mt-2 text-sm text-gray-500">{stat.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto w-full max-w-7xl px-6 pb-24 md:px-12">
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={fadeUp}
+            className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-lg sm:p-12"
+          >
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Privacy should be the default.</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-base text-gray-500">
+              Build trust with a secure-by-default vault designed for modern individuals and teams.
+            </p>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
+                className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-[0_0_28px_rgba(37,99,235,0.35)]"
+              >
+                Create Vault
+              </button>
+              <a
+                href="mailto:support@kryptes.com?subject=Kryptes%20Sales"
+                className="rounded-lg border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-900 transition duration-200 hover:scale-[1.02] hover:bg-gray-100"
+              >
+                Contact Sales
+              </a>
+            </div>
+          </motion.div>
+        </section>
+      </main>
+
+      <footer id="docs" className="border-t border-gray-200 bg-white">
+        <div className="mx-auto grid w-full max-w-7xl gap-8 px-6 py-12 md:px-12 lg:grid-cols-3">
+          <div>
+            <p className="text-base font-bold text-gray-900">Kryptes</p>
+            <p className="mt-2 text-sm text-gray-500">Zero-knowledge password and data vault for modern teams.</p>
           </div>
 
-          <div className="flex flex-col items-center sm:items-end">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-black/20 font-mono">
-              [PROTOCOL_V2.0_STABLE]
-            </p>
-            <p className="text-[8px] font-bold text-black/5 uppercase tracking-widest mt-2">
-              © 2026 KRYPTEX INC. // ALL RIGHTS RESERVED
-            </p>
+          <div className="grid grid-cols-2 gap-6 text-sm">
+            <div className="space-y-2">
+              <p className="font-semibold text-gray-900">Product</p>
+              <a href="#features" className="block text-gray-500 hover:text-gray-900">Features</a>
+              <a href="#security" className="block text-gray-500 hover:text-gray-900">Security</a>
+              <a href="#" className="block text-gray-500 hover:text-gray-900">Docs</a>
+            </div>
+            <div className="space-y-2">
+              <p className="font-semibold text-gray-900">Company</p>
+              <a href="https://github.com" className="block text-gray-500 hover:text-gray-900">GitHub</a>
+              <Link to="/privacy" className="block text-gray-500 hover:text-gray-900">Privacy</Link>
+              <Link to="/terms" className="block text-gray-500 hover:text-gray-900">Terms</Link>
+            </div>
           </div>
-        </motion.footer>
-      )}
+
+          <div className="flex items-start justify-start lg:justify-end">
+            <a
+              href="https://github.com"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-900 transition duration-200 hover:scale-[1.02] hover:bg-gray-100"
+            >
+              <Github className="h-4 w-4" />
+              View on GitHub
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
 
 export default Index;
-
-
-
-
-

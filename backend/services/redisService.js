@@ -52,42 +52,25 @@ function whenRedisReadyOrTimeout(ms = 15000) {
 connectRedis();
 
 const getCachedVault = async (userId) => {
-  try {
-    await connectRedis();
-    if (redisClient?.isOpen) {
-      return await redisClient.get(`vault:${userId}`);
-    }
-  } catch (err) {
-    console.warn(`⚠️ [redisService] getCachedVault failed, bypassing cache: ${err.message}`);
-  }
-  return null;
+  await connectRedis();
+  return await redisClient.get(`vault:${userId}`);
 };
 
 const setCachedVault = async (userId, encryptedString) => {
-  try {
-    await connectRedis();
-    if (redisClient?.isOpen) {
-      // 15-minute TTL (900 seconds)
-      await redisClient.set(`vault:${userId}`, encryptedString, {
-        EX: 900,
-      });
-    }
-  } catch (err) {
-    console.warn(`⚠️ [redisService] setCachedVault failed: ${err.message}`);
-  }
+  await connectRedis();
+  // 15-minute TTL (900 seconds)
+  await redisClient.set(`vault:${userId}`, encryptedString, {
+    EX: 900,
+  });
 };
 
 const deleteCachedVault = async (userId) => {
-  try {
-    await connectRedis();
-    if (redisClient?.isOpen) {
-      await Promise.all([
-        redisClient.del(`vault:${userId}`),
-        redisClient.del(`documents:${userId}`),
-      ]);
-    }
-  } catch (err) {
-    console.warn(`⚠️ [redisService] deleteCachedVault failed: ${err.message}`);
+  await connectRedis();
+  if (redisClient?.isOpen) {
+    await Promise.all([
+      redisClient.del(`vault:${userId}`),
+      redisClient.del(`documents:${userId}`),
+    ]);
   }
 };
 
