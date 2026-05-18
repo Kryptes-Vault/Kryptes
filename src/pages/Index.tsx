@@ -1,17 +1,21 @@
 import { useState } from "react";
-import { motion, useScroll, useSpring } from "framer-motion";
-import {
-  Lock,
-  ArrowRight,
-  Shield,
-  Zap,
-  Globe,
-  Fingerprint
-} from "lucide-react";
-import { Navigation } from "@/components/landing/Navigation";
+import { motion, AnimatePresence, useScroll, useSpring } from "framer-motion";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { IntroAnimation } from "@/components/landing/IntroAnimation";
-import { Button } from "@/components/ui/button";
+import { Marquee } from "@/components/landing/Marquee";
+import { Cpu, Shield, Lock, Globe, Zap, Database } from "lucide-react";
+
+const RevealSection = ({ children, className }: { children: React.ReactNode; className?: string }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 15 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-120px" }}
+    transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+    className={className}
+  >
+    {children}
+  </motion.div>
+);
 
 const Index = () => {
   const [showContent, setShowContent] = useState(false);
@@ -22,190 +26,186 @@ const Index = () => {
     restDelta: 0.001
   });
 
-  const sectionVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } 
-    }
-  };
+  const productPhrases = [
+    "End-to-End Security", "Privacy First", "Zero Trust", 
+    "Encrypted Infrastructure", "Real-Time Protection", 
+    "Secure Access", "Intelligent Defense", "Built for Privacy", 
+    "Threat Detection", "Trusted Security"
+  ];
 
   return (
-    <div className="bg-black text-white selection:bg-orange-500/30">
+    <div className="bg-black text-white selection:bg-orange-500/30 font-sans leading-normal overflow-x-hidden">
+      {/* Progress Bar */}
+      <motion.div 
+        className="fixed top-0 left-0 right-0 h-[2px] bg-orange-500 origin-left z-[150]"
+        style={{ scaleX }}
+      />
+
       <IntroAnimation onComplete={() => setShowContent(true)} />
       
-      <div className={`transition-opacity duration-1000 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
-        <motion.div
-          className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-400 to-orange-600 origin-left z-[60]"
-          style={{ scaleX }}
-        />
-        
-        <Navigation />
-        
-        <main>
-          <HeroSection />
-
-          {/* Stats Bar */}
-          <section className="relative py-12 border-y border-white/5 bg-black/50 backdrop-blur-sm">
-            <div className="mx-auto max-w-[1200px] px-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                {[
-                  { label: "Encryption", value: "AES-256" },
-                  { label: "Audited", value: "SOC2" },
-                  { label: "Knowledge", value: "Zero" },
-                  { label: "Uptime", value: "99.9%" },
-                ].map((stat, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.1 }}
-                    className="flex flex-col items-center md:items-start"
-                  >
-                    <span className="text-2xl md:text-3xl font-bold text-orange-500">{stat.value}</span>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-1">{stat.label}</span>
-                  </motion.div>
-                ))}
-              </div>
+      <AnimatePresence>
+        {showContent && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+          >
+            {/* Minimal Logo Home Button - Fixed Top Left */}
+            <div className="fixed top-8 left-8 z-[100] z- pointer-events-auto">
+               <a href="/" className="block">
+                 <img src="/kryptus.png" alt="Logo" className="h-8 w-8 object-contain opacity-80 hover:opacity-100 transition-opacity" />
+               </a>
             </div>
-          </section>
 
-          {/* Features Section */}
-          <section id="features" className="py-32 px-6 relative">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-orange-500/5 rounded-full blur-[120px] -z-10" />
-            
-            <div className="mx-auto max-w-[1200px]">
-              <motion.div
-                variants={sectionVariants}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
-                className="text-center mb-24"
-              >
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-500">Security Layers</span>
-                <h2 className="mt-4 text-4xl md:text-6xl font-bold tracking-tight">The ultimate vault for<br/>your <span className="gradient-text">digital sovereignty.</span></h2>
-              </motion.div>
+            <main className="relative">
+              <HeroSection />
 
-              <div className="grid md:grid-cols-3 gap-6">
-                {[
-                  {
-                    title: "Hardware-Grade Security",
-                    desc: "State-of-the-art AES-256-GCM encryption usually reserved for enterprise hardware, now on your browser.",
-                    icon: Lock,
-                  },
-                  {
-                    title: "Universal Sync",
-                    desc: "Real-time, end-to-end encrypted synchronization across all your platforms without breaking the chain.",
-                    icon: Zap,
-                  },
-                  {
-                    title: "Zero Knowledge",
-                    desc: "Architecture designed so that your master keys never leave your device. Even we can't see your data.",
-                    icon: Shield,
-                  },
-                  {
-                    title: "Open Source Verified",
-                    desc: "Fully transparent code reviewed by the community. No backdoors, no secrets, just pure security.",
-                    icon: Globe,
-                  },
-                  {
-                    title: "Biometric Integration",
-                    desc: "Seamlessly unlock your vaults using Touch ID or Face ID, bridging physical and digital security.",
-                    icon: Fingerprint,
-                  },
-                  {
-                    title: "Emergency Rescue",
-                    desc: "Sophisticated recovery mechanisms that don't compromise your privacy or centralize control.",
-                    icon: Shield,
-                  },
-                ].map((feature, i) => (
-                  <motion.div
-                    key={i}
-                    variants={sectionVariants}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.1 }}
-                    className="group glass p-8 border border-white/5 hover:border-orange-500/20 transition-all"
-                  >
-                    <feature.icon className="h-8 w-8 text-orange-500 mb-6 group-hover:scale-110 transition-transform" />
-                    <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                    <p className="text-sm text-gray-400 leading-relaxed font-medium">{feature.desc}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </section>
+              {/* Tighter Marquee Placement */}
+              <section className="relative z-10 -mt-8 mb-16">
+                <Marquee 
+                  items={productPhrases} 
+                  speed={70}
+                  variant="subtle"
+                  className="bg-neutral-950/40 border-y border-white/5 py-3"
+                />
+              </section>
 
-          {/* CTA Section */}
-          <section className="py-32 px-6">
-            <div className="mx-auto max-w-[1200px]">
-              <div className="relative glass p-12 md:p-24 overflow-hidden rounded-3xl border border-white/5">
-                <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-orange-500/10 blur-[100px]" />
-                <div className="relative z-10 max-w-2xl">
-                  <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight">Secure your future <br/>today.</h2>
-                  <p className="text-lg text-gray-400 mb-10 font-medium">Join 50,000+ users protecting their digital life with Kryptes.</p>
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <Button className="rounded-full bg-orange-500 px-8 h-14 text-sm font-bold uppercase tracking-widest text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_30px_rgba(249,115,22,0.3)]">
-                      Create Secure Vault
-                    </Button>
-                    <Button variant="outline" className="rounded-full border-white/10 px-8 h-14 text-sm font-bold uppercase tracking-widest hover:bg-white/5 transition-all">
-                      View Documentation
-                    </Button>
+              {/* Combined Content Area with dense layouts */}
+              <div className="max-w-7xl mx-auto px-6 sm:px-12 lg:px-24">
+                
+                {/* 01: Core Philosophy */}
+                <section className="py-20 lg:py-32 border-b border-white/[0.03]">
+                  <div className="grid lg:grid-cols-[0.8fr,1.2fr] gap-16 lg:gap-24 items-start">
+                    <RevealSection>
+                        <span className="text-[9px] font-black uppercase tracking-[0.4em] text-orange-500 block mb-6">LAYER 01 — PHILOSOPHY</span>
+                        <h2 className="text-4xl sm:text-6xl font-black tracking-tighter mb-8 leading-[0.95]">
+                          Securing the <br/>
+                          <span className="text-orange-500 italic">Individual.</span>
+                        </h2>
+                        <p className="text-gray-400 font-medium leading-relaxed max-w-sm">
+                          Privacy isn't just a right; it's a structural requirement for freedom in the digital age.
+                        </p>
+                    </RevealSection>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-16">
+                      {[
+                        { title: "Zero Knowledge", desc: "Your keys never touch our servers. Mathematically Certain.", icon: Lock },
+                        { title: "Quantum Grade", desc: "Post-quantum lattice primitives for the next era.", icon: Zap },
+                        { title: "Hardware Root", desc: "Isolated silicon enclaves for key derivations.", icon: Shield },
+                        { title: "Distributed", desc: "No single point of failure in our consensus layers.", icon: Database }
+                      ].map((item, i) => (
+                        <RevealSection key={i} className="group">
+                           <div className="flex items-start gap-5">
+                              <div className="sm:h-10 sm:w-10 h-8 w-8 shrink-0 rounded-xl bg-neutral-900 border border-white/5 flex items-center justify-center group-hover:border-orange-500/30 transition-colors">
+                                 <item.icon className="h-4 w-4 text-orange-500" strokeWidth={1.5} />
+                              </div>
+                              <div>
+                                 <h3 className="text-sm font-black tracking-tight mb-2 uppercase">{item.title}</h3>
+                                 <p className="text-[11px] text-gray-500 leading-relaxed font-medium">{item.desc}</p>
+                              </div>
+                           </div>
+                        </RevealSection>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </main>
+                </section>
 
-        <footer className="py-20 px-6 border-t border-white/5">
-          <div className="mx-auto max-w-[1200px] grid grid-cols-2 md:grid-cols-4 gap-12">
-            <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2 mb-6">
-                <Shield className="h-6 w-6 text-orange-500" />
-                <span className="text-sm font-black tracking-[0.3em]">KRYPTES</span>
+                {/* 02: Verification & Transparency */}
+                <section className="py-20 lg:py-32">
+                  <div className="grid lg:grid-cols-2 gap-16 lg:gap-32 items-center">
+                    <RevealSection className="order-2 lg:order-1 relative">
+                        {/* Glassmorphism Visualization */}
+                        <div className="aspect-[16/10] bg-neutral-900/50 border border-white/5 rounded-[32px] overflow-hidden p-8 flex flex-col justify-between">
+                           <div className="flex gap-1.5">
+                              <div className="h-2 w-2 rounded-full bg-orange-500/20" />
+                              <div className="h-2 w-2 rounded-full bg-orange-500/20" />
+                              <div className="h-2 w-2 rounded-full bg-orange-500/20" />
+                           </div>
+                           <div className="space-y-3 opacity-40">
+                              <div className="h-1.5 w-full bg-white/5 rounded-full" />
+                              <div className="h-1.5 w-[80%] bg-white/5 rounded-full" />
+                              <div className="h-1.5 w-[60%] bg-white/5 rounded-full" />
+                           </div>
+                           <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+                              <Globe className="h-[200px] w-[200px]" />
+                           </div>
+                           <div className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">Protocol Audit Log // PROD_NODE_01</div>
+                        </div>
+                    </RevealSection>
+
+                    <div className="order-1 lg:order-2">
+                       <RevealSection>
+                         <span className="text-[9px] font-black uppercase tracking-[0.4em] text-orange-500 block mb-6">LAYER 02 — INTEGRITY</span>
+                         <h2 className="text-4xl sm:text-6xl font-black tracking-tighter mb-8 leading-[0.95]">Open Source. <br/>Closed Loop.</h2>
+                         <p className="text-gray-400 font-medium leading-relaxed mb-8 max-w-md">
+                           Our logic is publicly auditable. No backdoors, no legacy baggage. Security verified by the community and mathematical proof.
+                         </p>
+                         <a href="#" className="text-[10px] font-black tracking-[0.3em] uppercase text-orange-500 flex items-center gap-3 hover:text-white transition-all group">
+                            GIT REPOSITORY
+                            <div className="h-px w-8 bg-orange-500 group-hover:w-16 transition-all" />
+                         </a>
+                       </RevealSection>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Final CTA Container */}
+                <section className="py-24 lg:py-40 text-center relative overflow-hidden">
+                   <div className="absolute inset-0 bg-gradient-to-t from-orange-500/[0.02] to-transparent pointer-events-none" />
+                   <RevealSection>
+                      <h2 className="text-[10vw] sm:text-[8vw] font-black tracking-tighter leading-none mb-10">
+                         SECURE THE <br/> FUTURE.
+                      </h2>
+                      <p className="text-base sm:text-lg text-gray-500 font-medium mb-12 max-w-xl mx-auto italic uppercase tracking-wider">
+                         "Initialization is the first step toward sovereignty."
+                      </p>
+                      <a href="/dashboard" className="inline-flex px-12 py-4 bg-white text-black rounded-full text-[10px] font-black uppercase tracking-[0.4em] hover:bg-orange-500 hover:text-white transition-all duration-500">
+                        START INITIATIVE
+                      </a>
+                   </RevealSection>
+                </section>
+
               </div>
-              <p className="text-xs text-gray-500 leading-relaxed font-bold uppercase tracking-wider italic">
-                Sovereign Digital Identity
-              </p>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500 mb-6">Product</h4>
-              <ul className="space-y-4 text-xs font-bold uppercase tracking-widest text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API Docs</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500 mb-6">Company</h4>
-              <ul className="space-y-4 text-xs font-bold uppercase tracking-widest text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Open Source</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500 mb-6">Support</h4>
-              <ul className="space-y-4 text-xs font-bold uppercase tracking-widest text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Guide</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="mx-auto max-w-[1200px] mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between gap-6">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600">© 2024 Kryptes Inc. All rights reserved.</span>
-            <div className="flex gap-6">
-               <a href="#" className="text-gray-600 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">Twitter</a>
-               <a href="#" className="text-gray-600 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">GitHub</a>
-            </div>
-          </div>
-        </footer>
-      </div>
+            </main>
+
+            <footer className="py-20 px-10 sm:px-12 lg:px-24 border-t border-white/5 bg-neutral-950">
+               <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[1fr,2fr] gap-20">
+                  <div>
+                     <div className="flex items-center gap-2.5 mb-6">
+                        <img src="/kryptus.png" alt="Logo" className="h-5 w-5" />
+                        <span className="text-[10px] font-black tracking-[0.4em]">KRYPTES</span>
+                     </div>
+                     <p className="text-[9px] font-bold tracking-widest text-gray-600 leading-relaxed uppercase">
+                        Sovereign security protocol built for the next century of digital trust and independent identity.
+                     </p>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
+                     <div>
+                        <h4 className="text-[9px] font-black uppercase tracking-[0.4em] text-orange-500 mb-6 font-bold">Protocol</h4>
+                        <ul className="space-y-3 text-[9px] font-bold tracking-widest text-gray-500">
+                           <li><a href="#" className="hover:text-white transition-colors">SPECIFICATION</a></li>
+                           <li><a href="#" className="hover:text-white transition-colors">AUDITS</a></li>
+                           <li><a href="#" className="hover:text-white transition-colors">SECURITY</a></li>
+                        </ul>
+                     </div>
+                     <div>
+                        <h4 className="text-[9px] font-black uppercase tracking-[0.4em] text-orange-500 mb-6 font-bold">Network</h4>
+                        <ul className="space-y-3 text-[9px] font-bold tracking-widest text-gray-500">
+                           <li><a href="#" className="hover:text-white transition-colors">DISCORD</a></li>
+                           <li><a href="#" className="hover:text-white transition-colors">TWITTER</a></li>
+                           <li><a href="#" className="hover:text-white transition-colors uppercase">Github</a></li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
+               <div className="max-w-7xl mx-auto mt-24 pt-8 border-t border-white/[0.03] flex justify-between gap-6 opacity-30">
+                  <span className="text-[8px] font-black tracking-widest">VER 2.0.4 PROD</span>
+                  <span className="text-[8px] font-black tracking-widest">© 2024 KRYPTES PROTOCOL</span>
+               </div>
+            </footer>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
