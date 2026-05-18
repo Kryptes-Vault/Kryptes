@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    --background: 228 12% 8%;
-    --foreground: 40 20% 95%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
 
-    --card: 228 15% 12%;
-    --card-foreground: 40 20% 95%;
+    --card: 240 10% 4.9%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 228 15% 12%;
-    --popover-foreground: 40 20% 95%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 28 92% 55%;
-    --primary-foreground: 228 12% 8%;
+    --primary: 24.6 95% 53.1%;
+    --primary-foreground: 60 9.1% 97.8%;
 
-    --secondary: 228 15% 18%;
-    --secondary-foreground: 40 20% 85%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 228 12% 16%;
-    --muted-foreground: 228 10% 55%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
 
-    --accent: 28 80% 50%;
-    --accent-foreground: 228 12% 8%;
+    --accent: 24.6 95% 53.1%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 228 12% 20%;
-    --input: 228 12% 20%;
-    --ring: 28 92% 55%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 24.6 95% 53.1%;
 
     /* 3D Vault Intro accent (Emerald) */
     --vault-glow: 160 84% 39%;
@@ -38,14 +38,14 @@
 
     --radius: 0.75rem;
 
-    --sidebar-background: 228 15% 10%;
-    --sidebar-foreground: 40 20% 85%;
-    --sidebar-primary: 28 92% 55%;
-    --sidebar-primary-foreground: 228 12% 8%;
-    --sidebar-accent: 228 12% 16%;
-    --sidebar-accent-foreground: 40 20% 85%;
-    --sidebar-border: 228 12% 18%;
-    --sidebar-ring: 28 92% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -61,26 +61,40 @@
 
 @layer utilities {
   .glass {
-    @apply bg-card/40 backdrop-blur-xl border border-border/50;
+    @apply bg-black/40 backdrop-blur-xl border border-white/10;
   }
 
   .gradient-hero {
-    background: radial-gradient(ellipse 80% 60% at 50% -20%, hsl(28 92% 55% / 0.15), transparent),
-                radial-gradient(ellipse 60% 50% at 80% 50%, hsl(28 80% 50% / 0.08), transparent),
+    background: radial-gradient(circle at 50% -20%, hsl(24.6 95% 53.1% / 0.15), transparent 70%),
+                radial-gradient(circle at 0% 0%, hsl(24.6 95% 53.1% / 0.05), transparent 50%),
                 hsl(var(--background));
   }
 
   .gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(28 92% 55%), hsl(35 95% 65%));
+    background-image: linear-gradient(135deg, hsl(24.6 95% 53.1%), hsl(35 95% 65%));
   }
 
   .glow-orange {
-    box-shadow: 0 0 60px -12px hsl(28 92% 55% / 0.4);
+    box-shadow: 0 0 60px -12px hsl(24.6 95% 53.1% / 0.4);
   }
 
-  .glow-emerald {
-    box-shadow: 0 0 60px -12px hsl(var(--vault-glow) / 0.4);
+  .glow-card {
+    position: relative;
+  }
+  
+  .glow-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.3), transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
 
   .scrollbar-hide {
@@ -90,6 +104,13 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  .grid-pattern {
+    background-image: 
+      linear-gradient(rgba(249, 115, 22, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(249, 115, 22, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
   }
 }
 
