@@ -1,211 +1,623 @@
-import { useState } from "react";
-import { motion, AnimatePresence, useScroll, useSpring } from "framer-motion";
-import { HeroSection } from "@/components/landing/HeroSection";
-import { IntroAnimation } from "@/components/landing/IntroAnimation";
-import { Marquee } from "@/components/landing/Marquee";
-import { Cpu, Shield, Lock, Globe, Zap, Database } from "lucide-react";
+import type { MouseEvent, ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import { motion, useInView, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
+import {
+  ArrowRight,
+  CheckCircle,
+  Database,
+  FileKey2,
+  Github,
+  Globe,
+  KeyRound,
+  Lock,
+  LucideIcon,
+  ServerCog,
+  Shield,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 
-const RevealSection = ({ children, className }: { children: React.ReactNode; className?: string }) => (
+import laptopMockup from "@/assets/laptop-ui-mockup.jpg";
+import phoneMockup from "@/assets/smartphone-ui-mockup.jpg";
+
+type RevealSectionProps = {
+  children: ReactNode;
+  className?: string;
+};
+
+type FeatureCardProps = {
+  title: string;
+  desc: string;
+  icon: LucideIcon;
+};
+
+type Stat = {
+  value: string;
+  label: string;
+  countTo?: number;
+  suffix?: string;
+  prefix?: string;
+};
+
+type MagneticButtonProps = {
+  children: ReactNode;
+  href: string;
+  variant?: "primary" | "secondary";
+};
+
+const trustBadges = ["Zero-knowledge encrypted", "Open source", "End-to-end security"];
+
+const stats: Stat[] = [
+  { value: "256-bit", label: "vault encryption", countTo: 256, suffix: "-bit" },
+  { value: "0", label: "server-held keys", countTo: 0 },
+  { value: "24/7", label: "secure access", prefix: "24/7" },
+];
+
+const features = [
+  {
+    icon: Lock,
+    title: "Zero Knowledge",
+    desc: "Private keys stay on your side of the vault boundary, so sensitive data is never exposed upstream.",
+  },
+  {
+    icon: Zap,
+    title: "Fast Recovery",
+    desc: "Encrypted recovery paths keep access practical without weakening the protection model.",
+  },
+  {
+    icon: Shield,
+    title: "Shared Secrets",
+    desc: "Burn links and support grants help you share exactly what is needed, then close access cleanly.",
+  },
+  {
+    icon: Database,
+    title: "Structured Vaults",
+    desc: "Passwords, documents, cards, media, and banking records live in one organized encrypted workspace.",
+  },
+];
+
+const workflow = [
+  { icon: KeyRound, title: "Create", desc: "Generate or import secrets into a private encrypted vault." },
+  { icon: ServerCog, title: "Sync", desc: "Store ciphertext in the cloud while keys remain under user control." },
+  { icon: FileKey2, title: "Share", desc: "Grant narrow access with time-boxed, auditable handoffs." },
+];
+
+const heroStagger = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      delayChildren: 0.35,
+      staggerChildren: 0.12,
+    },
+  },
+};
+
+const heroItem = {
+  hidden: { opacity: 0, y: 22, filter: "blur(8px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.82, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+const particles = [
+  { left: "8%", top: "18%", size: 3 },
+  { left: "18%", top: "72%", size: 2 },
+  { left: "29%", top: "32%", size: 2 },
+  { left: "42%", top: "14%", size: 3 },
+  { left: "55%", top: "78%", size: 2 },
+  { left: "66%", top: "27%", size: 2 },
+  { left: "78%", top: "64%", size: 3 },
+  { left: "90%", top: "22%", size: 2 },
+  { left: "94%", top: "82%", size: 2 },
+];
+
+const RevealSection = ({ children, className }: RevealSectionProps) => (
   <motion.div
-    initial={{ opacity: 0, y: 15 }}
+    initial={{ opacity: 0, y: 24 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-120px" }}
-    transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+    viewport={{ once: true, margin: "-80px" }}
+    transition={{ duration: 0.65, ease: "easeOut" }}
     className={className}
   >
     {children}
   </motion.div>
 );
 
-const Index = () => {
-  const [showContent, setShowContent] = useState(false);
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
-  });
+const FeatureCard = ({ title, desc, icon: Icon }: FeatureCardProps) => (
+  <motion.div
+    whileHover={{ y: -6, rotateX: 1.5, rotateY: -1.5 }}
+    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+    className="h-full rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all duration-500 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100/80"
+  >
+    <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg border border-orange-200 bg-orange-50">
+      <Icon className="h-5 w-5 text-orange-600" strokeWidth={1.8} />
+    </div>
+    <h3 className="mb-3 text-lg font-black tracking-tight text-gray-950">{title}</h3>
+    <p className="text-sm leading-6 text-gray-600">{desc}</p>
+  </motion.div>
+);
 
-  const productPhrases = [
-    "End-to-End Security", "Privacy First", "Zero Trust", 
-    "Encrypted Infrastructure", "Real-Time Protection", 
-    "Secure Access", "Intelligent Defense", "Built for Privacy", 
-    "Threat Detection", "Trusted Security"
-  ];
+const MagneticButton = ({ children, href, variant = "primary" }: MagneticButtonProps) => {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const springX = useSpring(x, { stiffness: 220, damping: 18, mass: 0.3 });
+  const springY = useSpring(y, { stiffness: 220, damping: 18, mass: 0.3 });
+
+  const handleMouseMove = (event: MouseEvent<HTMLAnchorElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    x.set((event.clientX - rect.left - rect.width / 2) * 0.18);
+    y.set((event.clientY - rect.top - rect.height / 2) * 0.18);
+  };
+
+  const reset = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  const baseClass =
+    "group relative inline-flex overflow-hidden rounded-lg px-6 py-4 text-xs font-black uppercase tracking-[0.22em] transition-all duration-500 ease-out";
+  const variantClass =
+    variant === "primary"
+      ? "bg-orange-500 text-white shadow-xl shadow-orange-500/25 hover:-translate-y-1 hover:shadow-orange-500/45"
+      : "border border-white/20 bg-white/[0.08] text-white shadow-sm backdrop-blur hover:-translate-y-1 hover:border-orange-300/80 hover:bg-white/[0.12]";
 
   return (
-    <div className="bg-black text-white selection:bg-orange-500/30 font-sans leading-normal overflow-x-hidden">
-      {/* Progress Bar */}
-      <motion.div 
-        className="fixed top-0 left-0 right-0 h-[2px] bg-orange-500 origin-left z-[150]"
-        style={{ scaleX }}
-      />
+    <motion.a
+      href={href}
+      style={{ x: springX, y: springY }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={reset}
+      whileTap={{ scale: 0.98 }}
+      className={`${baseClass} ${variantClass}`}
+    >
+      <span className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+        <span className="absolute inset-x-[-30%] top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+        <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0" />
+      </span>
+      <span className="relative flex items-center justify-center gap-2">
+        {children}
+      </span>
+    </motion.a>
+  );
+};
 
-      <IntroAnimation onComplete={() => setShowContent(true)} />
-      
-      <AnimatePresence>
-        {showContent && (
-          <motion.div 
+const CountUpStat = ({ stat }: { stat: Stat }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!inView || typeof stat.countTo !== "number") return;
+
+    const duration = 1100;
+    const start = performance.now();
+    let frame = 0;
+
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(stat.countTo * eased));
+
+      if (progress < 1) {
+        frame = requestAnimationFrame(tick);
+      }
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [inView, stat.countTo]);
+
+  const display = stat.prefix ?? `${value}${stat.suffix ?? ""}`;
+
+  return (
+    <div ref={ref} className="px-5 py-4 md:border-r md:border-white/10 md:last:border-r-0">
+      <p className="text-3xl font-black tracking-tight text-white">{display}</p>
+      <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-white/50">{stat.label}</p>
+    </div>
+  );
+};
+
+const Marquee = ({ items }: { items: string[] }) => {
+  const duplicatedItems = [...items, ...items, ...items];
+
+  return (
+    <div className="relative overflow-hidden border-y border-gray-200 bg-gray-950 text-white">
+      <motion.div
+        animate={{ x: [0, -1200] }}
+        transition={{ duration: 34, repeat: Infinity, ease: "linear" }}
+        className="flex whitespace-nowrap px-6 py-3"
+      >
+        {duplicatedItems.map((item, i) => (
+          <div key={`${item}-${i}`} className="flex shrink-0 items-center gap-8 pr-8">
+            <span className="text-xs font-black uppercase tracking-[0.28em] text-gray-100">{item}</span>
+            <Sparkles className="h-4 w-4 text-orange-400" strokeWidth={1.8} />
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  );
+};
+
+const Index = () => {
+  const shouldReduceMotion = useReducedMotion();
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const smoothX = useSpring(mouseX, { stiffness: 90, damping: 24, mass: 0.4 });
+  const smoothY = useSpring(mouseY, { stiffness: 90, damping: 24, mass: 0.4 });
+  const auroraX = useTransform(smoothX, [-0.5, 0.5], ["-1.4%", "1.4%"]);
+  const auroraY = useTransform(smoothY, [-0.5, 0.5], ["-1%", "1%"]);
+  const deviceRotateY = useTransform(smoothX, [-0.5, 0.5], [4, -4]);
+  const deviceRotateX = useTransform(smoothY, [-0.5, 0.5], [-3, 3]);
+  const phoneX = useTransform(smoothX, [-0.5, 0.5], [-10, 10]);
+
+  const handleHeroMouseMove = (event: MouseEvent<HTMLElement>) => {
+    if (shouldReduceMotion) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    mouseX.set((event.clientX - rect.left) / rect.width - 0.5);
+    mouseY.set((event.clientY - rect.top) / rect.height - 0.5);
+  };
+
+  return (
+    <div className="min-h-screen bg-white text-gray-950 selection:bg-orange-100 selection:text-orange-950">
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center bg-[#090807]"
+        initial={{ opacity: 1 }}
+        animate={{ opacity: 0 }}
+        transition={{ duration: 0.8, delay: 1.2, ease: [0.65, 0, 0.35, 1] }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.82 }}
+          animate={{ opacity: [0, 1, 1], scale: [0.82, 1.08, 1] }}
+          transition={{ duration: 1.05, ease: [0.22, 1, 0.36, 1] }}
+          className="group relative flex h-28 w-28 items-center justify-center rounded-full border border-white/10 bg-white p-4 shadow-2xl shadow-orange-500/30"
+        >
+          <motion.div
+            className="absolute inset-[-9px] rounded-full border border-orange-400/50"
+            initial={{ scale: 0.8, opacity: 0.8 }}
+            animate={{ scale: 1.45, opacity: 0 }}
+            transition={{ duration: 1.1, repeat: 1, ease: "easeOut" }}
+          />
+          <img src="/kryptes.png" alt="" className="h-full w-full rounded-full object-contain" />
+        </motion.div>
+      </motion.div>
+
+      <main>
+        <section
+          onMouseMove={handleHeroMouseMove}
+          className="relative min-h-screen overflow-hidden bg-[#0b0908] px-5 pb-16 pt-8 text-white lg:px-10 lg:pb-24 lg:pt-14"
+        >
+          <motion.div
+            aria-hidden="true"
+            className="hero-aurora pointer-events-none absolute inset-[-12%] opacity-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1 }}
-          >
-            {/* Minimal Logo Home Button - Fixed Top Left */}
-            <div className="fixed top-8 left-8 z-[100] z- pointer-events-auto">
-               <a href="/" className="block">
-                 <img src="/kryptus.png" alt="Logo" className="h-8 w-8 object-contain opacity-80 hover:opacity-100 transition-opacity" />
-               </a>
-            </div>
+            transition={{ duration: 1.8, delay: 0.45, ease: "easeOut" }}
+            style={{ x: auroraX, y: auroraY }}
+          />
+          <div aria-hidden="true" className="hero-grain pointer-events-none absolute inset-0" />
+          <motion.div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-[6%] top-[22%] h-72 w-72 rounded-full bg-orange-500/18 blur-3xl"
+            initial={{ opacity: 0, scale: 0.86 }}
+            animate={{ opacity: 0.55, scale: [0.96, 1.08, 0.96] }}
+            transition={{ opacity: { duration: 1.6, delay: 0.25 }, scale: { duration: 8, repeat: Infinity, ease: "easeInOut" } }}
+          />
+          <motion.div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-[4%] top-[12%] h-80 w-80 rounded-full bg-white/[0.08] blur-3xl"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 0.35, scale: [1.04, 0.96, 1.04] }}
+            transition={{ opacity: { duration: 1.8, delay: 0.5 }, scale: { duration: 9, repeat: Infinity, ease: "easeInOut" } }}
+          />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+            {particles.map((particle, index) => (
+              <span
+                key={`${particle.left}-${particle.top}`}
+                className="ambient-particle absolute rounded-full bg-orange-100/70 shadow-[0_0_18px_rgba(251,146,60,0.45)]"
+                style={{
+                  left: particle.left,
+                  top: particle.top,
+                  height: particle.size,
+                  width: particle.size,
+                  animationDelay: `${index * -1.4}s`,
+                }}
+              />
+            ))}
+          </div>
 
-            <main className="relative">
-              <HeroSection />
+          <div className="relative z-10 mx-auto grid min-h-[calc(100vh-7rem)] max-w-7xl items-center gap-12 lg:grid-cols-[0.92fr_1.08fr]">
+            <motion.div variants={heroStagger} initial="hidden" animate="visible">
+              <motion.a
+                href="/"
+                aria-label="Kryptes home"
+                variants={heroItem}
+                whileHover={{ scale: 1.035 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                className="group mb-10 inline-flex items-center gap-4 rounded-full border border-white/10 bg-white/[0.07] px-4 py-3 shadow-2xl shadow-orange-500/10 backdrop-blur-xl"
+              >
+                <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-white p-1.5 shadow-[0_0_34px_rgba(249,115,22,0.34)] transition duration-500 group-hover:shadow-[0_0_48px_rgba(249,115,22,0.55)]">
+                  <motion.span
+                    aria-hidden="true"
+                    className="absolute inset-[-5px] rounded-full border border-orange-300/55 border-t-white/80"
+                    animate={shouldReduceMotion ? undefined : { rotate: 360 }}
+                    transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                  />
+                  <img src="/kryptes.png" alt="Kryptes logo" className="h-full w-full rounded-full object-contain" />
+                </span>
+                <div>
+                  <span className="block text-lg font-black leading-none tracking-tight text-white">KRYPTES</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/45">Private vault</span>
+                </div>
+              </motion.a>
 
-              {/* Tighter Marquee Placement */}
-              <section className="relative z-10 -mt-8 mb-16">
-                <Marquee 
-                  items={productPhrases} 
-                  speed={70}
-                  variant="subtle"
-                  className="bg-neutral-950/40 border-y border-white/5 py-3"
+              <motion.div variants={heroItem} className="mb-7 inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-300/10 px-3 py-2 shadow-sm backdrop-blur">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.75)]" />
+                <span className="text-xs font-black uppercase tracking-[0.22em] text-orange-100/80">V2.0.4 production ready</span>
+              </motion.div>
+
+              <motion.h1 className="max-w-3xl text-5xl font-black leading-[0.96] tracking-tight text-white sm:text-6xl lg:text-7xl">
+                {["Secure your", "digital life in", "one private vault."].map((line) => (
+                  <motion.span key={line} variants={heroItem} className="block">
+                    {line}
+                  </motion.span>
+                ))}
+              </motion.h1>
+
+              <motion.p variants={heroItem} className="mt-7 max-w-2xl text-lg leading-8 text-white/62">
+                Kryptes keeps passwords, documents, banking details, and shared secrets organized behind a zero-knowledge security model built for everyday use.
+              </motion.p>
+
+              <motion.div variants={heroItem} className="mt-9 flex flex-col gap-3 sm:flex-row">
+                <MagneticButton href="/dashboard">
+                  Access Vault
+                  <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
+                </MagneticButton>
+                <MagneticButton href="#security" variant="secondary">
+                  Explore Security
+                </MagneticButton>
+              </motion.div>
+
+              <motion.div variants={heroStagger} className="mt-8 flex flex-wrap gap-3">
+                {trustBadges.map((badge) => (
+                  <motion.div
+                    key={badge}
+                    variants={heroItem}
+                    whileHover={{ y: -2, scale: 1.02 }}
+                    className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 py-2 shadow-sm backdrop-blur"
+                  >
+                    <CheckCircle className="h-4 w-4 text-emerald-300" strokeWidth={2} />
+                    <span className="text-xs font-bold uppercase tracking-[0.16em] text-white/70">{badge}</span>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 72, scale: 0.96 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 1.05, delay: 0.75, ease: [0.22, 1, 0.36, 1] }}
+              className="relative min-h-[420px] [perspective:1400px] lg:min-h-[560px]"
+              style={{ rotateX: deviceRotateX, rotateY: deviceRotateY }}
+            >
+              <motion.div
+                className="absolute left-6 top-4 h-52 w-52 rounded-full bg-emerald-300/15 blur-3xl"
+                animate={{ scale: [1, 1.12, 1], opacity: [0.45, 0.7, 0.45] }}
+                transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <motion.div
+                className="absolute bottom-2 right-8 h-64 w-64 rounded-full bg-orange-400/20 blur-3xl"
+                animate={{ scale: [1.08, 0.96, 1.08], opacity: [0.45, 0.72, 0.45] }}
+                transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
+              />
+
+              <motion.div
+                className="relative ml-auto max-w-3xl rounded-lg border border-white/10 bg-white/10 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl"
+                whileHover={{ y: -5 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <img
+                  src={laptopMockup}
+                  alt="Kryptes desktop vault interface"
+                  className="aspect-video w-full rounded-md object-cover"
                 />
-              </section>
+              </motion.div>
 
-              {/* Combined Content Area with dense layouts */}
-              <div className="max-w-7xl mx-auto px-6 sm:px-12 lg:px-24">
-                
-                {/* 01: Core Philosophy */}
-                <section className="py-20 lg:py-32 border-b border-white/[0.03]">
-                  <div className="grid lg:grid-cols-[0.8fr,1.2fr] gap-16 lg:gap-24 items-start">
-                    <RevealSection>
-                        <span className="text-[9px] font-black uppercase tracking-[0.4em] text-orange-500 block mb-6">LAYER 01 — PHILOSOPHY</span>
-                        <h2 className="text-4xl sm:text-6xl font-black tracking-tighter mb-8 leading-[0.95]">
-                          Securing the <br/>
-                          <span className="text-orange-500 italic">Individual.</span>
-                        </h2>
-                        <p className="text-gray-400 font-medium leading-relaxed max-w-sm">
-                          Privacy isn't just a right; it's a structural requirement for freedom in the digital age.
-                        </p>
-                    </RevealSection>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-16">
-                      {[
-                        { title: "Zero Knowledge", desc: "Your keys never touch our servers. Mathematically Certain.", icon: Lock },
-                        { title: "Quantum Grade", desc: "Post-quantum lattice primitives for the next era.", icon: Zap },
-                        { title: "Hardware Root", desc: "Isolated silicon enclaves for key derivations.", icon: Shield },
-                        { title: "Distributed", desc: "No single point of failure in our consensus layers.", icon: Database }
-                      ].map((item, i) => (
-                        <RevealSection key={i} className="group">
-                           <div className="flex items-start gap-5">
-                              <div className="sm:h-10 sm:w-10 h-8 w-8 shrink-0 rounded-xl bg-neutral-900 border border-white/5 flex items-center justify-center group-hover:border-orange-500/30 transition-colors">
-                                 <item.icon className="h-4 w-4 text-orange-500" strokeWidth={1.5} />
-                              </div>
-                              <div>
-                                 <h3 className="text-sm font-black tracking-tight mb-2 uppercase">{item.title}</h3>
-                                 <p className="text-[11px] text-gray-500 leading-relaxed font-medium">{item.desc}</p>
-                              </div>
-                           </div>
-                        </RevealSection>
-                      ))}
-                    </div>
+              <motion.div
+                initial={{ opacity: 0, y: 34, rotate: -4 }}
+                animate={{ opacity: 1, y: [0, -10, 0], rotate: 0 }}
+                style={{ x: phoneX }}
+                transition={{
+                  opacity: { duration: 0.6, delay: 1 },
+                  y: { duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.2 },
+                  rotate: { duration: 0.7, delay: 1, ease: "easeOut" },
+                }}
+                className="absolute -bottom-2 left-4 w-36 rounded-lg border border-white/15 bg-white/10 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl sm:w-44 lg:left-10 lg:w-52"
+              >
+                <img
+                  src={phoneMockup}
+                  alt="Kryptes mobile vault interface"
+                  className="aspect-[9/16] w-full rounded-md object-cover"
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 14, filter: "blur(8px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: 0.7, delay: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute right-0 top-0 hidden rounded-lg border border-orange-300/20 bg-white/10 p-4 shadow-xl shadow-orange-950/20 backdrop-blur-xl lg:block"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-400/15">
+                    <Shield className="h-5 w-5 text-orange-200" strokeWidth={1.8} />
                   </div>
-                </section>
-
-                {/* 02: Verification & Transparency */}
-                <section className="py-20 lg:py-32">
-                  <div className="grid lg:grid-cols-2 gap-16 lg:gap-32 items-center">
-                    <RevealSection className="order-2 lg:order-1 relative">
-                        {/* Glassmorphism Visualization */}
-                        <div className="aspect-[16/10] bg-neutral-900/50 border border-white/5 rounded-[32px] overflow-hidden p-8 flex flex-col justify-between">
-                           <div className="flex gap-1.5">
-                              <div className="h-2 w-2 rounded-full bg-orange-500/20" />
-                              <div className="h-2 w-2 rounded-full bg-orange-500/20" />
-                              <div className="h-2 w-2 rounded-full bg-orange-500/20" />
-                           </div>
-                           <div className="space-y-3 opacity-40">
-                              <div className="h-1.5 w-full bg-white/5 rounded-full" />
-                              <div className="h-1.5 w-[80%] bg-white/5 rounded-full" />
-                              <div className="h-1.5 w-[60%] bg-white/5 rounded-full" />
-                           </div>
-                           <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
-                              <Globe className="h-[200px] w-[200px]" />
-                           </div>
-                           <div className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">Protocol Audit Log // PROD_NODE_01</div>
-                        </div>
-                    </RevealSection>
-
-                    <div className="order-1 lg:order-2">
-                       <RevealSection>
-                         <span className="text-[9px] font-black uppercase tracking-[0.4em] text-orange-500 block mb-6">LAYER 02 — INTEGRITY</span>
-                         <h2 className="text-4xl sm:text-6xl font-black tracking-tighter mb-8 leading-[0.95]">Open Source. <br/>Closed Loop.</h2>
-                         <p className="text-gray-400 font-medium leading-relaxed mb-8 max-w-md">
-                           Our logic is publicly auditable. No backdoors, no legacy baggage. Security verified by the community and mathematical proof.
-                         </p>
-                         <a href="#" className="text-[10px] font-black tracking-[0.3em] uppercase text-orange-500 flex items-center gap-3 hover:text-white transition-all group">
-                            GIT REPOSITORY
-                            <div className="h-px w-8 bg-orange-500 group-hover:w-16 transition-all" />
-                         </a>
-                       </RevealSection>
-                    </div>
-                  </div>
-                </section>
-
-                {/* Final CTA Container */}
-                <section className="py-24 lg:py-40 text-center relative overflow-hidden">
-                   <div className="absolute inset-0 bg-gradient-to-t from-orange-500/[0.02] to-transparent pointer-events-none" />
-                   <RevealSection>
-                      <h2 className="text-[10vw] sm:text-[8vw] font-black tracking-tighter leading-none mb-10">
-                         SECURE THE <br/> FUTURE.
-                      </h2>
-                      <p className="text-base sm:text-lg text-gray-500 font-medium mb-12 max-w-xl mx-auto italic uppercase tracking-wider">
-                         "Initialization is the first step toward sovereignty."
-                      </p>
-                      <a href="/dashboard" className="inline-flex px-12 py-4 bg-white text-black rounded-full text-[10px] font-black uppercase tracking-[0.4em] hover:bg-orange-500 hover:text-white transition-all duration-500">
-                        START INITIATIVE
-                      </a>
-                   </RevealSection>
-                </section>
-
-              </div>
-            </main>
-
-            <footer className="py-20 px-10 sm:px-12 lg:px-24 border-t border-white/5 bg-neutral-950">
-               <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[1fr,2fr] gap-20">
                   <div>
-                     <div className="flex items-center gap-2.5 mb-6">
-                        <img src="/kryptus.png" alt="Logo" className="h-5 w-5" />
-                        <span className="text-[10px] font-black tracking-[0.4em]">KRYPTES</span>
-                     </div>
-                     <p className="text-[9px] font-bold tracking-widest text-gray-600 leading-relaxed uppercase">
-                        Sovereign security protocol built for the next century of digital trust and independent identity.
-                     </p>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-white/45">Protected</p>
+                    <p className="text-sm font-black text-white">Keys stay local</p>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
-                     <div>
-                        <h4 className="text-[9px] font-black uppercase tracking-[0.4em] text-orange-500 mb-6 font-bold">Protocol</h4>
-                        <ul className="space-y-3 text-[9px] font-bold tracking-widest text-gray-500">
-                           <li><a href="#" className="hover:text-white transition-colors">SPECIFICATION</a></li>
-                           <li><a href="#" className="hover:text-white transition-colors">AUDITS</a></li>
-                           <li><a href="#" className="hover:text-white transition-colors">SECURITY</a></li>
-                        </ul>
-                     </div>
-                     <div>
-                        <h4 className="text-[9px] font-black uppercase tracking-[0.4em] text-orange-500 mb-6 font-bold">Network</h4>
-                        <ul className="space-y-3 text-[9px] font-bold tracking-widest text-gray-500">
-                           <li><a href="#" className="hover:text-white transition-colors">DISCORD</a></li>
-                           <li><a href="#" className="hover:text-white transition-colors">TWITTER</a></li>
-                           <li><a href="#" className="hover:text-white transition-colors uppercase">Github</a></li>
-                        </ul>
-                     </div>
-                  </div>
-               </div>
-               <div className="max-w-7xl mx-auto mt-24 pt-8 border-t border-white/[0.03] flex justify-between gap-6 opacity-30">
-                  <span className="text-[8px] font-black tracking-widest">VER 2.0.4 PROD</span>
-                  <span className="text-[8px] font-black tracking-widest">© 2024 KRYPTES PROTOCOL</span>
-               </div>
-            </footer>
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.75, delay: 1.18, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-10 mx-auto mt-12 grid max-w-7xl gap-3 border-y border-white/10 bg-white/[0.06] py-4 backdrop-blur-xl md:grid-cols-3"
+          >
+            {stats.map((stat) => (
+              <CountUpStat key={stat.label} stat={stat} />
+            ))}
           </motion.div>
-        )}
-      </AnimatePresence>
+        </section>
+
+        <Marquee items={["Zero-knowledge vault", "Encrypted documents", "Burn-after-read sharing", "Banking records", "Password manager"]} />
+
+        <section id="security" className="px-5 py-20 lg:px-10 lg:py-24">
+          <div className="mx-auto max-w-7xl">
+            <RevealSection className="mb-12 max-w-3xl">
+              <p className="mb-4 text-xs font-black uppercase tracking-[0.34em] text-orange-600">Layer 01 — Security</p>
+              <h2 className="text-4xl font-black tracking-tight text-gray-950 lg:text-5xl">Fuller protection without the clutter.</h2>
+              <p className="mt-5 text-lg leading-8 text-gray-600">
+                A cleaner vault experience should still feel serious. Kryptes groups sensitive workflows into focused surfaces, with direct controls and visible security states.
+              </p>
+            </RevealSection>
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+              {features.map((feature) => (
+                <RevealSection key={feature.title}>
+                  <FeatureCard {...feature} />
+                </RevealSection>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="workflow" className="border-y border-gray-200 bg-gray-950 px-5 py-20 text-white lg:px-10 lg:py-24">
+          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+            <RevealSection>
+              <p className="mb-4 text-xs font-black uppercase tracking-[0.34em] text-orange-400">Layer 02 — Workflow</p>
+              <h2 className="text-4xl font-black tracking-tight lg:text-5xl">Built for the way private data actually moves.</h2>
+              <p className="mt-6 text-lg leading-8 text-gray-300">
+                Most vaults stop at storage. Kryptes adds the operational pieces around it: protected sharing, support grants, audit history, and organized document storage.
+              </p>
+            </RevealSection>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {workflow.map((item, index) => (
+                <RevealSection key={item.title} className="rounded-lg border border-white/10 bg-white/[0.06] p-6">
+                  <div className="mb-8 flex items-center justify-between">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-orange-500 text-white">
+                      <item.icon className="h-5 w-5" strokeWidth={1.8} />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-[0.24em] text-gray-500">0{index + 1}</span>
+                  </div>
+                  <h3 className="mb-3 text-xl font-black">{item.title}</h3>
+                  <p className="text-sm leading-6 text-gray-300">{item.desc}</p>
+                </RevealSection>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="open-source" className="px-5 py-20 lg:px-10 lg:py-24">
+          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-center">
+            <RevealSection>
+              <p className="mb-4 text-xs font-black uppercase tracking-[0.34em] text-orange-600">Layer 03 — Integrity</p>
+              <h2 className="text-4xl font-black tracking-tight text-gray-950 lg:text-5xl">
+                Open source where it matters. Closed to everyone else.
+              </h2>
+              <p className="mt-6 text-lg leading-8 text-gray-600">
+                The security model is designed to be inspectable, but your vault contents remain private. That balance gives the page a stronger promise and gives users a cleaner reason to trust it.
+              </p>
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                {["Publicly auditable logic", "No server-held master keys", "Ephemeral sharing flows", "Encrypted document storage"].map((item) => (
+                  <div key={item} className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                    <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600" strokeWidth={2} />
+                    <span className="text-sm font-bold text-gray-700">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </RevealSection>
+
+            <RevealSection className="rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm">
+              <div className="rounded-lg border border-gray-200 bg-white p-6">
+                <div className="mb-8 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.24em] text-gray-500">Audit Console</p>
+                    <h3 className="mt-2 text-2xl font-black tracking-tight text-gray-950">Vault events</h3>
+                  </div>
+                  <Globe className="h-8 w-8 text-orange-600" strokeWidth={1.6} />
+                </div>
+                <div className="space-y-3">
+                  {["Master key derived locally", "Document uploaded as ciphertext", "Burn share link expired", "Support grant revoked"].map((event) => (
+                    <div key={event} className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
+                      <span className="text-sm font-semibold text-gray-700">{event}</span>
+                      <span className="rounded bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">Verified</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </RevealSection>
+          </div>
+        </section>
+
+        <section className="bg-orange-500 px-5 py-16 text-center text-white lg:px-10">
+          <RevealSection className="mx-auto max-w-4xl">
+            <p className="mb-5 text-xs font-black uppercase tracking-[0.34em] text-orange-100">Kryptes Protocol</p>
+            <h2 className="text-4xl font-black tracking-tight lg:text-6xl">Bring your vault into one clean command center.</h2>
+            <div className="mt-8 flex justify-center">
+              <a
+                href="/dashboard"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-7 py-4 text-xs font-black uppercase tracking-[0.22em] text-orange-700 shadow-xl shadow-orange-900/20 transition-all hover:bg-gray-950 hover:text-white"
+              >
+                Start Initiative
+                <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
+              </a>
+            </div>
+          </RevealSection>
+        </section>
+      </main>
+
+      <footer className="border-t border-gray-200 bg-white px-5 py-10 lg:px-10">
+        <div className="mx-auto flex max-w-7xl flex-col gap-8 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full border border-orange-200 bg-white p-1.5 shadow-[0_0_24px_rgba(249,115,22,0.18)]">
+              <img src="/kryptes.png" alt="Kryptes logo" className="h-full w-full rounded-full object-contain" />
+            </div>
+            <div>
+              <span className="block text-lg font-black leading-none tracking-tight">KRYPTES</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-gray-500">Zero-knowledge vault</span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-6 text-xs font-bold uppercase tracking-[0.2em] text-gray-500">
+            <a href="/privacy" className="transition-colors hover:text-orange-600">
+              Privacy
+            </a>
+            <a href="/terms" className="transition-colors hover:text-orange-600">
+              Terms
+            </a>
+            <a href="#open-source" className="transition-colors hover:text-orange-600">
+              Repository
+            </a>
+          </div>
+
+          <a
+            href="#open-source"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-all hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
+            aria-label="View repository"
+          >
+            <Github className="h-5 w-5" strokeWidth={1.6} />
+          </a>
+        </div>
+      </footer>
     </div>
   );
 };
