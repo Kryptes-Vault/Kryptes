@@ -82,6 +82,12 @@ const workflow = [
   { icon: FileKey2, title: "Share", desc: "Grant narrow access with time-boxed, auditable handoffs." },
 ];
 
+const navLinks = [
+  { href: "#security", label: "Security" },
+  { href: "#workflow", label: "Workflow" },
+  { href: "#open-source", label: "Integrity" },
+];
+
 const heroStagger = {
   hidden: { opacity: 0 },
   visible: {
@@ -242,6 +248,25 @@ const Marquee = ({ items }: { items: string[] }) => {
   );
 };
 
+const BrandMark = () => (
+  <motion.a
+    href="/"
+    aria-label="Kryptes home"
+    whileHover={{ scale: 1.035 }}
+    transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+    className="group inline-flex items-center gap-3"
+  >
+    <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white p-1.5 shadow-[0_0_30px_rgba(249,115,22,0.28)] transition duration-500 group-hover:shadow-[0_0_44px_rgba(249,115,22,0.48)]">
+      <span className="absolute inset-[-5px] rounded-full border border-orange-300/35 opacity-80 transition duration-500 group-hover:border-orange-300/70" />
+      <img src="/kryptes.png" alt="Kryptes logo" className="h-full w-full rounded-full object-contain" />
+    </span>
+    <span className="block">
+      <span className="block text-sm font-black leading-none tracking-tight text-white sm:text-base">Kryptes</span>
+      <span className="hidden text-[10px] font-bold uppercase tracking-[0.22em] text-white/42 sm:block">Private vault</span>
+    </span>
+  </motion.a>
+);
+
 const Index = () => {
   const shouldReduceMotion = useReducedMotion();
   const mouseX = useMotionValue(0);
@@ -331,36 +356,29 @@ const Index = () => {
             ))}
           </div>
 
-          <div className="relative z-10 mx-auto grid min-h-[calc(100vh-7rem)] max-w-7xl items-center gap-12 lg:grid-cols-[0.92fr_1.08fr]">
+          <motion.header
+            initial={{ opacity: 0, y: -14, filter: "blur(8px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.72, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-20 mx-auto flex max-w-7xl items-center justify-between gap-4"
+          >
+            <BrandMark />
+
+            <nav className="flex min-w-0 items-center justify-end gap-3 rounded-full border border-white/10 bg-white/[0.055] px-3 py-2 shadow-2xl shadow-black/20 backdrop-blur-xl sm:gap-5 sm:px-5">
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="whitespace-nowrap rounded-full px-2 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-white/52 transition-all duration-300 hover:bg-white/[0.08] hover:text-orange-100 sm:px-3 sm:text-[11px] sm:tracking-[0.2em]"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+          </motion.header>
+
+          <div className="relative z-10 mx-auto grid min-h-[calc(100vh-11rem)] max-w-7xl items-center gap-12 pt-12 lg:grid-cols-[0.92fr_1.08fr] lg:pt-10">
             <motion.div variants={heroStagger} initial="hidden" animate="visible">
-              <motion.a
-                href="/"
-                aria-label="Kryptes home"
-                variants={heroItem}
-                whileHover={{ scale: 1.035 }}
-                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className="group mb-10 inline-flex items-center gap-4 rounded-full border border-white/10 bg-white/[0.07] px-4 py-3 shadow-2xl shadow-orange-500/10 backdrop-blur-xl"
-              >
-                <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-white p-1.5 shadow-[0_0_34px_rgba(249,115,22,0.34)] transition duration-500 group-hover:shadow-[0_0_48px_rgba(249,115,22,0.55)]">
-                  <motion.span
-                    aria-hidden="true"
-                    className="absolute inset-[-5px] rounded-full border border-orange-300/55 border-t-white/80"
-                    animate={shouldReduceMotion ? undefined : { rotate: 360 }}
-                    transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                  />
-                  <img src="/kryptes.png" alt="Kryptes logo" className="h-full w-full rounded-full object-contain" />
-                </span>
-                <div>
-                  <span className="block text-lg font-black leading-none tracking-tight text-white">KRYPTES</span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/45">Private vault</span>
-                </div>
-              </motion.a>
-
-              <motion.div variants={heroItem} className="mb-7 inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-300/10 px-3 py-2 shadow-sm backdrop-blur">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.75)]" />
-                <span className="text-xs font-black uppercase tracking-[0.22em] text-orange-100/80">V2.0.4 production ready</span>
-              </motion.div>
-
               <motion.h1 className="max-w-3xl text-5xl font-black leading-[0.96] tracking-tight text-white sm:text-6xl lg:text-7xl">
                 {["Secure your", "digital life in", "one private vault."].map((line) => (
                   <motion.span key={line} variants={heroItem} className="block">
