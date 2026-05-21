@@ -15,7 +15,7 @@ function bytesToB64(u8: Uint8Array): string {
 
 export type PasswordCategory = "social" | "work" | "shopping" | "finance" | "other";
 
-import appLogos from "./appLogos.json";
+import appDatabase from "./appDatabase.json";
 
 /** Auto-suggest category from a website URL domain. */
 export function inferCategory(url: string): PasswordCategory {
@@ -54,15 +54,18 @@ export function getLogoForNameOrUrl(name: string, url?: string): string {
   const cleanName = (name || "").toLowerCase().trim();
   
   // 1. Check exact match in JSON by name
-  if (cleanName && cleanName in appLogos) {
-    return (appLogos as Record<string, string>)[cleanName];
+  if (cleanName) {
+    const exactMatch = appDatabase.find(app => app.name.toLowerCase() === cleanName);
+    if (exactMatch && exactMatch.logo) {
+      return exactMatch.logo;
+    }
   }
 
   // 2. Fuzzy match by name (if name is longer than 2 characters to avoid false positives)
   if (cleanName.length > 2) {
-    const match = Object.entries(appLogos).find(([key]) => cleanName.includes(key));
-    if (match) {
-      return match[1];
+    const match = appDatabase.find(app => cleanName.includes(app.name.toLowerCase()) || app.name.toLowerCase().includes(cleanName));
+    if (match && match.logo) {
+      return match.logo;
     }
   }
 
