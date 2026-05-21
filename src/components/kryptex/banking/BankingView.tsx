@@ -66,8 +66,75 @@ export function BankingView({
   loading?: boolean,
   onRefresh?: () => void
 }) {
+  const [showMock, setShowMock] = useState(false);
+
+  // High-fidelity Mock Data for Portfolio Screenshots
+  const mockItems: any[] = [
+    {
+      id: "mock-1",
+      item_type: "card",
+      title: "HDFC Regalia Gold",
+      decrypted_data: {
+        bankName: "HDFC",
+        cardNumber: "4524 8812 9901 4432",
+        cardholderName: "CHITKUL LAKSHYA",
+        expMonth: "09",
+        expYear: "2028",
+        code: "421",
+        accountNumber: "50100421889012",
+        ifscCode: "HDFC0000128"
+      }
+    },
+    {
+      id: "mock-2",
+      item_type: "card",
+      title: "ICICI Amazon Pay",
+      decrypted_data: {
+        bankName: "ICICI",
+        cardNumber: "4111 2234 5567 8890",
+        cardholderName: "CHITKUL LAKSHYA",
+        expMonth: "12",
+        expYear: "2027",
+        code: "998",
+        accountNumber: "000401567890",
+        ifscCode: "ICIC0000004"
+      }
+    },
+    {
+      id: "mock-3",
+      item_type: "bank",
+      title: "SBI Savings",
+      decrypted_data: {
+        bankName: "SBI",
+        domain: "sbi.co.in",
+        accountNumber: "33445566778",
+        accountType: "Savings Account",
+        ifscRouting: "SBIN0001234",
+        isAutoFetch: true
+      }
+    },
+    {
+      id: "mock-4",
+      item_type: "card",
+      title: "Axis Magnus",
+      decrypted_data: {
+        bankName: "Axis",
+        cardNumber: "5241 0098 7765 1121",
+        cardholderName: "CHITKUL LAKSHYA",
+        expMonth: "05",
+        expYear: "2030",
+        code: "112",
+        accountNumber: "912010045678901",
+        ifscCode: "UTIB0000123"
+      }
+    }
+  ];
+
+  // Combine real items with mock items if enabled
+  const effectiveItems = showMock ? [...items, ...mockItems] : items;
+
   // Map decrypted cards
-  const mappedCards: CardData[] = items
+  const mappedCards: CardData[] = effectiveItems
     .filter(i => (i as any).item_type === "card" && (i as any).decrypted_data)
     .map(i => {
       const d = (i as any).decrypted_data;
@@ -90,7 +157,7 @@ export function BankingView({
     });
 
   // Map decrypted banks
-  const mappedBanks: BankData[] = items
+  const mappedBanks: BankData[] = effectiveItems
     .filter(i => (i as any).item_type === "bank" && (i as any).decrypted_data)
     .map(i => {
       const d = (i as any).decrypted_data;
@@ -159,6 +226,17 @@ export function BankingView({
           <div className="flex items-center gap-3">
             <Button 
               variant="outline" 
+              onClick={() => setShowMock(!showMock)}
+              className={cn(
+                "h-12 px-6 rounded-2xl border-dashed font-bold text-[10px] uppercase tracking-widest transition-all",
+                showMock ? "bg-[#FF3B13]/10 border-[#FF3B13] text-[#FF3B13] shadow-lg shadow-[#FF3B13]/5" : "bg-white border-black/10 text-black/40 hover:text-black hover:border-black/20"
+              )}
+            >
+              {showMock ? "Hide Demo Data" : "Seed Demo Data"}
+            </Button>
+
+            <Button 
+              variant="outline" 
               size="icon" 
               onClick={onRefresh} 
               disabled={loading}
@@ -177,16 +255,18 @@ export function BankingView({
         </div>
       </header>
 
-      {/* Grid Sections */}
-      <div className="space-y-12">
+      {/* Grid Sections - Now Side-by-Side on XL screens to fill the view */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 items-start mb-12">
+        
         {/* Linked Banks Section */}
-        {filteredBanks.length > 0 && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-black/30">Linked Bank Accounts</h2>
-              <div className="flex-1 h-[1px] bg-black/5" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-[#FF3B13]">Linked Accounts</h2>
+            <div className="flex-1 h-[1px] bg-black/5" />
+          </div>
+          
+          {filteredBanks.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredBanks.map((bank) => (
                 <div key={bank.id} className="group relative flex flex-col gap-4 rounded-[2rem] border border-black/5 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-[#FF3B13]/20">
                   <div className="flex items-start justify-between">
@@ -239,24 +319,29 @@ export function BankingView({
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[2rem] border border-dashed border-black/10 bg-black/[0.02] p-8 text-center">
+              <Landmark className="h-8 w-8 text-black/10 mb-4" />
+              <h4 className="text-sm font-bold text-black/40 uppercase tracking-widest">No Bank Accounts</h4>
+            </div>
+          )}
+        </div>
 
         {/* Payment Cards Section */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-black/30">Payment Instruments</h2>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-[#FF3B13]">Payment Instruments</h2>
             <div className="flex-1 h-[1px] bg-black/5" />
           </div>
           
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
+            <div className="grid grid-cols-1 gap-6">
+              {[1, 2].map((i) => (
                 <div key={i} className="h-64 w-full animate-pulse rounded-3xl bg-black/5 border border-black/5" />
               ))}
             </div>
           ) : filteredCards.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-8">
               {filteredCards.map((card) => {
                 const accountNumber = card.fields.find(f => f.name === "Account Number")?.value;
                 const ifscCode = card.fields.find(f => f.name === "IFSC Code")?.value;
@@ -277,38 +362,33 @@ export function BankingView({
               })}
             </div>
           ) : (
-            <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[2rem] border border-dashed border-black/10 bg-black/5 p-12 text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-black/5">
-                <CreditCard className="h-8 w-8 text-black/20" />
-              </div>
-              <h3 className="text-xl font-bold text-black">No Cards Found</h3>
-              <p className="mt-2 text-[13px] font-medium text-black/50 max-w-sm">
-                You haven't added any cards to your vault yet.
-              </p>
+            <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[2rem] border border-dashed border-black/10 bg-black/[0.02] p-8 text-center">
+              <CreditCard className="h-8 w-8 text-black/10 mb-4" />
+              <h4 className="text-sm font-bold text-black/40 uppercase tracking-widest">No Payment Cards</h4>
             </div>
           )}
         </div>
-
-        {/* Empty State when no data at all */}
-        {!loading && filteredCards.length === 0 && filteredBanks.length === 0 && (
-          <div className="flex min-h-[400px] flex-col items-center justify-center rounded-[3rem] border border-dashed border-black/10 bg-white p-12 text-center shadow-sm">
-            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#FF3B13]/5">
-              <ShieldCheck className="h-10 w-10 text-[#FF3B13]" />
-            </div>
-            <h3 className="text-2xl font-bold text-black">Your Financial Vault is Empty</h3>
-            <p className="mt-3 text-[14px] font-medium text-black/40 max-w-md mx-auto leading-relaxed">
-              Start by secure-adding your first banking instrument or payment card. Encryption happens locally on your machine.
-            </p>
-            <Link to="/vault/banking/new" className="mt-8">
-              <Button
-                className="h-12 rounded-xl bg-[#FF3B13] px-8 font-bold text-white shadow-xl shadow-[#FF3B13]/25 hover:bg-black transition-all"
-              >
-                Secure Addition
-              </Button>
-            </Link>
-          </div>
-        )}
       </div>
+
+      {/* Empty State when no data at all and not in demo mode */}
+      {!loading && !showMock && filteredCards.length === 0 && filteredBanks.length === 0 && (
+        <div className="flex min-h-[400px] flex-col items-center justify-center rounded-[3rem] border border-dashed border-black/10 bg-white p-12 text-center shadow-sm">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#FF3B13]/5">
+            <ShieldCheck className="h-10 w-10 text-[#FF3B13]" />
+          </div>
+          <h3 className="text-2xl font-bold text-black">Your Financial Vault is Empty</h3>
+          <p className="mt-3 text-[14px] font-medium text-black/40 max-w-md mx-auto leading-relaxed">
+            Start by secure-adding your first banking instrument or payment card. Encryption happens locally on your machine.
+          </p>
+          <Link to="/vault/banking/new" className="mt-8">
+            <Button
+              className="h-12 rounded-xl bg-[#FF3B13] px-8 font-bold text-white shadow-xl shadow-[#FF3B13]/25 hover:bg-black transition-all"
+            >
+              Secure Addition
+            </Button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

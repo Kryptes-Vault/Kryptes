@@ -10,6 +10,12 @@ function getRedis() {
     redis = new Redis(process.env.REDIS_URL, {
       maxRetriesPerRequest: 1,
       lazyConnect: false,
+      connectTimeout: 2000,
+      retryStrategy: () => null, // Do not retry; fail fast and fallback to memory
+    });
+    // Add simple error listener to prevent unhandled rejection/error event process crashes
+    redis.on("error", (err) => {
+      console.warn("⚠️ [userShellStore] ioredis client connection error:", err.message);
     });
   }
   return redis;
@@ -53,20 +59,29 @@ async function ensureShellUser({ provider, providerId, email, displayName, avata
 
   let merged;
   let isNew = false;
+  let redisSuccess = false;
+
   if (client) {
-    const existing = await client.get(key);
-    if (!existing) {
-      isNew = true;
-      record.createdAt = record.updatedAt;
-      merged = record;
-      await client.set(key, JSON.stringify(merged));
-    } else {
-      const prev = JSON.parse(existing);
-      merged = { ...prev, ...record, createdAt: prev.createdAt || record.updatedAt };
-      await client.set(key, JSON.stringify(merged));
+    try {
+      const existing = await client.get(key);
+      if (!existing) {
+        isNew = true;
+        record.createdAt = record.updatedAt;
+        merged = record;
+        await client.set(key, JSON.stringify(merged));
+      } else {
+        const prev = JSON.parse(existing);
+        merged = { ...prev, ...record, createdAt: prev.createdAt || record.updatedAt };
+        await client.set(key, JSON.stringify(merged));
+      }
+      await client.set(idIndexKey(merged.id), JSON.stringify(merged));
+      redisSuccess = true;
+    } catch (redisErr) {
+      console.warn("⚠️ [userShellStore] Redis operation failed, falling back to memory store:", redisErr.message);
     }
-    await client.set(idIndexKey(merged.id), JSON.stringify(merged));
-  } else {
+  }
+
+  if (!redisSuccess) {
     if (!memory.has(key)) {
       isNew = true;
       record.createdAt = record.updatedAt;
@@ -85,16 +100,17 @@ async function ensureShellUser({ provider, providerId, email, displayName, avata
 
 async function findById(id) {
   const client = getRedis();
-  if (!client) {
-    return memory.get(idIndexKey(id)) || null;
+  if (client) {
+    try {
+      const raw = await client.get(idIndexKey(id));
+      if (raw) {
+        return JSON.parse(raw);
+      }
+    } catch (redisErr) {
+      console.warn("⚠️ [userShellStore] Redis findById failed, falling back to memory store:", redisErr.message);
+    }
   }
-  const raw = await client.get(idIndexKey(id));
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  return memory.get(idIndexKey(id)) || null;
 }
 
 module.exports = {

@@ -369,7 +369,7 @@ const Dashboard = () => {
                   items={items}
                   userId={user.id}
                   pbkdfDerivedKey={pbkdfDerivedKey}
-                  onAddClick={() => setAddNodeOpen(true)}
+                  onAddClick={() => setAddPasswordOpen(true)}
                   activeCategory={passwordCategory}
                 />
               </div>
@@ -411,7 +411,13 @@ const Dashboard = () => {
         onShared={() => void reloadVault()}
       />
 
-      <AddPasswordModal open={addPasswordOpen} onOpenChange={setAddPasswordOpen} userId={user.id} onCreated={() => void reloadVault()} />
+      <AddPasswordModal
+        open={addPasswordOpen}
+        onOpenChange={setAddPasswordOpen}
+        userId={user.id}
+        pbkdfDerivedKey={pbkdfDerivedKey}
+        onCreated={() => void reloadVault()}
+      />
     </div>
   );
 };
