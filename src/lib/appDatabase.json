@@ -1,0 +1,2095 @@
+[
+  {
+    "name": "Facebook",
+    "domain": "facebook.com",
+    "category": "Social",
+    "hexColor": "#1877F2",
+    "logo": "https://cdn.simpleicons.org/facebook/1877F2"
+  },
+  {
+    "name": "Instagram",
+    "domain": "instagram.com",
+    "category": "Social",
+    "hexColor": "#E1306C",
+    "logo": "https://cdn.simpleicons.org/instagram/E1306C"
+  },
+  {
+    "name": "Twitter/X",
+    "domain": "x.com",
+    "category": "Social",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/twitterx/000000"
+  },
+  {
+    "name": "Threads",
+    "domain": "threads.net",
+    "category": "Social",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/threads/000000"
+  },
+  {
+    "name": "WhatsApp",
+    "domain": "whatsapp.com",
+    "category": "Social",
+    "hexColor": "#25D366",
+    "logo": "https://cdn.simpleicons.org/whatsapp/25D366"
+  },
+  {
+    "name": "Messenger",
+    "domain": "messenger.com",
+    "category": "Social",
+    "hexColor": "#00B2FF",
+    "logo": "https://cdn.simpleicons.org/messenger/00B2FF"
+  },
+  {
+    "name": "Telegram",
+    "domain": "telegram.org",
+    "category": "Social",
+    "hexColor": "#26A69A",
+    "logo": "https://cdn.simpleicons.org/telegram/26A69A"
+  },
+  {
+    "name": "Signal",
+    "domain": "signal.org",
+    "category": "Social",
+    "hexColor": "#3A76F0",
+    "logo": "https://cdn.simpleicons.org/signal/3A76F0"
+  },
+  {
+    "name": "Discord",
+    "domain": "discord.com",
+    "category": "Social",
+    "hexColor": "#5865F2",
+    "logo": "https://cdn.simpleicons.org/discord/5865F2"
+  },
+  {
+    "name": "LinkedIn",
+    "domain": "linkedin.com",
+    "category": "Social",
+    "hexColor": "#0A66C2",
+    "logo": "https://cdn.simpleicons.org/linkedin/0A66C2"
+  },
+  {
+    "name": "TikTok",
+    "domain": "tiktok.com",
+    "category": "Social",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/tiktok/000000"
+  },
+  {
+    "name": "Snapchat",
+    "domain": "snapchat.com",
+    "category": "Social",
+    "hexColor": "#FFFC00",
+    "logo": "https://cdn.simpleicons.org/snapchat/FFFC00"
+  },
+  {
+    "name": "Pinterest",
+    "domain": "pinterest.com",
+    "category": "Social",
+    "hexColor": "#BD081C",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/0/08/Pinterest-logo.svg"
+  },
+  {
+    "name": "WeChat",
+    "domain": "wechat.com",
+    "category": "Social",
+    "hexColor": "#07C160",
+    "logo": "https://cdn.simpleicons.org/wechat/07C160"
+  },
+  {
+    "name": "Line",
+    "domain": "line.me",
+    "category": "Social",
+    "hexColor": "#06C755",
+    "logo": "https://cdn.simpleicons.org/line/06C755"
+  },
+  {
+    "name": "Viber",
+    "domain": "viber.com",
+    "category": "Social",
+    "hexColor": "#7360F2",
+    "logo": "https://cdn.simpleicons.org/viber/7360F2"
+  },
+  {
+    "name": "Mastodon",
+    "domain": "mastodon.social",
+    "category": "Social",
+    "hexColor": "#6364FF",
+    "logo": "https://cdn.simpleicons.org/mastodon/6364FF"
+  },
+  {
+    "name": "Tumblr",
+    "domain": "tumblr.com",
+    "category": "Social",
+    "hexColor": "#001B35",
+    "logo": "https://cdn.simpleicons.org/tumblr/001B35"
+  },
+  {
+    "name": "Badoo",
+    "domain": "badoo.com",
+    "category": "Social",
+    "hexColor": "#7858FF",
+    "logo": "https://cdn.simpleicons.org/badoo/7858FF"
+  },
+  {
+    "name": "OkCupid",
+    "domain": "okcupid.com",
+    "category": "Social",
+    "hexColor": "#1F83F5",
+    "logo": "https://cdn.simpleicons.org/okcupid/1F83F5"
+  },
+  {
+    "name": "Tinder",
+    "domain": "tinder.com",
+    "category": "Social",
+    "hexColor": "#FE3C72",
+    "logo": "https://cdn.simpleicons.org/tinder/FE3C72"
+  },
+  {
+    "name": "Skype",
+    "domain": "skype.com",
+    "category": "Social",
+    "hexColor": "#00AFF0",
+    "logo": "https://cdn.simpleicons.org/skype/00AFF0"
+  },
+  {
+    "name": "Microsoft Teams",
+    "domain": "microsoft.com",
+    "category": "Social",
+    "hexColor": "#6264A7",
+    "logo": "https://cdn.simpleicons.org/microsoftteams/6264A7"
+  },
+  {
+    "name": "Clubhouse",
+    "domain": "clubhouse.com",
+    "category": "Social",
+    "hexColor": "#EAE4D9",
+    "logo": "https://cdn.simpleicons.org/clubhouse/EAE4D9"
+  },
+  {
+    "name": "BeReal",
+    "domain": "bereal.com",
+    "category": "Social",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/bereal/000000"
+  },
+  {
+    "name": "Flickr",
+    "domain": "flickr.com",
+    "category": "Social",
+    "hexColor": "#0063DC",
+    "logo": "https://cdn.simpleicons.org/flickr/0063DC"
+  },
+  {
+    "name": "Nextdoor",
+    "domain": "nextdoor.com",
+    "category": "Social",
+    "hexColor": "#19B26A",
+    "logo": "https://cdn.simpleicons.org/nextdoor/19B26A"
+  },
+  {
+    "name": "Meetup",
+    "domain": "meetup.com",
+    "category": "Social",
+    "hexColor": "#F64060",
+    "logo": "https://cdn.simpleicons.org/meetup/F64060"
+  },
+  {
+    "name": "Douyin",
+    "domain": "douyin.com",
+    "category": "Social",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/douyin/000000"
+  },
+  {
+    "name": "Sina Weibo",
+    "domain": "weibo.com",
+    "category": "Social",
+    "hexColor": "#DF2029",
+    "logo": "https://cdn.simpleicons.org/sinaweibo/DF2029"
+  },
+  {
+    "name": "Kuaishou",
+    "domain": "kuaishou.com",
+    "category": "Social",
+    "hexColor": "#FF4D00",
+    "logo": "https://cdn.simpleicons.org/kuaishou/FF4D00"
+  },
+  {
+    "name": "Tencent QQ",
+    "domain": "qq.com",
+    "category": "Social",
+    "hexColor": "#12B7F5",
+    "logo": "https://cdn.simpleicons.org/tencentqq/12B7F5"
+  },
+  {
+    "name": "Element",
+    "domain": "element.io",
+    "category": "Social",
+    "hexColor": "#0DBD8B",
+    "logo": "https://cdn.simpleicons.org/element/0DBD8B"
+  },
+  {
+    "name": "Matrix",
+    "domain": "matrix.org",
+    "category": "Social",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/matrix/000000"
+  },
+  {
+    "name": "ICQ",
+    "domain": "icq.com",
+    "category": "Social",
+    "hexColor": "#00B500",
+    "logo": "https://cdn.simpleicons.org/icq/00B500"
+  },
+  {
+    "name": "KakaoTalk",
+    "domain": "kakaocorp.com",
+    "category": "Social",
+    "hexColor": "#FEE500",
+    "logo": "https://cdn.simpleicons.org/kakaotalk/FEE500"
+  },
+  {
+    "name": "imo",
+    "domain": "imo.im",
+    "category": "Social",
+    "hexColor": "#1D8AFA",
+    "logo": "https://cdn.simpleicons.org/imo/1D8AFA"
+  },
+  {
+    "name": "Truecaller",
+    "domain": "truecaller.com",
+    "category": "Social",
+    "hexColor": "#0087FF",
+    "logo": "https://cdn.simpleicons.org/truecaller/0087FF"
+  },
+  {
+    "name": "Voxer",
+    "domain": "voxer.com",
+    "category": "Social",
+    "hexColor": "#FFAE00",
+    "logo": "https://cdn.simpleicons.org/voxer/FFAE00"
+  },
+  {
+    "name": "Kik",
+    "domain": "kik.com",
+    "category": "Social",
+    "hexColor": "#00B500",
+    "logo": "https://cdn.simpleicons.org/kik/00B500"
+  },
+  {
+    "name": "Whisper",
+    "domain": "whisper.sh",
+    "category": "Social",
+    "hexColor": "#FF0066",
+    "logo": "https://cdn.simpleicons.org/whisper/FF0066"
+  },
+  {
+    "name": "Amino",
+    "domain": "aminoapps.com",
+    "category": "Social",
+    "hexColor": "#49A4F7",
+    "logo": "https://cdn.simpleicons.org/amino/49A4F7"
+  },
+  {
+    "name": "Yubo",
+    "domain": "yubo.live",
+    "category": "Social",
+    "hexColor": "#FFE600",
+    "logo": "https://cdn.simpleicons.org/yubo/FFE600"
+  },
+  {
+    "name": "Houseparty",
+    "domain": "houseparty.com",
+    "category": "Social",
+    "hexColor": "#FF3D63",
+    "logo": "https://cdn.simpleicons.org/houseparty/FF3D63"
+  },
+  {
+    "name": "Yammer",
+    "domain": "yammer.com",
+    "category": "Social",
+    "hexColor": "#0078D4",
+    "logo": "https://cdn.simpleicons.org/yammer/0078D4"
+  },
+  {
+    "name": "Marco Polo",
+    "domain": "marcopolo.me",
+    "category": "Social",
+    "hexColor": "#FFC000",
+    "logo": "https://cdn.simpleicons.org/marcopolo/FFC000"
+  },
+  {
+    "name": "Band",
+    "domain": "band.us",
+    "category": "Social",
+    "hexColor": "#22C35E",
+    "logo": "https://cdn.simpleicons.org/band/22C35E"
+  },
+  {
+    "name": "Grindr",
+    "domain": "grindr.com",
+    "category": "Social",
+    "hexColor": "#FFE600",
+    "logo": "https://cdn.simpleicons.org/grindr/FFE600"
+  },
+  {
+    "name": "Hinge",
+    "domain": "hinge.co",
+    "category": "Social",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/hinge/000000"
+  },
+  {
+    "name": "Bumble",
+    "domain": "bumble.com",
+    "category": "Social",
+    "hexColor": "#FFC629",
+    "logo": "https://cdn.simpleicons.org/bumble/FFC629"
+  },
+  {
+    "name": "GitHub",
+    "domain": "github.com",
+    "category": "Development",
+    "hexColor": "#181717",
+    "logo": "https://cdn.simpleicons.org/github/181717"
+  },
+  {
+    "name": "GitLab",
+    "domain": "gitlab.com",
+    "category": "Development",
+    "hexColor": "#FC6D26",
+    "logo": "https://cdn.simpleicons.org/gitlab/FC6D26"
+  },
+  {
+    "name": "Bitbucket",
+    "domain": "bitbucket.org",
+    "category": "Development",
+    "hexColor": "#0052CC",
+    "logo": "https://cdn.simpleicons.org/bitbucket/0052CC"
+  },
+  {
+    "name": "Docker",
+    "domain": "docker.com",
+    "category": "Development",
+    "hexColor": "#2496ED",
+    "logo": "https://cdn.simpleicons.org/docker/2496ED"
+  },
+  {
+    "name": "Kubernetes",
+    "domain": "kubernetes.io",
+    "category": "Development",
+    "hexColor": "#326CE5",
+    "logo": "https://cdn.simpleicons.org/kubernetes/326CE5"
+  },
+  {
+    "name": "npm",
+    "domain": "npmjs.com",
+    "category": "Development",
+    "hexColor": "#CB3837",
+    "logo": "https://cdn.simpleicons.org/npm/CB3837"
+  },
+  {
+    "name": "Yarn",
+    "domain": "yarnpkg.com",
+    "category": "Development",
+    "hexColor": "#2C8EBB",
+    "logo": "https://cdn.simpleicons.org/yarn/2C8EBB"
+  },
+  {
+    "name": "Stack Overflow",
+    "domain": "stackoverflow.com",
+    "category": "Development",
+    "hexColor": "#F48024",
+    "logo": "https://cdn.simpleicons.org/stackoverflow/F48024"
+  },
+  {
+    "name": "Vercel",
+    "domain": "vercel.com",
+    "category": "Development",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/vercel/000000"
+  },
+  {
+    "name": "Netlify",
+    "domain": "netlify.com",
+    "category": "Development",
+    "hexColor": "#00C7B7",
+    "logo": "https://cdn.simpleicons.org/netlify/00C7B7"
+  },
+  {
+    "name": "Heroku",
+    "domain": "heroku.com",
+    "category": "Development",
+    "hexColor": "#430098",
+    "logo": "https://cdn.simpleicons.org/heroku/430098"
+  },
+  {
+    "name": "DigitalOcean",
+    "domain": "digitalocean.com",
+    "category": "Development",
+    "hexColor": "#0080FF",
+    "logo": "https://cdn.simpleicons.org/digitalocean/0080FF"
+  },
+  {
+    "name": "Cloudflare",
+    "domain": "cloudflare.com",
+    "category": "Development",
+    "hexColor": "#F38020",
+    "logo": "https://cdn.simpleicons.org/cloudflare/F38020"
+  },
+  {
+    "name": "Supabase",
+    "domain": "supabase.com",
+    "category": "Development",
+    "hexColor": "#3ECF8E",
+    "logo": "https://cdn.simpleicons.org/supabase/3ECF8E"
+  },
+  {
+    "name": "Firebase",
+    "domain": "google.com",
+    "category": "Development",
+    "hexColor": "#FFCA28",
+    "logo": "https://cdn.simpleicons.org/firebase/FFCA28"
+  },
+  {
+    "name": "Sentry",
+    "domain": "sentry.io",
+    "category": "Development",
+    "hexColor": "#362D59",
+    "logo": "https://cdn.simpleicons.org/sentry/362D59"
+  },
+  {
+    "name": "Datadog",
+    "domain": "datadoghq.com",
+    "category": "Development",
+    "hexColor": "#632CA6",
+    "logo": "https://cdn.simpleicons.org/datadog/632CA6"
+  },
+  {
+    "name": "New Relic",
+    "domain": "newrelic.com",
+    "category": "Development",
+    "hexColor": "#008C99",
+    "logo": "https://cdn.simpleicons.org/newrelic/008C99"
+  },
+  {
+    "name": "Postman",
+    "domain": "postman.com",
+    "category": "Development",
+    "hexColor": "#FF6C37",
+    "logo": "https://cdn.simpleicons.org/postman/FF6C37"
+  },
+  {
+    "name": "MongoDB",
+    "domain": "mongodb.com",
+    "category": "Development",
+    "hexColor": "#47A248",
+    "logo": "https://cdn.simpleicons.org/mongodb/47A248"
+  },
+  {
+    "name": "Redis",
+    "domain": "redis.io",
+    "category": "Development",
+    "hexColor": "#DC382D",
+    "logo": "https://cdn.simpleicons.org/redis/DC382D"
+  },
+  {
+    "name": "PostgreSQL",
+    "domain": "postgresql.org",
+    "category": "Development",
+    "hexColor": "#4169E1",
+    "logo": "https://cdn.simpleicons.org/postgresql/4169E1"
+  },
+  {
+    "name": "MySQL",
+    "domain": "mysql.com",
+    "category": "Development",
+    "hexColor": "#4479A1",
+    "logo": "https://cdn.simpleicons.org/mysql/4479A1"
+  },
+  {
+    "name": "PlanetScale",
+    "domain": "planetscale.com",
+    "category": "Development",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/planetscale/000000"
+  },
+  {
+    "name": "Prisma",
+    "domain": "prisma.io",
+    "category": "Development",
+    "hexColor": "#2D3748",
+    "logo": "https://cdn.simpleicons.org/prisma/2D3748"
+  },
+  {
+    "name": "HashiCorp",
+    "domain": "hashicorp.com",
+    "category": "Development",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/hashicorp/000000"
+  },
+  {
+    "name": "Terraform",
+    "domain": "terraform.io",
+    "category": "Development",
+    "hexColor": "#7B42BC",
+    "logo": "https://cdn.simpleicons.org/terraform/7B42BC"
+  },
+  {
+    "name": "CircleCI",
+    "domain": "circleci.com",
+    "category": "Development",
+    "hexColor": "#343434",
+    "logo": "https://cdn.simpleicons.org/circleci/343434"
+  },
+  {
+    "name": "Travis CI",
+    "domain": "travis-ci.com",
+    "category": "Development",
+    "hexColor": "#3EAAAF",
+    "logo": "https://cdn.simpleicons.org/travisci/3EAAAF"
+  },
+  {
+    "name": "Jenkins",
+    "domain": "jenkins.io",
+    "category": "Development",
+    "hexColor": "#D33833",
+    "logo": "https://cdn.simpleicons.org/jenkins/D33833"
+  },
+  {
+    "name": "SonarQube",
+    "domain": "sonarqube.org",
+    "category": "Development",
+    "hexColor": "#4E9BCD",
+    "logo": "https://cdn.simpleicons.org/sonarqube/4E9BCD"
+  },
+  {
+    "name": "IntelliJ",
+    "domain": "jetbrains.com",
+    "category": "Development",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/intellij/000000"
+  },
+  {
+    "name": "VS Code",
+    "domain": "visualstudio.com",
+    "category": "Development",
+    "hexColor": "#007ACC",
+    "logo": "https://cdn.simpleicons.org/vscode/007ACC"
+  },
+  {
+    "name": "Expo",
+    "domain": "expo.dev",
+    "category": "Development",
+    "hexColor": "#000020",
+    "logo": "https://cdn.simpleicons.org/expo/000020"
+  },
+  {
+    "name": "Android Studio",
+    "domain": "android.com",
+    "category": "Development",
+    "hexColor": "#3DDC84",
+    "logo": "https://cdn.simpleicons.org/androidstudio/3DDC84"
+  },
+  {
+    "name": "Xcode",
+    "domain": "apple.com",
+    "category": "Development",
+    "hexColor": "#157EFB",
+    "logo": "https://cdn.simpleicons.org/xcode/157EFB"
+  },
+  {
+    "name": "Figma",
+    "domain": "figma.com",
+    "category": "Development",
+    "hexColor": "#F24E1E",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg"
+  },
+  {
+    "name": "Jira",
+    "domain": "atlassian.com",
+    "category": "Development",
+    "hexColor": "#0052CC",
+    "logo": "https://cdn.simpleicons.org/jira/0052CC"
+  },
+  {
+    "name": "Confluence",
+    "domain": "atlassian.com",
+    "category": "Development",
+    "hexColor": "#0052CC",
+    "logo": "https://cdn.simpleicons.org/confluence/0052CC"
+  },
+  {
+    "name": "Bitrise",
+    "domain": "bitrise.io",
+    "category": "Development",
+    "hexColor": "#683D87",
+    "logo": "https://cdn.simpleicons.org/bitrise/683D87"
+  },
+  {
+    "name": "Codepen",
+    "domain": "codepen.io",
+    "category": "Development",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/codepen/000000"
+  },
+  {
+    "name": "JSFiddle",
+    "domain": "jsfiddle.net",
+    "category": "Development",
+    "hexColor": "#209CEE",
+    "logo": "https://cdn.simpleicons.org/jsfiddle/209CEE"
+  },
+  {
+    "name": "Replit",
+    "domain": "replit.com",
+    "category": "Development",
+    "hexColor": "#F26207",
+    "logo": "https://cdn.simpleicons.org/replit/F26207"
+  },
+  {
+    "name": "Ngrok",
+    "domain": "ngrok.com",
+    "category": "Development",
+    "hexColor": "#3F51B5",
+    "logo": "https://cdn.simpleicons.org/ngrok/3F51B5"
+  },
+  {
+    "name": "Linode",
+    "domain": "linode.com",
+    "category": "Development",
+    "hexColor": "#00A95C",
+    "logo": "https://cdn.simpleicons.org/linode/00A95C"
+  },
+  {
+    "name": "Fly.io",
+    "domain": "fly.io",
+    "category": "Development",
+    "hexColor": "#24185B",
+    "logo": "https://cdn.simpleicons.org/flyio/24185B"
+  },
+  {
+    "name": "Render",
+    "domain": "render.com",
+    "category": "Development",
+    "hexColor": "#46E3B7",
+    "logo": "https://cdn.simpleicons.org/render/46E3B7"
+  },
+  {
+    "name": "Auth0",
+    "domain": "auth0.com",
+    "category": "Development",
+    "hexColor": "#EB5424",
+    "logo": "https://cdn.simpleicons.org/auth0/EB5424"
+  },
+  {
+    "name": "Clerk",
+    "domain": "clerk.com",
+    "category": "Development",
+    "hexColor": "#6C47FF",
+    "logo": "https://cdn.simpleicons.org/clerk/6C47FF"
+  },
+  {
+    "name": "Grafana",
+    "domain": "grafana.com",
+    "category": "Development",
+    "hexColor": "#F17A0A",
+    "logo": "https://cdn.simpleicons.org/grafana/F17A0A"
+  },
+  {
+    "name": "Gmail",
+    "domain": "gmail.com",
+    "category": "Email",
+    "hexColor": "#EA4335",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg"
+  },
+  {
+    "name": "Outlook",
+    "domain": "outlook.com",
+    "category": "Email",
+    "hexColor": "#0078D4",
+    "logo": "https://cdn.simpleicons.org/outlook/0078D4"
+  },
+  {
+    "name": "ProtonMail",
+    "domain": "proton.me",
+    "category": "Email",
+    "hexColor": "#6D4AFF",
+    "logo": "https://cdn.simpleicons.org/protonmail/6D4AFF"
+  },
+  {
+    "name": "Yahoo Mail",
+    "domain": "yahoo.com",
+    "category": "Email",
+    "hexColor": "#6001D2",
+    "logo": "https://cdn.simpleicons.org/yahoomail/6001D2"
+  },
+  {
+    "name": "Zoho Mail",
+    "domain": "zoho.com",
+    "category": "Email",
+    "hexColor": "#E21E26",
+    "logo": "https://cdn.simpleicons.org/zohomail/E21E26"
+  },
+  {
+    "name": "Mailchimp",
+    "domain": "mailchimp.com",
+    "category": "Productivity",
+    "hexColor": "#FFE01B",
+    "logo": "https://cdn.simpleicons.org/mailchimp/FFE01B"
+  },
+  {
+    "name": "SendGrid",
+    "domain": "sendgrid.com",
+    "category": "Productivity",
+    "hexColor": "#009DD9",
+    "logo": "https://cdn.simpleicons.org/sendgrid/009DD9"
+  },
+  {
+    "name": "Notion",
+    "domain": "notion.so",
+    "category": "Productivity",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/notion/000000"
+  },
+  {
+    "name": "Trello",
+    "domain": "trello.com",
+    "category": "Productivity",
+    "hexColor": "#0079BF",
+    "logo": "https://cdn.simpleicons.org/trello/0079BF"
+  },
+  {
+    "name": "Asana",
+    "domain": "asana.com",
+    "category": "Productivity",
+    "hexColor": "#F06A6A",
+    "logo": "https://cdn.simpleicons.org/asana/F06A6A"
+  },
+  {
+    "name": "Monday.com",
+    "domain": "monday.com",
+    "category": "Productivity",
+    "hexColor": "#00CFF4",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/3/39/Monday_logo.svg"
+  },
+  {
+    "name": "ClickUp",
+    "domain": "clickup.com",
+    "category": "Productivity",
+    "hexColor": "#7B68EE",
+    "logo": "https://cdn.simpleicons.org/clickup/7B68EE"
+  },
+  {
+    "name": "Todoist",
+    "domain": "todoist.com",
+    "category": "Productivity",
+    "hexColor": "#E44332",
+    "logo": "https://cdn.simpleicons.org/todoist/E44332"
+  },
+  {
+    "name": "Evernote",
+    "domain": "evernote.com",
+    "category": "Productivity",
+    "hexColor": "#00A82D",
+    "logo": "https://cdn.simpleicons.org/evernote/00A82D"
+  },
+  {
+    "name": "Microsoft OneNote",
+    "domain": "onenote.com",
+    "category": "Productivity",
+    "hexColor": "#773595",
+    "logo": "https://cdn.simpleicons.org/microsoftonenote/773595"
+  },
+  {
+    "name": "Google Drive",
+    "domain": "google.com",
+    "category": "Productivity",
+    "hexColor": "#34A853",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+  },
+  {
+    "name": "Dropbox",
+    "domain": "dropbox.com",
+    "category": "Productivity",
+    "hexColor": "#0061FE",
+    "logo": "https://cdn.simpleicons.org/dropbox/0061FE"
+  },
+  {
+    "name": "Box",
+    "domain": "box.com",
+    "category": "Productivity",
+    "hexColor": "#0061D5",
+    "logo": "https://cdn.simpleicons.org/box/0061D5"
+  },
+  {
+    "name": "OneDrive",
+    "domain": "live.com",
+    "category": "Productivity",
+    "hexColor": "#0078D4",
+    "logo": "https://cdn.simpleicons.org/onedrive/0078D4"
+  },
+  {
+    "name": "Google Calendar",
+    "domain": "google.com",
+    "category": "Productivity",
+    "hexColor": "#4285F4",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+  },
+  {
+    "name": "Zoom",
+    "domain": "zoom.us",
+    "category": "Productivity",
+    "hexColor": "#2D8CFF",
+    "logo": "https://cdn.simpleicons.org/zoom/2D8CFF"
+  },
+  {
+    "name": "Slack",
+    "domain": "slack.com",
+    "category": "Productivity",
+    "hexColor": "#4A154B",
+    "logo": "https://cdn.simpleicons.org/slack/4A154B"
+  },
+  {
+    "name": "Microsoft Word",
+    "domain": "office.com",
+    "category": "Productivity",
+    "hexColor": "#D83B01",
+    "logo": "https://cdn.simpleicons.org/microsoftword/D83B01"
+  },
+  {
+    "name": "Microsoft Excel",
+    "domain": "office.com",
+    "category": "Productivity",
+    "hexColor": "#107C41",
+    "logo": "https://cdn.simpleicons.org/microsoftexcel/107C41"
+  },
+  {
+    "name": "Microsoft PowerPoint",
+    "domain": "office.com",
+    "category": "Productivity",
+    "hexColor": "#B7472A",
+    "logo": "https://cdn.simpleicons.org/microsoftpowerpoint/B7472A"
+  },
+  {
+    "name": "Google Docs",
+    "domain": "google.com",
+    "category": "Productivity",
+    "hexColor": "#4285F4",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+  },
+  {
+    "name": "Google Sheets",
+    "domain": "google.com",
+    "category": "Productivity",
+    "hexColor": "#0F9D58",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+  },
+  {
+    "name": "Google Slides",
+    "domain": "google.com",
+    "category": "Productivity",
+    "hexColor": "#F4B400",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+  },
+  {
+    "name": "Miro",
+    "domain": "miro.com",
+    "category": "Productivity",
+    "hexColor": "#FFD02F",
+    "logo": "https://cdn.simpleicons.org/miro/FFD02F"
+  },
+  {
+    "name": "Mural",
+    "domain": "mural.co",
+    "category": "Productivity",
+    "hexColor": "#EF3935",
+    "logo": "https://cdn.simpleicons.org/mural/EF3935"
+  },
+  {
+    "name": "Lucidchart",
+    "domain": "lucidchart.com",
+    "category": "Productivity",
+    "hexColor": "#F86B35",
+    "logo": "https://cdn.simpleicons.org/lucidchart/F86B35"
+  },
+  {
+    "name": "Canva",
+    "domain": "canva.com",
+    "category": "Productivity",
+    "hexColor": "#00C4CC",
+    "logo": "https://cdn.simpleicons.org/canva/00C4CC"
+  },
+  {
+    "name": "Airtable",
+    "domain": "airtable.com",
+    "category": "Productivity",
+    "hexColor": "#18BFFF",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/4/4b/Airtable_Logo.svg"
+  },
+  {
+    "name": "Smartsheet",
+    "domain": "smartsheet.com",
+    "category": "Productivity",
+    "hexColor": "#4EAF47",
+    "logo": "https://cdn.simpleicons.org/smartsheet/4EAF47"
+  },
+  {
+    "name": "Basecamp",
+    "domain": "basecamp.com",
+    "category": "Productivity",
+    "hexColor": "#FFD52E",
+    "logo": "https://cdn.simpleicons.org/basecamp/FFD52E"
+  },
+  {
+    "name": "Wrike",
+    "domain": "wrike.com",
+    "category": "Productivity",
+    "hexColor": "#04B46C",
+    "logo": "https://cdn.simpleicons.org/wrike/04B46C"
+  },
+  {
+    "name": "Loom",
+    "domain": "loom.com",
+    "category": "Productivity",
+    "hexColor": "#625DF5",
+    "logo": "https://cdn.simpleicons.org/loom/625DF5"
+  },
+  {
+    "name": "Grammarly",
+    "domain": "grammarly.com",
+    "category": "Productivity",
+    "hexColor": "#15C39A",
+    "logo": "https://cdn.simpleicons.org/grammarly/15C39A"
+  },
+  {
+    "name": "Adobe Creative Cloud",
+    "domain": "adobe.com",
+    "category": "Productivity",
+    "hexColor": "#DA1F26",
+    "logo": "https://cdn.simpleicons.org/adobecreativecloud/DA1F26"
+  },
+  {
+    "name": "Docusign",
+    "domain": "docusign.com",
+    "category": "Productivity",
+    "hexColor": "#FFCC00",
+    "logo": "https://cdn.simpleicons.org/docusign/FFCC00"
+  },
+  {
+    "name": "HelloSign",
+    "domain": "hellosign.com",
+    "category": "Productivity",
+    "hexColor": "#0052CC",
+    "logo": "https://cdn.simpleicons.org/hellosign/0052CC"
+  },
+  {
+    "name": "PandaDoc",
+    "domain": "pandadoc.com",
+    "category": "Productivity",
+    "hexColor": "#00D282",
+    "logo": "https://cdn.simpleicons.org/pandadoc/00D282"
+  },
+  {
+    "name": "Zapier",
+    "domain": "zapier.com",
+    "category": "Productivity",
+    "hexColor": "#FF4A00",
+    "logo": "https://cdn.simpleicons.org/zapier/FF4A00"
+  },
+  {
+    "name": "Make",
+    "domain": "make.com",
+    "category": "Productivity",
+    "hexColor": "#6147FF",
+    "logo": "https://cdn.simpleicons.org/make/6147FF"
+  },
+  {
+    "name": "IFTTT",
+    "domain": "ifttt.com",
+    "category": "Productivity",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/ifttt/000000"
+  },
+  {
+    "name": "LastPass",
+    "domain": "lastpass.com",
+    "category": "Productivity",
+    "hexColor": "#D32F2F",
+    "logo": "https://cdn.simpleicons.org/lastpass/D32F2F"
+  },
+  {
+    "name": "1Password",
+    "domain": "1password.com",
+    "category": "Productivity",
+    "hexColor": "#0094F5",
+    "logo": "https://cdn.simpleicons.org/1password/0094F5"
+  },
+  {
+    "name": "Dashlane",
+    "domain": "dashlane.com",
+    "category": "Productivity",
+    "hexColor": "#0E353D",
+    "logo": "https://cdn.simpleicons.org/dashlane/0E353D"
+  },
+  {
+    "name": "Bitwarden",
+    "domain": "bitwarden.com",
+    "category": "Productivity",
+    "hexColor": "#175DDC",
+    "logo": "https://cdn.simpleicons.org/bitwarden/175DDC"
+  },
+  {
+    "name": "Fastmail",
+    "domain": "fastmail.com",
+    "category": "Email",
+    "hexColor": "#212A34",
+    "logo": "https://cdn.simpleicons.org/fastmail/212A34"
+  },
+  {
+    "name": "Netflix",
+    "domain": "netflix.com",
+    "category": "Entertainment",
+    "hexColor": "#E50914",
+    "logo": "https://cdn.simpleicons.org/netflix/E50914"
+  },
+  {
+    "name": "Spotify",
+    "domain": "spotify.com",
+    "category": "Entertainment",
+    "hexColor": "#1DB954",
+    "logo": "https://cdn.simpleicons.org/spotify/1DB954"
+  },
+  {
+    "name": "YouTube",
+    "domain": "youtube.com",
+    "category": "Entertainment",
+    "hexColor": "#FF0000",
+    "logo": "https://cdn.simpleicons.org/youtube/FF0000"
+  },
+  {
+    "name": "Disney+",
+    "domain": "disneyplus.com",
+    "category": "Entertainment",
+    "hexColor": "#113CCF",
+    "logo": "https://cdn.simpleicons.org/disney/113CCF"
+  },
+  {
+    "name": "Amazon Prime Video",
+    "domain": "primevideo.com",
+    "category": "Entertainment",
+    "hexColor": "#00A8E1",
+    "logo": "https://cdn.simpleicons.org/amazonprimevideo/00A8E1"
+  },
+  {
+    "name": "Hulu",
+    "domain": "hulu.com",
+    "category": "Entertainment",
+    "hexColor": "#1CE783",
+    "logo": "https://cdn.simpleicons.org/hulu/1CE783"
+  },
+  {
+    "name": "HBO Max",
+    "domain": "max.com",
+    "category": "Entertainment",
+    "hexColor": "#0000FF",
+    "logo": "https://cdn.simpleicons.org/hbomax/0000FF"
+  },
+  {
+    "name": "Apple TV",
+    "domain": "apple.com",
+    "category": "Entertainment",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/appletv/000000"
+  },
+  {
+    "name": "Peacock",
+    "domain": "peacocktv.com",
+    "category": "Entertainment",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/peacock/000000"
+  },
+  {
+    "name": "Paramount+",
+    "domain": "paramountplus.com",
+    "category": "Entertainment",
+    "hexColor": "#0057FF",
+    "logo": "https://cdn.simpleicons.org/paramount/0057FF"
+  },
+  {
+    "name": "Steam",
+    "domain": "steampowered.com",
+    "category": "Entertainment",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/steam/000000"
+  },
+  {
+    "name": "Epic Games",
+    "domain": "epicgames.com",
+    "category": "Entertainment",
+    "hexColor": "#313131",
+    "logo": "https://cdn.simpleicons.org/epicgames/313131"
+  },
+  {
+    "name": "PlayStation Network",
+    "domain": "playstation.com",
+    "category": "Entertainment",
+    "hexColor": "#003087",
+    "logo": "https://cdn.simpleicons.org/playstationnetwork/003087"
+  },
+  {
+    "name": "Xbox Live",
+    "domain": "xbox.com",
+    "category": "Entertainment",
+    "hexColor": "#107C10",
+    "logo": "https://cdn.simpleicons.org/xboxlive/107C10"
+  },
+  {
+    "name": "Nintendo Switch Online",
+    "domain": "nintendo.com",
+    "category": "Entertainment",
+    "hexColor": "#E60012",
+    "logo": "https://cdn.simpleicons.org/nintendoswitchonline/E60012"
+  },
+  {
+    "name": "Roblox",
+    "domain": "roblox.com",
+    "category": "Entertainment",
+    "hexColor": "#FF0000",
+    "logo": "https://cdn.simpleicons.org/roblox/FF0000"
+  },
+  {
+    "name": "Minecraft",
+    "domain": "minecraft.net",
+    "category": "Entertainment",
+    "hexColor": "#518131",
+    "logo": "https://cdn.simpleicons.org/minecraft/518131"
+  },
+  {
+    "name": "Twitch",
+    "domain": "twitch.tv",
+    "category": "Entertainment",
+    "hexColor": "#9146FF",
+    "logo": "https://cdn.simpleicons.org/twitch/9146FF"
+  },
+  {
+    "name": "SoundCloud",
+    "domain": "soundcloud.com",
+    "category": "Entertainment",
+    "hexColor": "#FF5500",
+    "logo": "https://cdn.simpleicons.org/soundcloud/FF5500"
+  },
+  {
+    "name": "Deezer",
+    "domain": "deezer.com",
+    "category": "Entertainment",
+    "hexColor": "#EF5466",
+    "logo": "https://cdn.simpleicons.org/deezer/EF5466"
+  },
+  {
+    "name": "Tidal",
+    "domain": "tidal.com",
+    "category": "Entertainment",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/tidal/000000"
+  },
+  {
+    "name": "Apple Music",
+    "domain": "apple.com",
+    "category": "Entertainment",
+    "hexColor": "#FA243C",
+    "logo": "https://cdn.simpleicons.org/applemusic/FA243C"
+  },
+  {
+    "name": "YouTube Music",
+    "domain": "music.youtube.com",
+    "category": "Entertainment",
+    "hexColor": "#FF0000",
+    "logo": "https://cdn.simpleicons.org/youtubemusic/FF0000"
+  },
+  {
+    "name": "Pandora",
+    "domain": "pandora.com",
+    "category": "Entertainment",
+    "hexColor": "#00A0EE",
+    "logo": "https://cdn.simpleicons.org/pandora/00A0EE"
+  },
+  {
+    "name": "Audible",
+    "domain": "audible.com",
+    "category": "Entertainment",
+    "hexColor": "#F5ABB5",
+    "logo": "https://cdn.simpleicons.org/audible/F5ABB5"
+  },
+  {
+    "name": "Kindle",
+    "domain": "amazon.com",
+    "category": "Entertainment",
+    "hexColor": "#FF9900",
+    "logo": "https://cdn.simpleicons.org/kindle/FF9900"
+  },
+  {
+    "name": "Wattpad",
+    "domain": "wattpad.com",
+    "category": "Entertainment",
+    "hexColor": "#FF6B00",
+    "logo": "https://cdn.simpleicons.org/wattpad/FF6B00"
+  },
+  {
+    "name": "Crunchyroll",
+    "domain": "crunchyroll.com",
+    "category": "Entertainment",
+    "hexColor": "#F78C25",
+    "logo": "https://cdn.simpleicons.org/crunchyroll/F78C25"
+  },
+  {
+    "name": "Funimation",
+    "domain": "funimation.com",
+    "category": "Entertainment",
+    "hexColor": "#4E148C",
+    "logo": "https://cdn.simpleicons.org/funimation/4E148C"
+  },
+  {
+    "name": "Vimeo",
+    "domain": "vimeo.com",
+    "category": "Entertainment",
+    "hexColor": "#1AB7EA",
+    "logo": "https://cdn.simpleicons.org/vimeo/1AB7EA"
+  },
+  {
+    "name": "Dailymotion",
+    "domain": "dailymotion.com",
+    "category": "Entertainment",
+    "hexColor": "#0066DC",
+    "logo": "https://cdn.simpleicons.org/dailymotion/0066DC"
+  },
+  {
+    "name": "Plex",
+    "domain": "plex.tv",
+    "category": "Entertainment",
+    "hexColor": "#E5A93B",
+    "logo": "https://cdn.simpleicons.org/plex/E5A93B"
+  },
+  {
+    "name": "Roku",
+    "domain": "roku.com",
+    "category": "Entertainment",
+    "hexColor": "#6F1AB1",
+    "logo": "https://cdn.simpleicons.org/roku/6F1AB1"
+  },
+  {
+    "name": "Letterboxd",
+    "domain": "letterboxd.com",
+    "category": "Entertainment",
+    "hexColor": "#FF8000",
+    "logo": "https://cdn.simpleicons.org/letterboxd/FF8000"
+  },
+  {
+    "name": "IMDB",
+    "domain": "imdb.com",
+    "category": "Entertainment",
+    "hexColor": "#F5C518",
+    "logo": "https://cdn.simpleicons.org/imdb/F5C518"
+  },
+  {
+    "name": "Rotten Tomatoes",
+    "domain": "rottentomatoes.com",
+    "category": "Entertainment",
+    "hexColor": "#FA320A",
+    "logo": "https://cdn.simpleicons.org/rottentomatoes/FA320A"
+  },
+  {
+    "name": "IGN",
+    "domain": "ign.com",
+    "category": "Entertainment",
+    "hexColor": "#BF1313",
+    "logo": "https://cdn.simpleicons.org/ign/BF1313"
+  },
+  {
+    "name": "GameSpot",
+    "domain": "gamespot.com",
+    "category": "Entertainment",
+    "hexColor": "#F5C518",
+    "logo": "https://cdn.simpleicons.org/gamespot/F5C518"
+  },
+  {
+    "name": "Eurogamer",
+    "domain": "eurogamer.net",
+    "category": "Entertainment",
+    "hexColor": "#0087F7",
+    "logo": "https://cdn.simpleicons.org/eurogamer/0087F7"
+  },
+  {
+    "name": "MyAnimeList",
+    "domain": "myanimelist.net",
+    "category": "Entertainment",
+    "hexColor": "#2E51A2",
+    "logo": "https://cdn.simpleicons.org/myanimelist/2E51A2"
+  },
+  {
+    "name": "Beatport",
+    "domain": "beatport.com",
+    "category": "Entertainment",
+    "hexColor": "#00FF95",
+    "logo": "https://cdn.simpleicons.org/beatport/00FF95"
+  },
+  {
+    "name": "Mixcloud",
+    "domain": "mixcloud.com",
+    "category": "Entertainment",
+    "hexColor": "#52AAD8",
+    "logo": "https://cdn.simpleicons.org/mixcloud/52AAD8"
+  },
+  {
+    "name": "TuneIn",
+    "domain": "tunein.com",
+    "category": "Entertainment",
+    "hexColor": "#36B4A6",
+    "logo": "https://cdn.simpleicons.org/tunein/36B4A6"
+  },
+  {
+    "name": "iHeartRadio",
+    "domain": "iheart.com",
+    "category": "Entertainment",
+    "hexColor": "#C61B2B",
+    "logo": "https://cdn.simpleicons.org/iheartradio/C61B2B"
+  },
+  {
+    "name": "SiriusXM",
+    "domain": "siriusxm.com",
+    "category": "Entertainment",
+    "hexColor": "#0077C0",
+    "logo": "https://cdn.simpleicons.org/siriusxm/0077C0"
+  },
+  {
+    "name": "Viki",
+    "domain": "viki.com",
+    "category": "Entertainment",
+    "hexColor": "#00A5E3",
+    "logo": "https://cdn.simpleicons.org/viki/00A5E3"
+  },
+  {
+    "name": "Tubi",
+    "domain": "tubitv.com",
+    "category": "Entertainment",
+    "hexColor": "#FF4B00",
+    "logo": "https://cdn.simpleicons.org/tubi/FF4B00"
+  },
+  {
+    "name": "Pluto TV",
+    "domain": "pluto.tv",
+    "category": "Entertainment",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/plutotv/000000"
+  },
+  {
+    "name": "FuboTV",
+    "domain": "fubo.tv",
+    "category": "Entertainment",
+    "hexColor": "#FF5C00",
+    "logo": "https://cdn.simpleicons.org/fubotv/FF5C00"
+  },
+  {
+    "name": "Sling TV",
+    "domain": "sling.com",
+    "category": "Entertainment",
+    "hexColor": "#1480D6",
+    "logo": "https://cdn.simpleicons.org/slingtv/1480D6"
+  },
+  {
+    "name": "PayPal",
+    "domain": "paypal.com",
+    "category": "Finance",
+    "hexColor": "#003087",
+    "logo": "https://cdn.simpleicons.org/paypal/003087"
+  },
+  {
+    "name": "Stripe",
+    "domain": "stripe.com",
+    "category": "Finance",
+    "hexColor": "#008CDD",
+    "logo": "https://cdn.simpleicons.org/stripe/008CDD"
+  },
+  {
+    "name": "Square",
+    "domain": "squareup.com",
+    "category": "Finance",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/square/000000"
+  },
+  {
+    "name": "Venmo",
+    "domain": "venmo.com",
+    "category": "Finance",
+    "hexColor": "#008CFF",
+    "logo": "https://cdn.simpleicons.org/venmo/008CFF"
+  },
+  {
+    "name": "Cash App",
+    "domain": "cash.app",
+    "category": "Finance",
+    "hexColor": "#00D632",
+    "logo": "https://cdn.simpleicons.org/cashapp/00D632"
+  },
+  {
+    "name": "Chase",
+    "domain": "chase.com",
+    "category": "Finance",
+    "hexColor": "#117AC9",
+    "logo": "https://cdn.simpleicons.org/chase/117AC9"
+  },
+  {
+    "name": "Bank of America",
+    "domain": "bankofamerica.com",
+    "category": "Finance",
+    "hexColor": "#E31837",
+    "logo": "https://cdn.simpleicons.org/bankofamerica/E31837"
+  },
+  {
+    "name": "Wells Fargo",
+    "domain": "wellsfargo.com",
+    "category": "Finance",
+    "hexColor": "#D71920",
+    "logo": "https://cdn.simpleicons.org/wellsfargo/D71920"
+  },
+  {
+    "name": "Citibank",
+    "domain": "citi.com",
+    "category": "Finance",
+    "hexColor": "#003B70",
+    "logo": "https://cdn.simpleicons.org/citibank/003B70"
+  },
+  {
+    "name": "Capital One",
+    "domain": "capitalone.com",
+    "category": "Finance",
+    "hexColor": "#004975",
+    "logo": "https://cdn.simpleicons.org/capitalone/004975"
+  },
+  {
+    "name": "American Express",
+    "domain": "americanexpress.com",
+    "category": "Finance",
+    "hexColor": "#0076A5",
+    "logo": "https://cdn.simpleicons.org/americanexpress/0076A5"
+  },
+  {
+    "name": "Discover",
+    "domain": "discover.com",
+    "category": "Finance",
+    "hexColor": "#E55E2B",
+    "logo": "https://cdn.simpleicons.org/discover/E55E2B"
+  },
+  {
+    "name": "HSBC",
+    "domain": "hsbc.com",
+    "category": "Finance",
+    "hexColor": "#DB0011",
+    "logo": "https://cdn.simpleicons.org/hsbc/DB0011"
+  },
+  {
+    "name": "Barclays",
+    "domain": "barclays.co.uk",
+    "category": "Finance",
+    "hexColor": "#00AEEF",
+    "logo": "https://cdn.simpleicons.org/barclays/00AEEF"
+  },
+  {
+    "name": "Revolut",
+    "domain": "revolut.com",
+    "category": "Finance",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/revolut/000000"
+  },
+  {
+    "name": "Wise",
+    "domain": "wise.com",
+    "category": "Finance",
+    "hexColor": "#9FE870",
+    "logo": "https://cdn.simpleicons.org/wise/9FE870"
+  },
+  {
+    "name": "Coinbase",
+    "domain": "coinbase.com",
+    "category": "Finance",
+    "hexColor": "#0052FF",
+    "logo": "https://cdn.simpleicons.org/coinbase/0052FF"
+  },
+  {
+    "name": "Binance",
+    "domain": "binance.com",
+    "category": "Finance",
+    "hexColor": "#FCD535",
+    "logo": "https://cdn.simpleicons.org/binance/FCD535"
+  },
+  {
+    "name": "Robinhood",
+    "domain": "robinhood.com",
+    "category": "Finance",
+    "hexColor": "#00C805",
+    "logo": "https://cdn.simpleicons.org/robinhood/00C805"
+  },
+  {
+    "name": "E-Trade",
+    "domain": "etrade.com",
+    "category": "Finance",
+    "hexColor": "#68267F",
+    "logo": "https://cdn.simpleicons.org/etrade/68267F"
+  },
+  {
+    "name": "Fidelity",
+    "domain": "fidelity.com",
+    "category": "Finance",
+    "hexColor": "#00833F",
+    "logo": "https://cdn.simpleicons.org/fidelity/00833F"
+  },
+  {
+    "name": "Vanguard",
+    "domain": "vanguard.com",
+    "category": "Finance",
+    "hexColor": "#851C2C",
+    "logo": "https://cdn.simpleicons.org/vanguard/851C2C"
+  },
+  {
+    "name": "Charles Schwab",
+    "domain": "schwab.com",
+    "category": "Finance",
+    "hexColor": "#00A0DF",
+    "logo": "https://cdn.simpleicons.org/charlesschwab/00A0DF"
+  },
+  {
+    "name": "TD Bank",
+    "domain": "td.com",
+    "category": "Finance",
+    "hexColor": "#008A00",
+    "logo": "https://cdn.simpleicons.org/tdbank/008A00"
+  },
+  {
+    "name": "Amazon",
+    "domain": "amazon.com",
+    "category": "Shopping",
+    "hexColor": "#FF9900",
+    "logo": "https://cdn.simpleicons.org/amazon/FF9900"
+  },
+  {
+    "name": "eBay",
+    "domain": "ebay.com",
+    "category": "Shopping",
+    "hexColor": "#E53238",
+    "logo": "https://cdn.simpleicons.org/ebay/E53238"
+  },
+  {
+    "name": "Shopify",
+    "domain": "shopify.com",
+    "category": "Shopping",
+    "hexColor": "#96BF48",
+    "logo": "https://cdn.simpleicons.org/shopify/96BF48"
+  },
+  {
+    "name": "Etsy",
+    "domain": "etsy.com",
+    "category": "Shopping",
+    "hexColor": "#F56400",
+    "logo": "https://cdn.simpleicons.org/etsy/F56400"
+  },
+  {
+    "name": "Walmart",
+    "domain": "walmart.com",
+    "category": "Shopping",
+    "hexColor": "#0071CE",
+    "logo": "https://cdn.simpleicons.org/walmart/0071CE"
+  },
+  {
+    "name": "Target",
+    "domain": "target.com",
+    "category": "Shopping",
+    "hexColor": "#CC0000",
+    "logo": "https://cdn.simpleicons.org/target/CC0000"
+  },
+  {
+    "name": "AliExpress",
+    "domain": "aliexpress.com",
+    "category": "Shopping",
+    "hexColor": "#FF4747",
+    "logo": "https://cdn.simpleicons.org/aliexpress/FF4747"
+  },
+  {
+    "name": "Alibaba",
+    "domain": "alibaba.com",
+    "category": "Shopping",
+    "hexColor": "#FF6A00",
+    "logo": "https://cdn.simpleicons.org/alibaba/FF6A00"
+  },
+  {
+    "name": "Best Buy",
+    "domain": "bestbuy.com",
+    "category": "Shopping",
+    "hexColor": "#0046BE",
+    "logo": "https://cdn.simpleicons.org/bestbuy/0046BE"
+  },
+  {
+    "name": "Home Depot",
+    "domain": "homedepot.com",
+    "category": "Shopping",
+    "hexColor": "#F96302",
+    "logo": "https://cdn.simpleicons.org/homedepot/F96302"
+  },
+  {
+    "name": "IKEA",
+    "domain": "ikea.com",
+    "category": "Shopping",
+    "hexColor": "#0051BA",
+    "logo": "https://cdn.simpleicons.org/ikea/0051BA"
+  },
+  {
+    "name": "Costco",
+    "domain": "costco.com",
+    "category": "Shopping",
+    "hexColor": "#E31B23",
+    "logo": "https://cdn.simpleicons.org/costco/E31B23"
+  },
+  {
+    "name": "Temu",
+    "domain": "temu.com",
+    "category": "Shopping",
+    "hexColor": "#FF4E00",
+    "logo": "https://cdn.simpleicons.org/temu/FF4E00"
+  },
+  {
+    "name": "Shein",
+    "domain": "shein.com",
+    "category": "Shopping",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/shein/000000"
+  },
+  {
+    "name": "Wayfair",
+    "domain": "wayfair.com",
+    "category": "Shopping",
+    "hexColor": "#7F187F",
+    "logo": "https://cdn.simpleicons.org/wayfair/7F187F"
+  },
+  {
+    "name": "Macy's",
+    "domain": "macys.com",
+    "category": "Shopping",
+    "hexColor": "#E11A2B",
+    "logo": "https://cdn.simpleicons.org/macys/E11A2B"
+  },
+  {
+    "name": "Nordstrom",
+    "domain": "nordstrom.com",
+    "category": "Shopping",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/nordstrom/000000"
+  },
+  {
+    "name": "Sephora",
+    "domain": "sephora.com",
+    "category": "Shopping",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/sephora/000000"
+  },
+  {
+    "name": "Asos",
+    "domain": "asos.com",
+    "category": "Shopping",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/asos/000000"
+  },
+  {
+    "name": "Nike",
+    "domain": "nike.com",
+    "category": "Shopping",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/nike/000000"
+  },
+  {
+    "name": "Adidas",
+    "domain": "adidas.com",
+    "category": "Shopping",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/adidas/000000"
+  },
+  {
+    "name": "Zara",
+    "domain": "zara.com",
+    "category": "Shopping",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/zara/000000"
+  },
+  {
+    "name": "H&M",
+    "domain": "hm.com",
+    "category": "Shopping",
+    "hexColor": "#CF1A27",
+    "logo": "https://cdn.simpleicons.org/hm/CF1A27"
+  },
+  {
+    "name": "Apple Store",
+    "domain": "apple.com",
+    "category": "Shopping",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/applestore/000000"
+  },
+  {
+    "name": "Newegg",
+    "domain": "newegg.com",
+    "category": "Shopping",
+    "hexColor": "#F27C22",
+    "logo": "https://cdn.simpleicons.org/newegg/F27C22"
+  },
+  {
+    "name": "Chewy",
+    "domain": "chewy.com",
+    "category": "Shopping",
+    "hexColor": "#002855",
+    "logo": "https://cdn.simpleicons.org/chewy/002855"
+  },
+  {
+    "name": "ChatGPT",
+    "domain": "openai.com",
+    "category": "Other",
+    "hexColor": "#74AA9C",
+    "logo": "https://cdn.simpleicons.org/chatgpt/74AA9C"
+  },
+  {
+    "name": "Claude",
+    "domain": "anthropic.com",
+    "category": "Other",
+    "hexColor": "#D97756",
+    "logo": "https://cdn.simpleicons.org/claude/D97756"
+  },
+  {
+    "name": "Google Gemini",
+    "domain": "google.com",
+    "category": "Other",
+    "hexColor": "#8E75FF",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+  },
+  {
+    "name": "Midjourney",
+    "domain": "midjourney.com",
+    "category": "Other",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/midjourney/000000"
+  },
+  {
+    "name": "Perplexity",
+    "domain": "perplexity.ai",
+    "category": "Other",
+    "hexColor": "#22C55E",
+    "logo": "https://cdn.simpleicons.org/perplexity/22C55E"
+  },
+  {
+    "name": "Wikipedia",
+    "domain": "wikipedia.org",
+    "category": "Other",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/wikipedia/000000"
+  },
+  {
+    "name": "NYT",
+    "domain": "nytimes.com",
+    "category": "Other",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/nyt/000000"
+  },
+  {
+    "name": "CNN",
+    "domain": "cnn.com",
+    "category": "Other",
+    "hexColor": "#CC0000",
+    "logo": "https://cdn.simpleicons.org/cnn/CC0000"
+  },
+  {
+    "name": "BBC",
+    "domain": "bbc.com",
+    "category": "Other",
+    "hexColor": "#B00000",
+    "logo": "https://cdn.simpleicons.org/bbc/B00000"
+  },
+  {
+    "name": "Reuters",
+    "domain": "reuters.com",
+    "category": "Other",
+    "hexColor": "#E65A28",
+    "logo": "https://cdn.simpleicons.org/reuters/E65A28"
+  },
+  {
+    "name": "Bloomberg",
+    "domain": "bloomberg.com",
+    "category": "Other",
+    "hexColor": "#3B5998",
+    "logo": "https://cdn.simpleicons.org/bloomberg/3B5998"
+  },
+  {
+    "name": "The Guardian",
+    "domain": "theguardian.com",
+    "category": "Other",
+    "hexColor": "#005689",
+    "logo": "https://cdn.simpleicons.org/theguardian/005689"
+  },
+  {
+    "name": "Forbes",
+    "domain": "forbes.com",
+    "category": "Other",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/forbes/000000"
+  },
+  {
+    "name": "Wall Street Journal",
+    "domain": "wsj.com",
+    "category": "Other",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/wallstreetjournal/000000"
+  },
+  {
+    "name": "TechCrunch",
+    "domain": "techcrunch.com",
+    "category": "Other",
+    "hexColor": "#028940",
+    "logo": "https://cdn.simpleicons.org/techcrunch/028940"
+  },
+  {
+    "name": "Wired",
+    "domain": "wired.com",
+    "category": "Other",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/wired/000000"
+  },
+  {
+    "name": "The Verge",
+    "domain": "theverge.com",
+    "category": "Other",
+    "hexColor": "#E11284",
+    "logo": "https://cdn.simpleicons.org/theverge/E11284"
+  },
+  {
+    "name": "Medium",
+    "domain": "medium.com",
+    "category": "Other",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/medium/000000"
+  },
+  {
+    "name": "Substack",
+    "domain": "substack.com",
+    "category": "Other",
+    "hexColor": "#FF6719",
+    "logo": "https://cdn.simpleicons.org/substack/FF6719"
+  },
+  {
+    "name": "Google Search",
+    "domain": "google.com",
+    "category": "Other",
+    "hexColor": "#4285F4",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+  },
+  {
+    "name": "Yahoo Search",
+    "domain": "yahoo.com",
+    "category": "Other",
+    "hexColor": "#6001D2",
+    "logo": "https://cdn.simpleicons.org/yahoosearch/6001D2"
+  },
+  {
+    "name": "Bing Search",
+    "domain": "bing.com",
+    "category": "Other",
+    "hexColor": "#00809D",
+    "logo": "https://cdn.simpleicons.org/bingsearch/00809D"
+  },
+  {
+    "name": "DuckDuckGo",
+    "domain": "duckduckgo.com",
+    "category": "Other",
+    "hexColor": "#DE5833",
+    "logo": "https://cdn.simpleicons.org/duckduckgo/DE5833"
+  },
+  {
+    "name": "Baidu",
+    "domain": "baidu.com",
+    "category": "Other",
+    "hexColor": "#2319DC",
+    "logo": "https://cdn.simpleicons.org/baidu/2319DC"
+  },
+  {
+    "name": "Yandex",
+    "domain": "yandex.ru",
+    "category": "Other",
+    "hexColor": "#FC3F1D",
+    "logo": "https://cdn.simpleicons.org/yandex/FC3F1D"
+  },
+  {
+    "name": "Stack Exchange",
+    "domain": "stackexchange.com",
+    "category": "Other",
+    "hexColor": "#1953B4",
+    "logo": "https://cdn.simpleicons.org/stackexchange/1953B4"
+  },
+  {
+    "name": "wikiHow",
+    "domain": "wikihow.com",
+    "category": "Other",
+    "hexColor": "#93B874",
+    "logo": "https://cdn.simpleicons.org/wikihow/93B874"
+  },
+  {
+    "name": "Instructables",
+    "domain": "instructables.com",
+    "category": "Other",
+    "hexColor": "#F08000",
+    "logo": "https://cdn.simpleicons.org/instructables/F08000"
+  },
+  {
+    "name": "Coursera",
+    "domain": "coursera.org",
+    "category": "Other",
+    "hexColor": "#0056D2",
+    "logo": "https://cdn.simpleicons.org/coursera/0056D2"
+  },
+  {
+    "name": "Udemy",
+    "domain": "udemy.com",
+    "category": "Other",
+    "hexColor": "#A435F0",
+    "logo": "https://cdn.simpleicons.org/udemy/A435F0"
+  },
+  {
+    "name": "Duolingo",
+    "domain": "duolingo.com",
+    "category": "Other",
+    "hexColor": "#58CC02",
+    "logo": "https://cdn.simpleicons.org/duolingo/58CC02"
+  },
+  {
+    "name": "Khan Academy",
+    "domain": "khanacademy.org",
+    "category": "Other",
+    "hexColor": "#14BF96",
+    "logo": "https://cdn.simpleicons.org/khanacademy/14BF96"
+  },
+  {
+    "name": "TED",
+    "domain": "ted.com",
+    "category": "Other",
+    "hexColor": "#E62B1E",
+    "logo": "https://cdn.simpleicons.org/ted/E62B1E"
+  },
+  {
+    "name": "Snopes",
+    "domain": "snopes.com",
+    "category": "Other",
+    "hexColor": "#222222",
+    "logo": "https://cdn.simpleicons.org/snopes/222222"
+  },
+  {
+    "name": "Britannica",
+    "domain": "britannica.com",
+    "category": "Other",
+    "hexColor": "#006CA6",
+    "logo": "https://cdn.simpleicons.org/britannica/006CA6"
+  },
+  {
+    "name": "WebMD",
+    "domain": "webmd.com",
+    "category": "Other",
+    "hexColor": "#0077A0",
+    "logo": "https://cdn.simpleicons.org/webmd/0077A0"
+  },
+  {
+    "name": "Healthline",
+    "domain": "healthline.com",
+    "category": "Other",
+    "hexColor": "#00AEEF",
+    "logo": "https://cdn.simpleicons.org/healthline/00AEEF"
+  },
+  {
+    "name": "Mayo Clinic",
+    "domain": "mayoclinic.org",
+    "category": "Other",
+    "hexColor": "#0F4C81",
+    "logo": "https://cdn.simpleicons.org/mayoclinic/0F4C81"
+  },
+  {
+    "name": "Weather Channel",
+    "domain": "weather.com",
+    "category": "Other",
+    "hexColor": "#003466",
+    "logo": "https://cdn.simpleicons.org/weatherchannel/003466"
+  },
+  {
+    "name": "AccuWeather",
+    "domain": "accuweather.com",
+    "category": "Other",
+    "hexColor": "#F05A28",
+    "logo": "https://cdn.simpleicons.org/accuweather/F05A28"
+  },
+  {
+    "name": "National Geographic",
+    "domain": "nationalgeographic.com",
+    "category": "Other",
+    "hexColor": "#FFC20E",
+    "logo": "https://cdn.simpleicons.org/nationalgeographic/FFC20E"
+  },
+  {
+    "name": "NASA",
+    "domain": "nasa.gov",
+    "category": "Other",
+    "hexColor": "#0B3C5D",
+    "logo": "https://cdn.simpleicons.org/nasa/0B3C5D"
+  },
+  {
+    "name": "Wayback Machine",
+    "domain": "archive.org",
+    "category": "Other",
+    "hexColor": "#000000",
+    "logo": "https://cdn.simpleicons.org/waybackmachine/000000"
+  },
+  {
+    "name": "Scribd",
+    "domain": "scribd.com",
+    "category": "Other",
+    "hexColor": "#1A7B85",
+    "logo": "https://cdn.simpleicons.org/scribd/1A7B85"
+  },
+  {
+    "name": "Goodreads",
+    "domain": "goodreads.com",
+    "category": "Other",
+    "hexColor": "#372213",
+    "logo": "https://cdn.simpleicons.org/goodreads/372213"
+  },
+  {
+    "name": "Dev.to",
+    "domain": "dev.to",
+    "category": "Other",
+    "hexColor": "#0A0A0A",
+    "logo": "https://cdn.simpleicons.org/devto/0A0A0A"
+  },
+  {
+    "name": "Product Hunt",
+    "domain": "producthunt.com",
+    "category": "Other",
+    "hexColor": "#DA552F",
+    "logo": "https://cdn.simpleicons.org/producthunt/DA552F"
+  },
+  {
+    "name": "Patreon",
+    "domain": "patreon.com",
+    "category": "Other",
+    "hexColor": "#050D26",
+    "logo": "https://cdn.simpleicons.org/patreon/050D26"
+  },
+  {
+    "name": "Kickstarter",
+    "domain": "kickstarter.com",
+    "category": "Other",
+    "hexColor": "#05CE78",
+    "logo": "https://cdn.simpleicons.org/kickstarter/05CE78"
+  }
+]
