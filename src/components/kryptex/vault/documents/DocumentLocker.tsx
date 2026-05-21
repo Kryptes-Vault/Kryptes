@@ -667,7 +667,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
   return (
     <>
     <div className="bg-white text-black h-full overflow-hidden">
-      <div className="w-full h-full flex flex-col md:flex-row divide-x divide-black/5">
+      <div className="w-full h-full flex flex-col md:flex-row">
         {/* Left Sidebar for Folders - Matches Main Sidebar Geometry */}
         <aside
           className={`w-full md:w-64 flex flex-col pt-8 px-6 rounded-tr-[2.5rem] h-full overflow-y-auto transition-colors ${
