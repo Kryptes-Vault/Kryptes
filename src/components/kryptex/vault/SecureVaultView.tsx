@@ -1,6 +1,6 @@
 /** Kryptex vault grid — redesigned to match the white + #FF3B13 Kryptex design system. */
 import { Plus } from "lucide-react";
-import { VaultItemCard } from "@/components/kryptex/VaultItemCard";
+import { VaultItemCard } from "@/components/kryptex/vault/VaultItemCard";
 import type { VaultItemRow } from "@/hooks/useVaultItems";
 
 type Props = {

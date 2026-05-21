@@ -6,8 +6,8 @@ import {
   ShieldCheck, 
   RefreshCcw 
 } from "lucide-react";
-import { MiniSidebar } from "@/components/kryptex/MiniSidebar";
-import { PaymentCard } from "@/components/kryptex/PaymentCard";
+import { MiniSidebar } from "@/components/kryptex/ui/MiniSidebar";
+import { PaymentCard } from "@/components/kryptex/banking/PaymentCard";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";

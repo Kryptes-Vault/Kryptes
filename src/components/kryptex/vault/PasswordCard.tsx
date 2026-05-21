@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Check, Copy, Eye, EyeOff, Globe, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { decryptSecretBody, ENCRYPTION_VERSION_V2_PBKDF2 } from "@/lib/crypto/vaultCrypto";
-import { getFaviconUrl, logAuditEvent } from "@/lib/passwordVaultService";
+import { getLogoForNameOrUrl, logAuditEvent } from "@/lib/passwordVaultService";
 import type { VaultItemRow } from "@/hooks/useVaultItems";
 
 export function PasswordCard({
@@ -17,6 +17,8 @@ export function PasswordCard({
   const [revealed, setRevealed] = useState(false);
   const [decryptedUsername, setDecryptedUsername] = useState<string | null>(null);
   const [decryptedPassword, setDecryptedPassword] = useState<string | null>(null);
+  const [decryptedEmail, setDecryptedEmail] = useState<string | null>(null);
+  const [decryptedNote, setDecryptedNote] = useState<string | null>(null);
   const [decrypting, setDecrypting] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -26,7 +28,7 @@ export function PasswordCard({
   const isV2 = item.encryption_version === ENCRYPTION_VERSION_V2_PBKDF2;
   const locked = isV2 && !pbkdfDerivedKey;
 
-  const faviconSrc = websiteUrl ? getFaviconUrl(websiteUrl) : null;
+  const faviconSrc = getLogoForNameOrUrl(item.title || "", websiteUrl);
 
   async function handleReveal() {
     if (!pbkdfDerivedKey || !isV2) {
@@ -42,9 +44,11 @@ export function PasswordCard({
     setDecrypting(true);
     try {
       const plainJson = await decryptSecretBody(item.ciphertext, item.iv, pbkdfDerivedKey);
-      const parsed = JSON.parse(plainJson) as { username?: string; password?: string };
+      const parsed = JSON.parse(plainJson) as { email?: string; username?: string; password?: string; note?: string };
       setDecryptedUsername(parsed.username ?? "");
       setDecryptedPassword(parsed.password ?? "");
+      setDecryptedEmail(parsed.email ?? "");
+      setDecryptedNote(parsed.note ?? "");
       setRevealed(true);
 
       // Audit log
@@ -140,18 +144,41 @@ export function PasswordCard({
       </div>
 
       <div className="space-y-2 flex-1">
+        {/* Email */}
+        {(!locked && revealed && decryptedEmail) ? (
+          <div className="rounded-xl bg-[#f8f8f8] border border-black/[0.03] px-3 py-2.5 animate-fadeIn">
+            <p className="text-[8px] font-bold uppercase tracking-widest text-black/25 mb-1">Email</p>
+            <p className="text-[11.5px] font-bold text-black/70 font-mono truncate">
+              {decryptedEmail}
+            </p>
+          </div>
+        ) : null}
+
+        {/* Username */}
         <div className="rounded-xl bg-[#f8f8f8] border border-black/[0.03] px-3 py-2.5">
           <p className="text-[8px] font-bold uppercase tracking-widest text-black/25 mb-1">Username</p>
           <p className="text-[11px] font-bold text-black/50 font-mono truncate">
-            {locked ? "����������" : revealed && decryptedUsername ? decryptedUsername : "����������"}
+            {locked ? "••••••••••" : revealed && decryptedUsername ? decryptedUsername : "••••••••••"}
           </p>
         </div>
+
+        {/* Password */}
         <div className="rounded-xl bg-[#f8f8f8] border border-black/[0.03] px-3 py-2.5">
           <p className="text-[8px] font-bold uppercase tracking-widest text-black/25 mb-1">Password</p>
           <p className="text-[11px] font-bold text-black/50 font-mono truncate">
-            {locked ? "������������" : revealed && decryptedPassword ? decryptedPassword : "������������"}
+            {locked ? "••••••••••••" : revealed && decryptedPassword ? decryptedPassword : "••••••••••••"}
           </p>
         </div>
+
+        {/* Note */}
+        {(!locked && revealed && decryptedNote) ? (
+          <div className="rounded-xl bg-[#f8f8f8] border border-black/[0.03] px-3 py-2.5 max-h-24 overflow-y-auto scrollbar-thin">
+            <p className="text-[8px] font-bold uppercase tracking-widest text-black/25 mb-1">Note</p>
+            <p className="text-[10px] font-medium text-black/40 whitespace-pre-wrap break-words leading-normal">
+              {decryptedNote}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-4 flex items-center gap-2">

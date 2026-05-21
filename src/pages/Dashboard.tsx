@@ -26,17 +26,17 @@ import {
   Landmark
 } from "lucide-react";
 import { toast } from "sonner";
-import { AddSecretModal } from "@/components/kryptex/AddSecretModal";
-import { AddPasswordModal } from "@/components/kryptex/AddPasswordModal";
-import AddNodeModal from "@/components/kryptex/AddNodeModal";
-import { BurnShareModal } from "@/components/kryptex/BurnShareModal";
-import SettingsView from "@/components/kryptex/SettingsView";
-import TwoFAMigrationWizard from "@/components/kryptex/TwoFAMigrationWizard";
-import DocumentLocker from "@/components/kryptex/DocumentLocker";
-import { BankingView } from "@/components/kryptex/BankingView";
+import { AddSecretModal } from "@/components/kryptex/vault/AddSecretModal";
+import { AddPasswordModal } from "@/components/kryptex/vault/AddPasswordModal";
+import AddNodeModal from "@/components/kryptex/zks/AddNodeModal";
+import { BurnShareModal } from "@/components/kryptex/zks/BurnShareModal";
+import SettingsView from "@/components/kryptex/settings/SettingsView";
+import TwoFAMigrationWizard from "@/components/kryptex/zks/TwoFAMigrationWizard";
+import DocumentLocker from "@/components/kryptex/vault/documents/DocumentLocker";
+import { BankingView } from "@/components/kryptex/banking/BankingView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PasswordGrid } from "@/components/kryptex/PasswordGrid";
+import { PasswordGrid } from "@/components/kryptex/vault/PasswordGrid";
 import type { CategoryFilter } from "@/hooks/usePasswordVault";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useVaultItems, type VaultItemRow } from "@/hooks/useVaultItems";
@@ -369,7 +369,7 @@ const Dashboard = () => {
                   items={items}
                   userId={user.id}
                   pbkdfDerivedKey={pbkdfDerivedKey}
-                  onAddClick={() => setAddNodeOpen(true)}
+                  onAddClick={() => setAddPasswordOpen(true)}
                   activeCategory={passwordCategory}
                 />
               </div>
@@ -411,7 +411,13 @@ const Dashboard = () => {
         onShared={() => void reloadVault()}
       />
 
-      <AddPasswordModal open={addPasswordOpen} onOpenChange={setAddPasswordOpen} userId={user.id} onCreated={() => void reloadVault()} />
+      <AddPasswordModal
+        open={addPasswordOpen}
+        onOpenChange={setAddPasswordOpen}
+        userId={user.id}
+        pbkdfDerivedKey={pbkdfDerivedKey}
+        onCreated={() => void reloadVault()}
+      />
     </div>
   );
 };

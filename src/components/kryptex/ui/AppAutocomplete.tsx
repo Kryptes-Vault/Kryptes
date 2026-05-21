@@ -47,7 +47,7 @@ export const AppAutocomplete: React.FC<AppAutocompleteProps> = ({
 
   // Debounced API Search
   useEffect(() => {
-    if (query.trim().length < 2) {
+    if ((query || "").trim().length < 2) {
       setSuggestions([]);
       setLoading(false);
       return;
