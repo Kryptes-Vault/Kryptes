@@ -15,8 +15,6 @@ function bytesToB64(u8: Uint8Array): string {
 
 export type PasswordCategory = "social" | "work" | "shopping" | "finance" | "other";
 
-import appDatabase from "./appDatabase.json";
-
 /** Auto-suggest category from a website URL domain. */
 export function inferCategory(url: string): PasswordCategory {
   const lower = url.toLowerCase();
@@ -48,44 +46,18 @@ export function inferCategory(url: string): PasswordCategory {
 }
 
 /**
- * Generate a high-quality logo URL for a given name or fallback to a Favicon URL for a domain.
+ * Generate a Google Favicon URL for any domain.
+ * Falls back to Clearbit if preferred, but Google's service is sufficient.
  */
-export function getLogoForNameOrUrl(name: string, url?: string): string {
-  const cleanName = (name || "").toLowerCase().trim();
-  
-  // 1. Check exact match in JSON by name
-  if (cleanName) {
-    const exactMatch = appDatabase.find(app => app.name.toLowerCase() === cleanName);
-    if (exactMatch && exactMatch.logo) {
-      return exactMatch.logo;
-    }
-  }
-
-  // 2. Fuzzy match by name (if name is longer than 2 characters to avoid false positives)
-  if (cleanName.length > 2) {
-    const match = appDatabase.find(app => cleanName.includes(app.name.toLowerCase()) || app.name.toLowerCase().includes(cleanName));
-    if (match && match.logo) {
-      return match.logo;
-    }
-  }
-
-  // 3. Fallback to Google Favicon service
-  const targetUrl = url || name;
-  if (!targetUrl) return "";
-  
+export function getFaviconUrl(websiteUrl: string): string {
   try {
     const domain = new URL(
-      targetUrl.startsWith("http") ? targetUrl : `https://${targetUrl}`
+      websiteUrl.startsWith("http") ? websiteUrl : `https://${websiteUrl}`
     ).hostname;
     return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
   } catch {
-    return `https://www.google.com/s2/favicons?domain=${targetUrl}&sz=64`;
+    return `https://www.google.com/s2/favicons?domain=${websiteUrl}&sz=64`;
   }
-}
-
-/** Legacy support: Generate a Google Favicon URL for any domain. */
-export function getFaviconUrl(websiteUrl: string): string {
-  return getLogoForNameOrUrl("", websiteUrl);
 }
 
 /** Encrypt username + password as a JSON blob, store metadata as plaintext. */
@@ -95,31 +67,17 @@ export async function addPasswordEntry(params: {
   websiteUrl: string;
   username: string;
   password: string;
-  email?: string;
-  note?: string;
   category: PasswordCategory;
-  masterPassword?: string;
-  pbkdfDerivedKey?: CryptoKey | null;
+  masterPassword: string;
 }): Promise<void> {
   const salt = await getOrCreateKdfSaltBytes(params.userId);
+  const key = await deriveVaultKeyFromPassword(params.masterPassword, salt);
   const saltB64 = bytesToB64(salt);
-  
-  let key: CryptoKey;
-  if (params.pbkdfDerivedKey) {
-    key = params.pbkdfDerivedKey;
-  } else {
-    if (!params.masterPassword) {
-      throw new Error("Master password is required when vault session is locked");
-    }
-    key = await deriveVaultKeyFromPassword(params.masterPassword, salt);
-  }
 
   // Encrypt the sensitive fields as a single JSON blob
   const secretPayload = JSON.stringify({
-    email: params.email || "",
     username: params.username,
     password: params.password,
-    note: params.note || "",
   });
   const { ciphertext, iv } = await encryptSecretBody(secretPayload, key);
 
