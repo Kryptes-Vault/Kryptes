@@ -105,7 +105,7 @@ const heroItem = {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    transition: { duration: 0.82, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.82, ease: [0.22, 1, 0.36, 1] as unknown as any },
   },
 };
 
@@ -364,7 +364,7 @@ const Index = () => {
           >
             <BrandMark />
 
-            <nav className="flex min-w-0 items-center justify-end gap-3 rounded-full border border-white/10 bg-white/[0.055] px-3 py-2 shadow-2xl shadow-black/20 backdrop-blur-xl sm:gap-5 sm:px-5">
+            <nav className="hidden min-w-0 items-center justify-end gap-2 rounded-full border border-white/10 bg-white/[0.055] px-3 py-2 shadow-2xl shadow-black/20 backdrop-blur-xl min-[460px]:flex sm:gap-5 sm:px-5">
               {navLinks.map((link) => (
                 <a
                   key={link.href}

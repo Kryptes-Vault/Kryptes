@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Transition } from "framer-motion";
 import { useEffect, useState } from "react";
 
 interface IntroAnimationProps {
@@ -28,7 +28,7 @@ export function IntroAnimation({ onComplete }: IntroAnimationProps) {
   }, [onComplete]);
 
   // macOS Genie-style spring physics
-  const genieTransition = {
+  const genieTransition: Transition = {
     type: "spring",
     stiffness: 80,
     damping: 18,
