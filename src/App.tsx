@@ -14,6 +14,7 @@ import ShareReceive from "./pages/ShareReceive";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import AddBankingPage from "./pages/AddBankingPage";
+import VaultFinance from "./pages/VaultFinance";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
               }
             />
             <Route path="/share/:secretId" element={<ShareReceive />} />
+            <Route path="/vault-finance" element={<VaultFinance />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route

@@ -99,13 +99,15 @@ const heroStagger = {
   },
 };
 
+const smoothEase = [0.22, 1, 0.36, 1] as const;
+
 const heroItem = {
   hidden: { opacity: 0, y: 22, filter: "blur(8px)" },
   visible: {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    transition: { duration: 0.82, ease: [0.22, 1, 0.36, 1] as unknown as any },
+    transition: { duration: 0.82, ease: smoothEase },
   },
 };
 
@@ -364,17 +366,28 @@ const Index = () => {
           >
             <BrandMark />
 
-            <nav className="hidden min-w-0 items-center justify-end gap-2 rounded-full border border-white/10 bg-white/[0.055] px-3 py-2 shadow-2xl shadow-black/20 backdrop-blur-xl min-[460px]:flex sm:gap-5 sm:px-5">
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="whitespace-nowrap rounded-full px-2 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-white/52 transition-all duration-300 hover:bg-white/[0.08] hover:text-orange-100 sm:px-3 sm:text-[11px] sm:tracking-[0.2em]"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </nav>
+            <div className="flex items-center justify-end gap-3">
+              <nav className="hidden min-w-0 items-center justify-end gap-2 rounded-full border border-white/10 bg-white/[0.055] px-3 py-2 shadow-2xl shadow-black/20 backdrop-blur-xl min-[520px]:flex sm:gap-5 sm:px-5">
+                {navLinks.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className="whitespace-nowrap rounded-full px-2 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-white/52 transition-all duration-300 hover:bg-white/[0.08] hover:text-orange-100 sm:px-3 sm:text-[11px] sm:tracking-[0.2em]"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </nav>
+
+              <motion.a
+                href="/vault-finance"
+                whileHover={{ y: -2, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="hidden rounded-full border border-orange-300/30 bg-orange-400/10 px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-orange-100 shadow-[0_0_30px_rgba(249,115,22,0.12)] transition-all duration-300 hover:border-orange-300/70 hover:bg-orange-400/16 hover:shadow-[0_0_42px_rgba(249,115,22,0.24)] sm:inline-flex"
+              >
+                Vault Finance →
+              </motion.a>
+            </div>
           </motion.header>
 
           <div className="relative z-10 mx-auto grid min-h-[calc(100vh-11rem)] max-w-7xl items-center gap-12 pt-12 lg:grid-cols-[0.92fr_1.08fr] lg:pt-10">
@@ -398,6 +411,10 @@ const Index = () => {
                 </MagneticButton>
                 <MagneticButton href="#security" variant="secondary">
                   Explore Security
+                </MagneticButton>
+                <MagneticButton href="/vault-finance" variant="secondary">
+                  Vault Finance
+                  <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
                 </MagneticButton>
               </motion.div>
 
