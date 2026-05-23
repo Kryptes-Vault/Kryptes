@@ -1,6 +1,7 @@
 import type { MouseEvent, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   ArrowRight,
   CheckCircle,
@@ -19,6 +20,8 @@ import {
 
 import laptopMockup from "@/assets/laptop-ui-mockup.jpg";
 import phoneMockup from "@/assets/smartphone-ui-mockup.jpg";
+
+const MotionLink = motion(Link);
 
 type RevealSectionProps = {
   children: ReactNode;
@@ -41,7 +44,8 @@ type Stat = {
 
 type MagneticButtonProps = {
   children: ReactNode;
-  href: string;
+  href?: string;
+  to?: string;
   variant?: "primary" | "secondary";
 };
 
@@ -149,7 +153,7 @@ const FeatureCard = ({ title, desc, icon: Icon }: FeatureCardProps) => (
   </motion.div>
 );
 
-const MagneticButton = ({ children, href, variant = "primary" }: MagneticButtonProps) => {
+const MagneticButton = ({ children, href, to, variant = "primary" }: MagneticButtonProps) => {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const springX = useSpring(x, { stiffness: 220, damping: 18, mass: 0.3 });
@@ -173,23 +177,40 @@ const MagneticButton = ({ children, href, variant = "primary" }: MagneticButtonP
       ? "bg-orange-500 text-white shadow-xl shadow-orange-500/25 hover:-translate-y-1 hover:shadow-orange-500/45"
       : "border border-white/20 bg-white/[0.08] text-white shadow-sm backdrop-blur hover:-translate-y-1 hover:border-orange-300/80 hover:bg-white/[0.12]";
 
-  return (
-    <motion.a
-      href={href}
-      style={{ x: springX, y: springY }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={reset}
-      whileTap={{ scale: 0.98 }}
-      className={`${baseClass} ${variantClass}`}
-    >
+  const sharedContent = (
+    <>
       <span className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
         <span className="absolute inset-x-[-30%] top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent" />
         <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0" />
       </span>
-      <span className="relative flex items-center justify-center gap-2">
-        {children}
-      </span>
-    </motion.a>
+      <span className="relative flex items-center justify-center gap-2">{children}</span>
+    </>
+  );
+
+  return (
+    to ? (
+      <MotionLink
+        to={to}
+        style={{ x: springX, y: springY }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={reset}
+        whileTap={{ scale: 0.98 }}
+        className={`${baseClass} ${variantClass}`}
+      >
+        {sharedContent}
+      </MotionLink>
+    ) : (
+      <motion.a
+        href={href}
+        style={{ x: springX, y: springY }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={reset}
+        whileTap={{ scale: 0.98 }}
+        className={`${baseClass} ${variantClass}`}
+      >
+        {sharedContent}
+      </motion.a>
+    )
   );
 };
 
@@ -405,14 +426,14 @@ const Index = () => {
               </motion.p>
 
               <motion.div variants={heroItem} className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <MagneticButton href="/dashboard">
+                <MagneticButton to="/auth">
                   Access Vault
                   <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
                 </MagneticButton>
                 <MagneticButton href="#security" variant="secondary">
                   Explore Security
                 </MagneticButton>
-                <MagneticButton href="/vault-finance" variant="secondary">
+                <MagneticButton to="/vault-finance" variant="secondary">
                   Vault Finance
                   <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
                 </MagneticButton>
