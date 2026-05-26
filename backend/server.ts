@@ -66,6 +66,14 @@ try {
       retryStrategy: (times: number) => (times > 5 ? null : Math.min(times * 100, 3000)),
     });
 
+    let lastServerErrorMsg = "";
+    redisClient.on("error", (err: any) => {
+      const msg = err?.message || String(err);
+      if (msg === lastServerErrorMsg) return;
+      lastServerErrorMsg = msg;
+      console.warn(`[Server Session Redis] ⚠️ Redis error: ${msg}`);
+    });
+
     redisStore = new RedisStore({ client: redisClient, disableTouch: true });
   }
 } catch {

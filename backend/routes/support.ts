@@ -6,6 +6,14 @@ const { getSupabaseAdmin } = require("../services/supabaseAdmin");
 const router = express.Router();
 const redisClient = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
 
+let lastSupportErrorMsg = "";
+redisClient.on("error", (err: any) => {
+  const msg = err?.message || String(err);
+  if (msg === lastSupportErrorMsg) return;
+  lastSupportErrorMsg = msg;
+  console.warn(`[Support Redis] ⚠️ Redis error: ${msg}`);
+});
+
 type AuthedRequest = express.Request & { user: { id: string; email?: string } };
 
 /** PBKDF2 salt label; must match browser `useVaultCrypto` (historical string — do not change). */
