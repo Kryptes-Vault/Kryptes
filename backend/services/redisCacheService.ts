@@ -5,6 +5,14 @@ import { encryptForCache, decryptFromCache } from "../utils/cryptoUtils";
 // process.env.REDIS_URL must be defined in .env
 const redisClient = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
 
+let lastCacheErrorMsg = "";
+redisClient.on("error", (err: any) => {
+  const msg = err?.message || String(err);
+  if (msg === lastCacheErrorMsg) return;
+  lastCacheErrorMsg = msg;
+  console.warn(`[RedisCacheService] ⚠️ Redis error: ${msg}`);
+});
+
 const CACHE_TTL_SECONDS = 900; // 15 minutes
 
 export const redisCacheService = {

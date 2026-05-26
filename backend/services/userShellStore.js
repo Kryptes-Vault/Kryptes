@@ -11,6 +11,14 @@ function getRedis() {
       maxRetriesPerRequest: 1,
       lazyConnect: false,
     });
+
+    let lastShellErrorMsg = "";
+    redis.on("error", (err) => {
+      const msg = err?.message || String(err);
+      if (msg === lastShellErrorMsg) return;
+      lastShellErrorMsg = msg;
+      console.warn(`[UserShellStore Redis] ⚠️ Redis error: ${msg}`);
+    });
   }
   return redis;
 }
