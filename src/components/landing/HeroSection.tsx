@@ -54,7 +54,7 @@ export function HeroSection() {
 
               <div className="flex flex-wrap items-center gap-5">
                  <a 
-                   href="/dashboard"
+                   href="/auth"
                    className="px-8 py-3.5 bg-orange-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full hover:bg-orange-600 transition-all shadow-[0_0_30px_rgba(249,115,22,0.15)]"
                  >
                    Access Vault
