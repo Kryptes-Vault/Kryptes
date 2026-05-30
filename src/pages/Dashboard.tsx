@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText,
   Briefcase,
@@ -24,7 +25,10 @@ import {
   Target,
   Database,
   Landmark,
-  LineChart
+  LineChart,
+  Fingerprint,
+  FolderPlus,
+  FolderOpen
 } from "lucide-react";
 import { toast } from "sonner";
 import { AddSecretModal } from "@/components/kryptex/AddSecretModal";
@@ -35,6 +39,7 @@ import SettingsView from "@/components/kryptex/SettingsView";
 import TwoFAMigrationWizard from "@/components/kryptex/TwoFAMigrationWizard";
 import DocumentLocker from "@/components/kryptex/DocumentLocker";
 import { BankingView } from "@/components/kryptex/BankingView";
+import { FinanceView } from "@/components/kryptex/FinanceView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordGrid } from "@/components/kryptex/PasswordGrid";
@@ -46,7 +51,7 @@ import { ENCRYPTION_VERSION_V2_PBKDF2 } from "@/lib/crypto/vaultCrypto";
 import { unlockVaultWithPassword } from "@/lib/kryptexVaultService";
 import { supabase } from "@/lib/supabase";
 
-type ViewMode = "documents" | "passwords" | "banking" | "settings" | "authenticator";
+type ViewMode = "documents" | "passwords" | "banking" | "settings" | "authenticator" | "finance";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -57,6 +62,8 @@ const Dashboard = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("documents");
   const [passwordCategory, setPasswordCategory] = useState<CategoryFilter>("all");
   const [bankingCategory, setBankingCategory] = useState<"all" | "accounts" | "cards">("all");
+  const [financeCategory, setFinanceCategory] = useState<"all" | "statements" | "analytics">("all");
+  const [authenticatorCategory, setAuthenticatorCategory] = useState<"all" | "google" | "microsoft" | "authy" | "apple">("all");
   const [addNodeOpen, setAddNodeOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addPasswordOpen, setAddPasswordOpen] = useState(false);
@@ -65,10 +72,49 @@ const Dashboard = () => {
   const [unlockPassword, setUnlockPassword] = useState("");
   const [unlockBusy, setUnlockBusy] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [documentsFolder, setDocumentsFolder] = useState<string>("Education");
+  const [customFolders, setCustomFolders] = useState<string[]>([]);
+
+  const documentFolders = useMemo(() => {
+    const defaultFolders = ["Education", "Government", "Vehicle", "Certificates"];
+    const seen = new Set<string>([...defaultFolders, ...customFolders]);
+    
+    // Scan items to find folders of existing ZK documents
+    items
+      .filter((i) => i.item_type === "zk_document")
+      .forEach((row) => {
+        const metadata = (row as any).decrypted_data || (row as any).metadata || {};
+        if (metadata.folder) {
+          seen.add(metadata.folder);
+        }
+      });
+      
+    const result = Array.from(seen);
+    console.log("[Dashboard folders Debug]", {
+      itemsCount: items.length,
+      zkDocs: items.filter((i) => i.item_type === "zk_document"),
+      documentFolders: result
+    });
+    return result;
+  }, [items, customFolders]);
+
+  const handleAddFolder = () => {
+    const name = window.prompt("Enter new folder name:");
+    if (!name) return;
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const exists = documentFolders.some((f) => f.toLowerCase() === trimmed.toLowerCase());
+    if (exists) {
+      setDocumentsFolder(documentFolders.find((f) => f.toLowerCase() === trimmed.toLowerCase()) || "Education");
+      return;
+    }
+    setCustomFolders((prev) => [...prev, trimmed]);
+    setDocumentsFolder(trimmed);
+  };
   
   // Sync viewMode with URL param
   useEffect(() => {
-    if (view && ["documents", "passwords", "banking", "settings", "authenticator"].includes(view)) {
+    if (view && ["documents", "passwords", "banking", "settings", "authenticator", "finance"].includes(view)) {
       setViewMode(view as ViewMode);
     } else if (!view) {
       // Default to documents if no sub-path
@@ -125,6 +171,18 @@ const Dashboard = () => {
     { id: "accounts" as const, label: "Bank Accounts", icon: Landmark },
     { id: "cards" as const, label: "Payment Cards", icon: CreditCard },
   ];
+  const financeSections = [
+    { id: "all" as const, label: "All Insights", icon: LayoutGrid },
+    { id: "statements" as const, label: "Statements", icon: FileText },
+    { id: "analytics" as const, label: "Analytics", icon: LineChart },
+  ];
+  const authenticatorSections = [
+    { id: "all" as const, label: "All Guides", icon: LayoutGrid },
+    { id: "google" as const, label: "Google Authenticator", icon: Shield },
+    { id: "microsoft" as const, label: "Microsoft Authenticator", icon: Shield },
+    { id: "authy" as const, label: "Authy", icon: Fingerprint },
+    { id: "apple" as const, label: "Apple Passwords", icon: KeyRound },
+  ];
   const [settingsTab, setSettingsTab] = useState("identity");
 
   const settingsSections = [
@@ -135,7 +193,7 @@ const Dashboard = () => {
     { id: "data", label: "Data Management", icon: Database },
   ];
 
-  const showMainSidebar = viewMode === "passwords" || viewMode === "settings" || viewMode === "banking";
+  const showMainSidebar = viewMode === "passwords" || viewMode === "settings" || viewMode === "banking" || viewMode === "finance" || viewMode === "authenticator" || viewMode === "documents";
 
   return (
     <div className="flex h-screen w-full bg-white text-[#111] font-sans selection:bg-[#FF3B13] selection:text-white overflow-hidden flex-col">
@@ -168,7 +226,7 @@ const Dashboard = () => {
                 <p className="text-[10px] font-medium text-black/40 leading-tight">{user?.email}</p>
               </div>
               {avatarUrl ? (
-                <img src={avatarUrl} className="h-10 w-10 rounded-xl object-cover ring-2 ring-black/5" />
+                <img src={avatarUrl} className="h-10 w-10 rounded-xl object-cover ring-2 ring-black/5" referrerPolicy="no-referrer" />
               ) : (
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF3B13]/10 font-bold text-[#FF3B13] text-[12px] border border-[#FF3B13]/5">
                   {initials}
@@ -187,7 +245,7 @@ const Dashboard = () => {
               { id: "documents", icon: FileText, path: null },
               { id: "passwords", icon: KeyRound, path: null },
               { id: "banking", icon: CreditCard, path: null },
-              { id: "finance", icon: LineChart, path: "/vault-finance" },
+              { id: "finance", icon: LineChart, path: null },
               { id: "authenticator", icon: QrCode, path: null },
               { id: "settings", icon: Settings, path: null },
             ].map((item) => (
@@ -218,9 +276,39 @@ const Dashboard = () => {
             <div className="flex-1 flex flex-col bg-[#f7f7f7] rounded-tr-[2.5rem] ml-0 mt-0 mb-0 py-6 px-6 overflow-y-auto overflow-x-hidden transition-all">
               <div className="mb-8">
                 <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4">
-                  {viewMode === "passwords" ? "Vault Categories" : viewMode === "banking" ? "Banking & Cards" : "Vault Settings"}
+                  {viewMode === "passwords" ? "Vault Categories" : viewMode === "banking" ? "Banking & Cards" : viewMode === "finance" ? "Finance Tracker" : viewMode === "authenticator" ? "Migration Guides" : viewMode === "documents" ? "Document Locker" : "Vault Settings"}
                 </p>
                 <nav className="flex flex-col gap-1">
+                  {viewMode === "documents" && (
+                    <>
+                      <button
+                        onClick={handleAddFolder}
+                        className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-black/50 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13] border border-dashed border-black/10 hover:border-[#FF3B13]/30 w-full mb-3"
+                      >
+                        <FolderPlus className="w-5 h-5 shrink-0 text-[#FF3B13]" />
+                        <span className="text-[13px] font-bold">Add Folder</span>
+                      </button>
+                      {documentFolders.map((folder) => {
+                        const active = documentsFolder === folder;
+                        return (
+                          <button
+                            key={folder}
+                            onClick={() => {
+                              setDocumentsFolder(folder);
+                            }}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                              active
+                                ? "bg-white text-[#FF3B13] shadow-sm font-bold" 
+                                : "text-black/50 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13]"
+                            }`}
+                          >
+                            <FolderOpen className="w-5 h-5 shrink-0" />
+                            <span className="text-[13px] font-medium">{folder}</span>
+                          </button>
+                        );
+                      })}
+                    </>
+                  )}
                   {viewMode === "passwords" && activeSidebarItems.map((item) => {
                     const active = passwordCategory === item.id;
                     return (
@@ -247,6 +335,44 @@ const Dashboard = () => {
                         key={item.id}
                         onClick={() => {
                           setBankingCategory(item.id);
+                        }}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                          active
+                            ? "bg-white text-[#FF3B13] shadow-sm font-bold" 
+                            : "text-black/50 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13]"
+                        }`}
+                      >
+                        <item.icon className="w-5 h-5 shrink-0" />
+                        <span className="text-[13px] font-medium">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                  {viewMode === "finance" && financeSections.map((item) => {
+                    const active = financeCategory === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setFinanceCategory(item.id);
+                        }}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                          active
+                            ? "bg-white text-[#FF3B13] shadow-sm font-bold" 
+                            : "text-black/50 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13]"
+                        }`}
+                      >
+                        <item.icon className="w-5 h-5 shrink-0" />
+                        <span className="text-[13px] font-medium">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                  {viewMode === "authenticator" && authenticatorSections.map((item) => {
+                    const active = authenticatorCategory === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setAuthenticatorCategory(item.id);
                         }}
                         className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
                           active
@@ -312,21 +438,34 @@ const Dashboard = () => {
           </aside>
         )}
 
-        <main className={`flex-1 min-h-0 bg-white ${viewMode === "documents" ? "overflow-hidden" : "overflow-y-auto"}`}>
-          <div className={`${viewMode === "documents" ? "p-0 h-full" : "p-8 max-w-[1200px] mx-auto"}`}>
+        <main className="flex-1 min-h-0 bg-white overflow-hidden relative">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={viewMode}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className={`h-full ${viewMode === "documents" ? "p-0" : "p-8 overflow-y-auto"}`}
+            >
+              <div className={viewMode === "documents" ? "h-full" : "max-w-[1200px] mx-auto"}>
             {viewMode === "documents" && (
-              <DocumentLocker userId={user?.id ?? null} />
+              <DocumentLocker userId={user?.id ?? null} activeFolder={documentsFolder} />
             )}
             {viewMode === "banking" && (
-              <div className="p-8 max-w-[1200px] mx-auto">
-                <BankingView 
-                  userId={user.id} 
-                  filter={bankingCategory} 
-                  items={items} 
-                  loading={itemsLoading} 
-                  onRefresh={reloadVault}
-                />
-              </div>
+              <BankingView 
+                userId={user.id} 
+                filter={bankingCategory} 
+                items={items} 
+                loading={itemsLoading} 
+                onRefresh={reloadVault}
+              />
+            )}
+            {viewMode === "finance" && (
+              <FinanceView 
+                userId={user.id}
+                filter={financeCategory}
+              />
             )}
             {/* ... other views ... */}
 
@@ -387,8 +526,15 @@ const Dashboard = () => {
                 activeTab={settingsTab as any}
               />
             )}
-            {viewMode === "authenticator" && <TwoFAMigrationWizard />}
-          </div>
+            {viewMode === "authenticator" && (
+              <TwoFAMigrationWizard 
+                activeProvider={authenticatorCategory === "all" ? null : authenticatorCategory}
+                onProviderChange={(provider) => setAuthenticatorCategory(provider || "all")}
+              />
+            )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
 

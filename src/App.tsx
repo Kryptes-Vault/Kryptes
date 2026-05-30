@@ -42,6 +42,7 @@ const AuthRoute = () => {
   const { user, isLoading } = useAuth();
   const [showSessionPrompt, setShowSessionPrompt] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -86,9 +87,13 @@ const AuthRoute = () => {
           </div>
 
           <div className="p-5 sm:p-6 rounded-xl sm:rounded-2xl bg-[#f8f8f8] border border-black/5 mb-6 sm:mb-8 text-left flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-[#FF3B13]/10 flex items-center justify-center text-[#FF3B13] font-black text-lg shrink-0 border border-[#FF3B13]/20">
-              {user.email?.charAt(0).toUpperCase()}
-            </div>
+            {avatarUrl ? (
+              <img src={avatarUrl} className="w-12 h-12 rounded-xl object-cover shrink-0 border border-black/5" referrerPolicy="no-referrer" />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-[#FF3B13]/10 flex items-center justify-center text-[#FF3B13] font-black text-lg shrink-0 border border-[#FF3B13]/20">
+                {user.email?.charAt(0).toUpperCase()}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <div className="text-[10px] font-bold text-[#FF3B13] uppercase tracking-widest">Logged in as</div>
               <div className="text-sm sm:text-base font-black text-black truncate mt-0.5" title={user.email}>
@@ -127,7 +132,7 @@ const AppRoutes = () => {
 
   return (
     <AnimatePresence mode="wait" initial={false}>
-      <Routes location={location} key={location.pathname}>
+      <Routes location={location} key={location.pathname.split("/")[1] || "/"}>
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><AuthRoute /></PageTransition>} />
         <Route path="/login" element={<PageTransition><AuthRoute /></PageTransition>} />
@@ -141,7 +146,7 @@ const AppRoutes = () => {
           }
         />
         <Route path="/share/:secretId" element={<ShareReceive />} />
-        <Route path="/vault-finance" element={<VaultFinance />} />
+        <Route path="/vault-finance" element={<PageTransition><VaultFinance /></PageTransition>} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route

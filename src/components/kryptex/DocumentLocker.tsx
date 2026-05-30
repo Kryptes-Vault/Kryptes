@@ -43,12 +43,14 @@ export type LockerDocument = {
   updatedAt: string;
   thumbnailSeed: string;
   source: "r2" | "upload";
+  downloadUrl?: string;
 };
 
 type DocumentLockerProps = {
   activeFormat?: DocumentFormat | "all";
   /** Supabase `auth.users.id` — sent as `?userId=` so the API can authorize when the session cookie is missing (e.g. cross-origin `VITE_BACKEND_URL`). */
   userId?: string | null;
+  activeFolder?: string;
 };
 
 type UploadItem = {
@@ -84,9 +86,10 @@ function mimeForType(type: DocumentFormat): string {
   }
 }
 
-async function fetchR2DownloadUrl(objectKey: string): Promise<string> {
+async function fetchR2DownloadUrl(objectKey: string, userId?: string | null): Promise<string> {
+  const qs = userId ? `&userId=${encodeURIComponent(userId)}` : "";
   const res = await fetch(
-    `${ZK_VAULT_DOCUMENTS_ENDPOINT}/download-url?objectKey=${encodeURIComponent(objectKey)}`,
+    `${ZK_VAULT_DOCUMENTS_ENDPOINT}/download-url?objectKey=${encodeURIComponent(objectKey)}${qs}`,
     { credentials: "include" }
   );
   if (!res.ok) throw new Error(`Failed to get download URL (${res.status})`);
@@ -94,8 +97,8 @@ async function fetchR2DownloadUrl(objectKey: string): Promise<string> {
   return data.downloadUrl;
 }
 
-async function fetchEncryptedBlob(objectKey: string): Promise<Blob> {
-  const url = await fetchR2DownloadUrl(objectKey);
+async function fetchEncryptedBlob(objectKey: string, userId?: string | null, pregeneratedUrl?: string): Promise<Blob> {
+  const url = pregeneratedUrl || await fetchR2DownloadUrl(objectKey, userId);
   const res = await fetch(url);
   if (!res.ok) throw new Error(`R2 download failed (${res.status})`);
   return res.blob();
@@ -199,13 +202,10 @@ function documentsListUrl(userId?: string | null) {
   return path;
 }
 
-export default function DocumentLocker({ activeFormat = "all", userId = null }: DocumentLockerProps) {
+export default function DocumentLocker({ activeFormat = "all", userId = null, activeFolder = "Education" }: DocumentLockerProps) {
   const { items, loading: syncing, reload: reloadVault, deleteItem, commitDocument } = useVaultItems(userId);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [dragActive, setDragActive] = useState(false);
-  const [activeFolder, setActiveFolder] = useState<string>(DEFAULT_FOLDERS[0]);
-  const [folderName, setFolderName] = useState("");
-  const [customFolders, setCustomFolders] = useState<string[]>([]);
   const [previewDoc, setPreviewDoc] = useState<LockerDocument | null>(null);
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -237,7 +237,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
         const ext = String(metadata.fileType || "bin").toLowerCase();
         return {
           id: String(row.id),
-          objectKey: String(metadata.objectKey || ""),
+          objectKey: String(metadata.objectKey || row.ciphertext || ""),
           name: String(row.title || ""),
           size: Number(metadata.originalSize || 0),
           type: (ext === "jpg" ? "jpeg" : ext) as DocumentFormat,
@@ -245,15 +245,12 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
           updatedAt: String(row.updated_at),
           thumbnailSeed: String(row.title || "").slice(0, 1).toUpperCase() || "D",
           source: "r2" as const,
+          downloadUrl: String(metadata.downloadUrl || ""),
         };
       });
   }, [items, optimisticDeletedIds]);
 
-  const folderOptions = useMemo(() => {
-    const seen = new Set<string>([...DEFAULT_FOLDERS, ...customFolders]);
-    documents.forEach((doc) => seen.add(doc.folder));
-    return Array.from(seen);
-  }, [documents, customFolders]);
+  // folderOptions removed as folders are managed globally
 
   const filteredByFormat = useMemo(
     () => (activeFormat === "all" ? documents : documents.filter((doc) => doc.type === activeFormat)),
@@ -293,7 +290,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
       void (async () => {
         try {
           const key = await getOrCreateFileKey();
-          const encryptedBlob = await fetchEncryptedBlob(objectKey);
+          const encryptedBlob = await fetchEncryptedBlob(objectKey, userId, doc.downloadUrl);
           const url = await decryptFile(encryptedBlob, key, mimeForType(docType));
           setThumbById((prev) => (prev[docId] ? prev : { ...prev, [docId]: url }));
         } catch (err) {
@@ -392,7 +389,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
     if (!doc.objectKey) return;
     try {
       const key = await getOrCreateFileKey();
-      const encryptedBlob = await fetchEncryptedBlob(doc.objectKey);
+      const encryptedBlob = await fetchEncryptedBlob(doc.objectKey, userId, doc.downloadUrl);
       const decryptedUrl = await decryptFile(encryptedBlob, key, mimeForType(doc.type));
       const a = document.createElement("a");
       a.href = decryptedUrl;
@@ -403,7 +400,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
       toast.error("Failed to decrypt document for download.");
       console.error("[ZK-Vault] Download decrypt error:", err);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     if (!previewDoc) {
@@ -426,7 +423,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
       setPreviewLoading(true);
       try {
         const key = await getOrCreateFileKey();
-        const encryptedBlob = await fetchEncryptedBlob(previewDoc.objectKey);
+        const encryptedBlob = await fetchEncryptedBlob(previewDoc.objectKey, userId, previewDoc.downloadUrl);
         if (cancelled) return;
         const decryptedUrl = await decryptFile(encryptedBlob, key, mimeForType(previewDoc.type));
         if (cancelled) {
@@ -445,22 +442,9 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- preview blob is reset when previewDoc changes; avoids reload loops
-  }, [previewDoc]);
+  }, [previewDoc, userId]);
 
-  function createFolder() {
-    const trimmed = folderName.trim();
-    if (!trimmed) return;
-    const exists = folderOptions.some((folder) => folder.toLowerCase() === trimmed.toLowerCase());
-    if (exists) {
-      setActiveFolder(folderOptions.find((folder) => folder.toLowerCase() === trimmed.toLowerCase()) || DEFAULT_FOLDERS[0]);
-      setFolderName("");
-      return;
-    }
-
-    setCustomFolders((prev) => [...prev, trimmed]);
-    setActiveFolder(trimmed);
-    setFolderName("");
-  }
+  // createFolder removed as folders are managed globally
 
   function syncDocument(document: LockerDocument) {
     // Rely on useVaultItems and Supabase Realtime for synchronization
@@ -484,13 +468,13 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
 
     let progress = 0;
     const interval = window.setInterval(() => {
-      progress += Math.random() * 15;
+      progress += Math.random() * 25;
       if (progress >= 90) {
         progress = 90;
         window.clearInterval(interval);
       }
       setUploads((prev) => prev.map((item) => (item.id === tempId ? { ...item, progress: Math.round(progress) } : item)));
-    }, 180);
+    }, 60);
 
     try {
       // 1. Encrypt client-side
@@ -572,7 +556,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
     setBusyDocId(conversionDoc.id);
     try {
       const key = await getOrCreateFileKey();
-      const encryptedBlob = await fetchEncryptedBlob(conversionDoc.objectKey);
+      const encryptedBlob = await fetchEncryptedBlob(conversionDoc.objectKey, userId, conversionDoc.downloadUrl);
       
       const formats = Array.from(selectedFormats);
       for (const format of formats) {
@@ -620,7 +604,7 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
     setBusyDocId(doc.id);
     try {
       const key = await getOrCreateFileKey();
-      const encryptedBlob = await fetchEncryptedBlob(doc.objectKey);
+      const encryptedBlob = await fetchEncryptedBlob(doc.objectKey, userId, doc.downloadUrl);
       const url = await decryptFile(encryptedBlob, key, mimeForType(doc.type));
       const a = document.createElement("a");
       a.href = url;
@@ -668,52 +652,27 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
     }
   }
 
+  console.log("[DocumentLocker Debug]", {
+    userId,
+    syncing,
+    activeFolder,
+    totalItems: items.length,
+    zkDocsCount: items.filter((i) => i.item_type === "zk_document").length,
+    allTypes: Array.from(new Set(items.map((i) => i.item_type))),
+    documentsCount: documents.length,
+    documents
+  });
+
   return (
     <>
     <div className="bg-white text-black h-full overflow-hidden">
-      <div className="w-full h-full flex flex-col md:flex-row divide-x divide-black/5">
-        {/* Left Sidebar for Folders - Matches Main Sidebar Geometry */}
-        <aside
-          className={`w-full md:w-64 flex flex-col pt-8 px-6 rounded-tr-[2.5rem] h-full overflow-y-auto transition-colors ${
-            dragActive ? "bg-[#FF3B13]/10" : "bg-[#f7f7f7]"
-          }`}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-        >
-          <div className="px-4 mb-6">
-            <button onClick={createFolder} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#FF3B13] hover:opacity-80 transition-opacity">
-              <FolderPlus className="h-4 w-4" /> Add Folder
-            </button>
-          </div>
-
-          <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-4"></p>
-          <nav className="flex flex-col gap-1">
-            {folderOptions.map((folder) => (
-              <button
-                key={folder}
-                type="button"
-                onClick={() => setActiveFolder(folder)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
-                  activeFolder === folder 
-                    ? "bg-white text-[#FF3B13] shadow-sm font-bold" 
-                    : "text-black/40 hover:bg-[#FF3B13]/5 hover:text-[#FF3B13]"
-                }`}
-              >
-                <FolderOpen className="h-4 w-4 shrink-0" />
-                <span className="text-[13px] font-medium">{folder}</span>
-              </button>
-            ))}
-          </nav>
-        </aside>
-
-        {/* Main Content Area */}
-        <div
-          className={`flex-1 flex flex-col h-full overflow-y-auto pt-8 pb-16 px-4 transition-colors ${dragActive ? "bg-[#FF3B13]/5" : ""}`}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-        >
+      {/* Main Content Area */}
+      <div
+        className={`w-full h-full flex flex-col overflow-y-auto pt-8 pb-16 px-4 transition-colors ${dragActive ? "bg-[#FF3B13]/5" : ""}`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
           {/* Header Controls */}
           <div className="mb-8 w-full">
             <div className="flex w-full items-center bg-[#f7f7f7] rounded-xl border border-black/5 overflow-hidden group focus-within:bg-white focus-within:border-[#FF3B13]/30 focus-within:ring-4 focus-within:ring-[#FF3B13]/5 transition-all">
@@ -991,7 +950,6 @@ export default function DocumentLocker({ activeFormat = "all", userId = null }: 
         )}
       </div>
     </div>
-</div>
 
       <AnimatePresence>
         {previewDoc && (

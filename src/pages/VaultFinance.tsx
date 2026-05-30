@@ -113,7 +113,7 @@ const GlassCard = ({ children, className = "" }: { children: ReactNode; classNam
   <motion.div
     whileHover={{ y: -4 }}
     transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-    className={`rounded-lg border border-white/10 bg-white/[0.065] shadow-2xl shadow-black/20 backdrop-blur-xl ${className}`}
+    className={`rounded-2xl border border-gray-100 bg-white/75 shadow-xl shadow-gray-200/30 backdrop-blur-xl ${className}`}
   >
     {children}
   </motion.div>
@@ -123,16 +123,31 @@ const ChartTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   if (!active || !payload?.length) return null;
 
   return (
-    <div className="rounded-lg border border-white/10 bg-[#12100f]/95 px-3 py-2 text-xs text-white shadow-xl backdrop-blur">
-      {label && <p className="mb-1 font-bold text-white/70">{label}</p>}
+    <div className="rounded-xl border border-gray-100 bg-white/95 px-3 py-2 text-xs text-gray-900 shadow-xl backdrop-blur">
+      {label && <p className="mb-1 font-bold text-gray-500">{label}</p>}
       {payload.map((item) => (
-        <p key={item.dataKey || item.name} style={{ color: item.color }}>
+        <p key={item.dataKey || item.name} style={{ color: item.color }} className="font-medium">
           {item.name || item.dataKey}: {item.value}
         </p>
       ))}
     </div>
   );
 };
+const navLinks = [
+  { href: "/", label: "Home", active: false },
+  { href: "/#capabilities", label: "Capabilities", active: false },
+  { href: "/#features", label: "Features", active: false },
+  { href: "/#enterprise", label: "Enterprise", active: false },
+  { href: "/#faq", label: "FAQ", active: false },
+  { href: "/vault-finance", label: "Finance", active: true },
+];
+
+const BrandMark = () => (
+  <Link to="/" className="flex items-center gap-2 group">
+    <img src="/kryptes.png" alt="Kryptes Logo" className="h-8 w-auto object-contain" />
+    <span className="text-xl font-bold tracking-tight text-gray-900 ml-1">Kryptes</span>
+  </Link>
+);
 
 const VaultFinance = () => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -165,66 +180,90 @@ const VaultFinance = () => {
   };
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#0b0908] text-white selection:bg-orange-500/30">
+    <main className="min-h-screen overflow-hidden bg-white text-gray-900 selection:bg-orange-500/20">
       <motion.div
         className="pointer-events-none fixed inset-0 z-0"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.9 }}
       >
-        <div className="hero-aurora absolute inset-[-12%] opacity-80" />
-        <div className="hero-grain absolute inset-0" />
-        <div className="absolute left-[8%] top-[18%] h-72 w-72 rounded-full bg-orange-500/20 blur-3xl" />
-        <div className="absolute right-[4%] top-[36%] h-96 w-96 rounded-full bg-emerald-300/10 blur-3xl" />
+        <div 
+          className="absolute inset-0 z-0 opacity-20" 
+          style={{ backgroundImage: 'radial-gradient(circle, #ea580c 1px, transparent 1px)', backgroundSize: '36px 36px' }} 
+        />
+        <div className="absolute left-[8%] top-[18%] h-72 w-72 rounded-full bg-orange-100/40 blur-3xl" />
+        <div className="absolute right-[4%] top-[36%] h-96 w-96 rounded-full bg-emerald-100/30 blur-3xl" />
       </motion.div>
 
-      <section className="relative z-10 px-5 pb-12 pt-8 lg:px-10">
-        <motion.header
-          initial={{ opacity: 0, y: -12, filter: "blur(8px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-          className="mx-auto flex max-w-7xl items-center justify-between gap-4"
-        >
-          <Link to="/" className="group inline-flex items-center gap-3">
-            <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white p-1.5 shadow-[0_0_30px_rgba(249,115,22,0.32)] transition duration-500 group-hover:scale-105 group-hover:shadow-[0_0_44px_rgba(249,115,22,0.52)]">
-              <img src="/kryptes.png" alt="Kryptes logo" className="h-full w-full rounded-full object-contain" />
-            </span>
-            <span>
-              <span className="block text-sm font-black tracking-tight">Kryptes</span>
-              <span className="hidden text-[10px] font-bold uppercase tracking-[0.22em] text-white/42 sm:block">Vault Finance</span>
-            </span>
-          </Link>
-
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/60 transition-all duration-300 hover:border-orange-300/50 hover:text-orange-100"
+      <section className="relative w-full pt-6 pb-20 overflow-hidden">
+        <div className="relative z-10 mx-auto max-w-7xl px-5 lg:px-10">
+          <motion.header
+            initial={{ opacity: 0, y: -12, filter: "blur(8px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="flex items-center justify-between"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Home
+          <BrandMark />
+
+          {/* Pill Navigation */}
+          <nav className="hidden md:flex items-center bg-white border border-gray-100 rounded-full p-1.5 shadow-sm">
+            {navLinks.map((link) => {
+              const isRoute = link.href.startsWith("/") && !link.href.includes("#");
+              const className = `px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                link.active 
+                  ? "bg-orange-500 text-white shadow-md shadow-orange-500/20" 
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/50"
+              }`;
+              return isRoute ? (
+                <Link
+                  key={link.label}
+                  to={link.href}
+                  className={className}
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className={className}
+                >
+                  {link.label}
+                </a>
+              );
+            })}
+          </nav>
+
+          {/* CTA */}
+          <Link 
+            to="/auth" 
+            className="hidden md:inline-flex px-6 py-2.5 rounded-full bg-orange-500 text-white text-sm font-medium shadow-lg shadow-orange-500/25 transition-transform hover:scale-105 hover:bg-orange-600"
+          >
+            Access Vault
           </Link>
         </motion.header>
 
-        <div className="mx-auto grid max-w-7xl items-center gap-10 py-14 lg:grid-cols-[0.92fr_1.08fr] lg:py-20">
+          <div className="grid items-center gap-10 py-14 lg:grid-cols-[0.92fr_1.08fr] lg:py-20">
           <motion.div
             initial={{ opacity: 0, y: 26, filter: "blur(10px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 0.9, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-300/10 px-3 py-2 text-xs font-black uppercase tracking-[0.24em] text-orange-100/75">
-              <Sparkles className="h-4 w-4 text-orange-300" />
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-black uppercase tracking-[0.24em] text-orange-600">
+              <Sparkles className="h-4 w-4 text-orange-500" />
               Financial intelligence
             </div>
 
-            <h1 className="max-w-4xl text-5xl font-black leading-[0.96] tracking-tight sm:text-6xl lg:text-7xl">
-              Understand where your money actually goes.
+            <h1 className="max-w-4xl text-5xl font-black leading-[0.96] tracking-tight sm:text-6xl lg:text-7xl text-gray-900">
+              Understand where your money <span className="font-serif italic font-medium text-orange-600">actually</span> goes.
             </h1>
-            <p className="mt-7 max-w-2xl text-lg leading-8 text-white/62">
+            <p className="mt-7 max-w-2xl text-lg leading-8 text-gray-500">
               Upload bank statements into a private vault interface and convert raw transactions into intelligent insights, spending signals, and calm financial clarity.
             </p>
 
             <div className="mt-9 flex flex-wrap gap-3">
               {["PDF statements", "Encrypted analysis", "Smart breakdowns"].map((item) => (
-                <span key={item} className="rounded-full border border-white/10 bg-white/[0.065] px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-white/62 backdrop-blur">
+                <span key={item} className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-gray-600 shadow-sm">
                   {item}
                 </span>
               ))}
@@ -236,50 +275,51 @@ const VaultFinance = () => {
             animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ duration: 0.95, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
           >
-            <GlassCard className="relative overflow-hidden p-5">
-              <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl" />
-              <div className="relative grid gap-4">
-                <div className="flex items-center justify-between rounded-lg border border-white/10 bg-black/20 p-4">
+            <GlassCard className="relative overflow-hidden p-6 border border-gray-100 bg-white/80 shadow-2xl shadow-gray-200/50">
+              <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-orange-100/50 blur-3xl" />
+              <div className="relative grid gap-5">
+                <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50/50 p-4">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/42">Projected savings</p>
-                    <p className="mt-2 text-4xl font-black">₹73,580</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-gray-400">Projected savings</p>
+                    <p className="mt-2 text-4xl font-black text-gray-900">₹73,580</p>
                   </div>
-                  <BadgeIndianRupee className="h-10 w-10 text-orange-300" strokeWidth={1.4} />
+                  <BadgeIndianRupee className="h-10 w-10 text-orange-500" strokeWidth={1.4} />
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   {categoryData.slice(0, 3).map((item) => (
-                    <div key={item.name} className="rounded-lg border border-white/10 bg-white/[0.055] p-3">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/42">{item.name}</p>
-                      <p className="mt-2 text-lg font-black">₹{Math.round(item.value / 1000)}k</p>
+                    <div key={item.name} className="rounded-2xl border border-gray-100 bg-gray-50/40 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400">{item.name}</p>
+                      <p className="mt-2 text-lg font-black text-gray-900">₹{Math.round(item.value / 1000)}k</p>
                     </div>
                   ))}
                 </div>
-                <div className="h-48 rounded-lg border border-white/10 bg-black/20 p-3">
+                <div className="h-48 rounded-2xl border border-gray-100 bg-gray-50/40 p-3">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={cashflowData}>
                       <defs>
                         <linearGradient id="heroIncome" x1="0" x2="0" y1="0" y2="1">
-                          <stop offset="0%" stopColor="#fb923c" stopOpacity={0.65} />
-                          <stop offset="100%" stopColor="#fb923c" stopOpacity={0} />
+                          <stop offset="0%" stopColor="#f97316" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,.42)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <XAxis dataKey="month" tick={{ fill: "rgba(0,0,0,.42)", fontSize: 10 }} axisLine={false} tickLine={false} />
                       <YAxis hide />
                       <Tooltip content={<ChartTooltip />} />
-                      <Area type="monotone" dataKey="income" stroke="#fb923c" fill="url(#heroIncome)" strokeWidth={2} />
+                      <Area type="monotone" dataKey="income" stroke="#ea580c" fill="url(#heroIncome)" strokeWidth={2} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
               </div>
             </GlassCard>
           </motion.div>
+          </div>
         </div>
       </section>
 
       <section className="relative z-10 px-5 pb-16 lg:px-10">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.86fr_1.14fr]">
           <Reveal>
-            <GlassCard className="p-5">
+            <GlassCard className="p-6">
               <div
                 onDragOver={(event) => {
                   event.preventDefault();
@@ -288,25 +328,27 @@ const VaultFinance = () => {
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
                 onClick={() => inputRef.current?.click()}
-                className={`group relative flex min-h-80 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center transition-all duration-500 ${
-                  isDragging ? "border-orange-300 bg-orange-400/10 shadow-[0_0_42px_rgba(249,115,22,0.22)]" : "border-white/15 bg-black/20 hover:border-orange-300/50 hover:bg-white/[0.055]"
+                className={`group relative flex min-h-[340px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-500 ${
+                  isDragging 
+                    ? "border-orange-500 bg-orange-50 shadow-[0_0_42px_rgba(249,115,22,0.15)]" 
+                    : "border-gray-200 bg-gray-50/50 hover:border-orange-500/50 hover:bg-orange-50/10"
                 }`}
               >
                 <input ref={inputRef} type="file" accept="application/pdf,.pdf" onChange={handleInput} className="hidden" />
                 <motion.div
                   animate={isProcessing ? { rotate: 360 } : { rotate: 0 }}
                   transition={isProcessing ? { duration: 1.4, repeat: Infinity, ease: "linear" } : { duration: 0.4 }}
-                  className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-orange-300/30 bg-orange-400/10 shadow-[0_0_34px_rgba(249,115,22,0.2)]"
+                  className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-orange-200 bg-orange-50 shadow-[0_0_34px_rgba(249,115,22,0.1)]"
                 >
-                  {isProcessing ? <Sparkles className="h-7 w-7 text-orange-200" /> : <UploadCloud className="h-7 w-7 text-orange-200" />}
+                  {isProcessing ? <Sparkles className="h-7 w-7 text-orange-500" /> : <UploadCloud className="h-7 w-7 text-orange-500" />}
                 </motion.div>
-                <h2 className="text-2xl font-black tracking-tight">{isProcessing ? "Reading statement signals" : "Upload your bank statement"}</h2>
-                <p className="mt-3 max-w-md text-sm leading-6 text-white/54">
+                <h2 className="text-2xl font-black tracking-tight text-gray-900">{isProcessing ? "Reading statement signals" : "Upload your bank statement"}</h2>
+                <p className="mt-3 max-w-md text-sm leading-6 text-gray-500">
                   Drag and drop a PDF statement, or click to select one. The experience is designed to feel secure, private, and calm.
                 </p>
                 {fileName && (
-                  <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-4 py-2 text-xs font-bold text-white/70">
-                    <FileText className="h-4 w-4 text-orange-200" />
+                  <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-bold text-gray-700 shadow-sm">
+                    <FileText className="h-4 w-4 text-orange-500" />
                     {fileName}
                   </div>
                 )}
@@ -317,15 +359,17 @@ const VaultFinance = () => {
           <Reveal delay={0.08}>
             <div className="grid gap-4 sm:grid-cols-2">
               {financeStats.map((stat) => (
-                <GlassCard key={stat.label} className="p-5">
+                <GlassCard key={stat.label} className="p-6">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">{stat.label}</p>
-                      <p className="mt-3 text-3xl font-black tracking-tight">{hasInsights || stat.label === "Signal Score" ? stat.value : "—"}</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-gray-400">{stat.label}</p>
+                      <p className="mt-3 text-3xl font-black tracking-tight text-gray-900">{hasInsights || stat.label === "Signal Score" ? stat.value : "—"}</p>
                     </div>
-                    <stat.icon className="h-6 w-6 text-orange-300" strokeWidth={1.6} />
+                    <stat.icon className="h-6 w-6 text-orange-500" strokeWidth={1.6} />
                   </div>
-                  <p className="mt-4 text-sm font-semibold text-emerald-300/80">{hasInsights ? stat.delta : "Awaiting statement"}</p>
+                  <p className={`mt-4 text-sm font-semibold ${hasInsights ? "text-emerald-600" : "text-gray-400"}`}>
+                    {hasInsights ? stat.delta : "Awaiting statement"}
+                  </p>
                 </GlassCard>
               ))}
             </div>
@@ -336,13 +380,13 @@ const VaultFinance = () => {
       <section className="relative z-10 px-5 pb-20 lg:px-10">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <Reveal>
-            <GlassCard className="p-5">
+            <GlassCard className="p-6">
               <div className="mb-5 flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">Expense categories</p>
-                  <h2 className="mt-2 text-2xl font-black tracking-tight">Spending gravity</h2>
+                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-gray-400">Expense categories</p>
+                  <h2 className="mt-2 text-2xl font-black tracking-tight text-gray-900">Spending gravity</h2>
                 </div>
-                <LineChartIcon className="h-6 w-6 text-orange-300" />
+                <LineChartIcon className="h-6 w-6 text-orange-500" />
               </div>
               <div className="grid gap-5 md:grid-cols-[0.82fr_1fr] md:items-center">
                 <div className="h-64">
@@ -359,12 +403,12 @@ const VaultFinance = () => {
                 </div>
                 <div className="space-y-3">
                   {categoryData.map((item) => (
-                    <div key={item.name} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.045] px-4 py-3">
+                    <div key={item.name} className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-3">
                       <div className="flex items-center gap-3">
                         <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-sm font-bold text-white/72">{item.name}</span>
+                        <span className="text-sm font-bold text-gray-700">{item.name}</span>
                       </div>
-                      <span className="text-sm font-black">₹{item.value.toLocaleString("en-IN")}</span>
+                      <span className="text-sm font-black text-gray-900">₹{item.value.toLocaleString("en-IN")}</span>
                     </div>
                   ))}
                 </div>
@@ -373,17 +417,17 @@ const VaultFinance = () => {
           </Reveal>
 
           <Reveal delay={0.08}>
-            <GlassCard className="p-5">
+            <GlassCard className="p-6">
               <div className="mb-5">
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">Monthly cashflow</p>
-                <h2 className="mt-2 text-2xl font-black tracking-tight">Income versus expense</h2>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-gray-400">Monthly cashflow</p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-gray-900">Income versus expense</h2>
               </div>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={cashflowData}>
-                    <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
-                    <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,.42)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: "rgba(255,255,255,.34)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <CartesianGrid stroke="rgba(0,0,0,0.06)" vertical={false} />
+                    <XAxis dataKey="month" tick={{ fill: "rgba(0,0,0,.42)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "rgba(0,0,0,.34)", fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<ChartTooltip />} />
                     <Bar dataKey="income" name="Income" fill="#fb923c" radius={[6, 6, 0, 0]} />
                     <Bar dataKey="expense" name="Expense" fill="#34d399" radius={[6, 6, 0, 0]} />
@@ -398,25 +442,25 @@ const VaultFinance = () => {
       <section className="relative z-10 px-5 pb-24 lg:px-10">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1.08fr_0.92fr]">
           <Reveal>
-            <GlassCard className="p-5">
+            <GlassCard className="p-6">
               <div className="mb-5">
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">Spending timeline</p>
-                <h2 className="mt-2 text-2xl font-black tracking-tight">Where the week bends</h2>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-gray-400">Spending timeline</p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-gray-900">Where the week bends</h2>
               </div>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={trendData}>
                     <defs>
                       <linearGradient id="trendFill" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="#f97316" stopOpacity={0.62} />
+                        <stop offset="0%" stopColor="#f97316" stopOpacity={0.4} />
                         <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
-                    <XAxis dataKey="day" tick={{ fill: "rgba(255,255,255,.42)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: "rgba(255,255,255,.34)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <CartesianGrid stroke="rgba(0,0,0,0.06)" vertical={false} />
+                    <XAxis dataKey="day" tick={{ fill: "rgba(0,0,0,.42)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "rgba(0,0,0,.34)", fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<ChartTooltip />} />
-                    <Area type="monotone" dataKey="spend" name="Spend" stroke="#fb923c" fill="url(#trendFill)" strokeWidth={2.4} />
+                    <Area type="monotone" dataKey="spend" name="Spend" stroke="#ea580c" fill="url(#trendFill)" strokeWidth={2.4} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -426,14 +470,14 @@ const VaultFinance = () => {
           <Reveal delay={0.08}>
             <div className="grid gap-4">
               {insights.map((insight, index) => (
-                <GlassCard key={insight} className="p-5">
+                <GlassCard key={insight} className="p-6">
                   <div className="flex gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-400/12 text-orange-200">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600">
                       {hasInsights ? <CheckCircle className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
                     </div>
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/38">Insight 0{index + 1}</p>
-                      <p className="mt-2 text-base font-bold leading-6 text-white/82">{hasInsights ? insight : "Upload a statement to unlock this financial signal."}</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-gray-400">Insight 0{index + 1}</p>
+                      <p className="mt-2 text-base font-bold leading-6 text-gray-800">{hasInsights ? insight : "Upload a statement to unlock this financial signal."}</p>
                     </div>
                   </div>
                 </GlassCard>

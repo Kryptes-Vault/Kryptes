@@ -8,11 +8,12 @@ import { BentoBox } from "@/components/landing/BentoBox";
 const MotionLink = motion(Link);
 
 const navLinks = [
-  { href: "#", label: "Home", active: true },
-  { href: "#capabilities", label: "Capabilities", active: false },
-  { href: "#features", label: "Features", active: false },
-  { href: "#enterprise", label: "Enterprise", active: false },
-  { href: "#faq", label: "FAQ", active: false },
+  { href: "/", label: "Home", active: true },
+  { href: "/#capabilities", label: "Capabilities", active: false },
+  { href: "/#features", label: "Features", active: false },
+  { href: "/#enterprise", label: "Enterprise", active: false },
+  { href: "/#faq", label: "FAQ", active: false },
+  { href: "/vault-finance", label: "Finance", active: false },
 ];
 
 const BrandMark = () => (
@@ -45,19 +46,31 @@ export default function Index() {
 
             {/* Pill Navigation */}
             <nav className="hidden md:flex items-center bg-white border border-gray-100 rounded-full p-1.5 shadow-sm">
-              {navLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                    link.active 
-                      ? "bg-orange-500 text-white shadow-md shadow-orange-500/20" 
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/50"
-                  }`}
-                >
-                  {link.label}
-                </a>
-              ))}
+              {navLinks.map((link) => {
+                const isRoute = link.href.startsWith("/") && !link.href.includes("#");
+                const className = `px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                  link.active 
+                    ? "bg-orange-500 text-white shadow-md shadow-orange-500/20" 
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/50"
+                }`;
+                return isRoute ? (
+                  <Link
+                    key={link.label}
+                    to={link.href}
+                    className={className}
+                  >
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    className={className}
+                  >
+                    {link.label}
+                  </a>
+                );
+              })}
             </nav>
 
             {/* CTA */}
@@ -307,7 +320,7 @@ export default function Index() {
                 </div>
                 
                 {/* Mobile App Body */}
-                <div className="flex-1 bg-gray-50 rounded-t-[2.5rem] p-6 overflow-y-auto relative z-10">
+                <div className="flex-1 bg-gray-50 rounded-t-[2.5rem] p-6 overflow-y-auto scrollbar-hide relative z-10">
                   
                   {/* Security Score Widget */}
                   <div className="w-full h-40 bg-gradient-to-br from-[#ea580c] to-[#f97316] rounded-3xl shadow-lg p-6 text-white flex flex-col justify-between mb-8 relative overflow-hidden">
