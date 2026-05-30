@@ -71,7 +71,7 @@ const AuthRoute = () => {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,122,89,0.16),transparent_32%),linear-gradient(180deg,#0b0f17_0%,#06070a_100%)] flex items-center justify-center">
+    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,122,89,0.12),transparent_32%),linear-gradient(180deg,#ffffff_0%,#f8f8f8_100%)] flex items-center justify-center">
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.045)_1px,transparent_1px)] bg-[size:46px_46px] opacity-30" />
       
       {showSessionPrompt && user ? (

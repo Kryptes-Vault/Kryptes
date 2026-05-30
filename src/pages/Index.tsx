@@ -1,681 +1,447 @@
 import type { MouseEvent, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  CheckCircle,
-  Database,
-  FileKey2,
-  Github,
-  Globe,
-  KeyRound,
-  Lock,
-  LucideIcon,
-  ServerCog,
-  Shield,
-  Sparkles,
-  Zap,
-} from "lucide-react";
-
-import laptopMockup from "@/assets/laptop-ui-mockup.jpg";
-import phoneMockup from "@/assets/smartphone-ui-mockup.jpg";
+import { Shield, Folder, Database, Lock, Key } from "lucide-react";
+import { BentoBox } from "@/components/landing/BentoBox";
 
 const MotionLink = motion(Link);
 
-type RevealSectionProps = {
-  children: ReactNode;
-  className?: string;
-};
-
-type FeatureCardProps = {
-  title: string;
-  desc: string;
-  icon: LucideIcon;
-};
-
-type Stat = {
-  value: string;
-  label: string;
-  countTo?: number;
-  suffix?: string;
-  prefix?: string;
-};
-
-type MagneticButtonProps = {
-  children: ReactNode;
-  href?: string;
-  to?: string;
-  variant?: "primary" | "secondary";
-};
-
-const trustBadges = ["Zero-knowledge encrypted", "Open source", "End-to-end security"];
-
-const stats: Stat[] = [
-  { value: "256-bit", label: "vault encryption", countTo: 256, suffix: "-bit" },
-  { value: "0", label: "server-held keys", countTo: 0 },
-  { value: "24/7", label: "secure access", prefix: "24/7" },
-];
-
-const features = [
-  {
-    icon: Lock,
-    title: "Zero Knowledge",
-    desc: "Private keys stay on your side of the vault boundary, so sensitive data is never exposed upstream.",
-  },
-  {
-    icon: Zap,
-    title: "Fast Recovery",
-    desc: "Encrypted recovery paths keep access practical without weakening the protection model.",
-  },
-  {
-    icon: Shield,
-    title: "Shared Secrets",
-    desc: "Burn links and support grants help you share exactly what is needed, then close access cleanly.",
-  },
-  {
-    icon: Database,
-    title: "Structured Vaults",
-    desc: "Passwords, documents, cards, media, and banking records live in one organized encrypted workspace.",
-  },
-];
-
-const workflow = [
-  { icon: KeyRound, title: "Create", desc: "Generate or import secrets into a private encrypted vault." },
-  { icon: ServerCog, title: "Sync", desc: "Store ciphertext in the cloud while keys remain under user control." },
-  { icon: FileKey2, title: "Share", desc: "Grant narrow access with time-boxed, auditable handoffs." },
-];
-
 const navLinks = [
-  { href: "#security", label: "Security" },
-  { href: "#workflow", label: "Workflow" },
-  { href: "#open-source", label: "Integrity" },
+  { href: "#", label: "Home", active: true },
+  { href: "#capabilities", label: "Capabilities", active: false },
+  { href: "#features", label: "Features", active: false },
+  { href: "#enterprise", label: "Enterprise", active: false },
+  { href: "#faq", label: "FAQ", active: false },
 ];
-
-const heroStagger = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      delayChildren: 0.35,
-      staggerChildren: 0.12,
-    },
-  },
-};
-
-const smoothEase = [0.22, 1, 0.36, 1] as const;
-
-const heroItem = {
-  hidden: { opacity: 0, y: 22, filter: "blur(8px)" },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.82, ease: smoothEase },
-  },
-};
-
-const particles = [
-  { left: "8%", top: "18%", size: 3 },
-  { left: "18%", top: "72%", size: 2 },
-  { left: "29%", top: "32%", size: 2 },
-  { left: "42%", top: "14%", size: 3 },
-  { left: "55%", top: "78%", size: 2 },
-  { left: "66%", top: "27%", size: 2 },
-  { left: "78%", top: "64%", size: 3 },
-  { left: "90%", top: "22%", size: 2 },
-  { left: "94%", top: "82%", size: 2 },
-];
-
-const RevealSection = ({ children, className }: RevealSectionProps) => (
-  <motion.div
-    initial={{ opacity: 0, y: 24 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-80px" }}
-    transition={{ duration: 0.65, ease: "easeOut" }}
-    className={className}
-  >
-    {children}
-  </motion.div>
-);
-
-const FeatureCard = ({ title, desc, icon: Icon }: FeatureCardProps) => (
-  <motion.div
-    whileHover={{ y: -6, rotateX: 1.5, rotateY: -1.5 }}
-    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-    className="h-full rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all duration-500 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100/80"
-  >
-    <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg border border-orange-200 bg-orange-50">
-      <Icon className="h-5 w-5 text-orange-600" strokeWidth={1.8} />
-    </div>
-    <h3 className="mb-3 text-lg font-black tracking-tight text-gray-950">{title}</h3>
-    <p className="text-sm leading-6 text-gray-600">{desc}</p>
-  </motion.div>
-);
-
-const MagneticButton = ({ children, href, to, variant = "primary" }: MagneticButtonProps) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const springX = useSpring(x, { stiffness: 220, damping: 18, mass: 0.3 });
-  const springY = useSpring(y, { stiffness: 220, damping: 18, mass: 0.3 });
-
-  const handleMouseMove = (event: MouseEvent<HTMLAnchorElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    x.set((event.clientX - rect.left - rect.width / 2) * 0.18);
-    y.set((event.clientY - rect.top - rect.height / 2) * 0.18);
-  };
-
-  const reset = () => {
-    x.set(0);
-    y.set(0);
-  };
-
-  const baseClass =
-    "group relative inline-flex overflow-hidden rounded-lg px-6 py-4 text-xs font-black uppercase tracking-[0.22em] transition-all duration-500 ease-out";
-  const variantClass =
-    variant === "primary"
-      ? "bg-orange-500 text-white shadow-xl shadow-orange-500/25 hover:-translate-y-1 hover:shadow-orange-500/45"
-      : "border border-white/20 bg-white/[0.08] text-white shadow-sm backdrop-blur hover:-translate-y-1 hover:border-orange-300/80 hover:bg-white/[0.12]";
-
-  const sharedContent = (
-    <>
-      <span className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-        <span className="absolute inset-x-[-30%] top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent" />
-        <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0" />
-      </span>
-      <span className="relative flex items-center justify-center gap-2">{children}</span>
-    </>
-  );
-
-  return (
-    to ? (
-      <MotionLink
-        to={to}
-        style={{ x: springX, y: springY }}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={reset}
-        whileTap={{ scale: 0.98 }}
-        className={`${baseClass} ${variantClass}`}
-      >
-        {sharedContent}
-      </MotionLink>
-    ) : (
-      <motion.a
-        href={href}
-        style={{ x: springX, y: springY }}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={reset}
-        whileTap={{ scale: 0.98 }}
-        className={`${baseClass} ${variantClass}`}
-      >
-        {sharedContent}
-      </motion.a>
-    )
-  );
-};
-
-const CountUpStat = ({ stat }: { stat: Stat }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    if (!inView || typeof stat.countTo !== "number") return;
-
-    const duration = 1100;
-    const start = performance.now();
-    let frame = 0;
-
-    const tick = (now: number) => {
-      const progress = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(Math.round(stat.countTo * eased));
-
-      if (progress < 1) {
-        frame = requestAnimationFrame(tick);
-      }
-    };
-
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [inView, stat.countTo]);
-
-  const display = stat.prefix ?? `${value}${stat.suffix ?? ""}`;
-
-  return (
-    <div ref={ref} className="px-5 py-4 md:border-r md:border-white/10 md:last:border-r-0">
-      <p className="text-3xl font-black tracking-tight text-white">{display}</p>
-      <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-white/50">{stat.label}</p>
-    </div>
-  );
-};
-
-const Marquee = ({ items }: { items: string[] }) => {
-  const duplicatedItems = [...items, ...items, ...items];
-
-  return (
-    <div className="relative overflow-hidden border-y border-gray-200 bg-gray-950 text-white">
-      <motion.div
-        animate={{ x: [0, -1200] }}
-        transition={{ duration: 34, repeat: Infinity, ease: "linear" }}
-        className="flex whitespace-nowrap px-6 py-3"
-      >
-        {duplicatedItems.map((item, i) => (
-          <div key={`${item}-${i}`} className="flex shrink-0 items-center gap-8 pr-8">
-            <span className="text-xs font-black uppercase tracking-[0.28em] text-gray-100">{item}</span>
-            <Sparkles className="h-4 w-4 text-orange-400" strokeWidth={1.8} />
-          </div>
-        ))}
-      </motion.div>
-    </div>
-  );
-};
 
 const BrandMark = () => (
-  <motion.a
-    href="/"
-    aria-label="Kryptes home"
-    whileHover={{ scale: 1.035 }}
-    transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-    className="group inline-flex items-center gap-3"
-  >
-    <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white p-1.5 shadow-[0_0_30px_rgba(249,115,22,0.28)] transition duration-500 group-hover:shadow-[0_0_44px_rgba(249,115,22,0.48)]">
-      <span className="absolute inset-[-5px] rounded-full border border-orange-300/35 opacity-80 transition duration-500 group-hover:border-orange-300/70" />
-      <img src="/kryptes.png" alt="Kryptes logo" className="h-full w-full rounded-full object-contain" />
-    </span>
-    <span className="block">
-      <span className="block text-sm font-black leading-none tracking-tight text-white sm:text-base">Kryptes</span>
-      <span className="hidden text-[10px] font-bold uppercase tracking-[0.22em] text-white/42 sm:block">Private vault</span>
-    </span>
-  </motion.a>
+  <a href="/" className="flex items-center gap-2 group">
+    <img src="/kryptes.png" alt="Kryptes Logo" className="h-8 w-auto object-contain" />
+    <span className="text-xl font-bold tracking-tight text-gray-900 ml-1">Kryptes</span>
+  </a>
 );
 
-const Index = () => {
-  const shouldReduceMotion = useReducedMotion();
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const smoothX = useSpring(mouseX, { stiffness: 90, damping: 24, mass: 0.4 });
-  const smoothY = useSpring(mouseY, { stiffness: 90, damping: 24, mass: 0.4 });
-  const auroraX = useTransform(smoothX, [-0.5, 0.5], ["-1.4%", "1.4%"]);
-  const auroraY = useTransform(smoothY, [-0.5, 0.5], ["-1%", "1%"]);
-  const deviceRotateY = useTransform(smoothX, [-0.5, 0.5], [4, -4]);
-  const deviceRotateX = useTransform(smoothY, [-0.5, 0.5], [-3, 3]);
-  const phoneX = useTransform(smoothX, [-0.5, 0.5], [-10, 10]);
-
-  const handleHeroMouseMove = (event: MouseEvent<HTMLElement>) => {
-    if (shouldReduceMotion) return;
-
-    const rect = event.currentTarget.getBoundingClientRect();
-    mouseX.set((event.clientX - rect.left) / rect.width - 0.5);
-    mouseY.set((event.clientY - rect.top) / rect.height - 0.5);
-  };
-
+export default function Index() {
   return (
-    <div className="min-h-screen bg-white text-gray-950 selection:bg-orange-100 selection:text-orange-950">
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center bg-[#090807]"
-        initial={{ opacity: 1 }}
-        animate={{ opacity: 0 }}
-        transition={{ duration: 0.8, delay: 1.2, ease: [0.65, 0, 0.35, 1] }}
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.82 }}
-          animate={{ opacity: [0, 1, 1], scale: [0.82, 1.08, 1] }}
-          transition={{ duration: 1.05, ease: [0.22, 1, 0.36, 1] }}
-          className="group relative flex h-28 w-28 items-center justify-center rounded-full border border-white/10 bg-white p-4 shadow-2xl shadow-orange-500/30"
-        >
-          <motion.div
-            className="absolute inset-[-9px] rounded-full border border-orange-400/50"
-            initial={{ scale: 0.8, opacity: 0.8 }}
-            animate={{ scale: 1.45, opacity: 0 }}
-            transition={{ duration: 1.1, repeat: 1, ease: "easeOut" }}
-          />
-          <img src="/kryptes.png" alt="" className="h-full w-full rounded-full object-contain" />
-        </motion.div>
-      </motion.div>
-
-      <main>
-        <section
-          onMouseMove={handleHeroMouseMove}
-          className="relative min-h-screen overflow-hidden bg-[#0b0908] px-5 pb-16 pt-8 text-white lg:px-10 lg:pb-24 lg:pt-14"
-        >
-          <motion.div
-            aria-hidden="true"
-            className="hero-aurora pointer-events-none absolute inset-[-12%] opacity-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.8, delay: 0.45, ease: "easeOut" }}
-            style={{ x: auroraX, y: auroraY }}
-          />
-          <div aria-hidden="true" className="hero-grain pointer-events-none absolute inset-0" />
-          <motion.div
-            aria-hidden="true"
-            className="pointer-events-none absolute left-[6%] top-[22%] h-72 w-72 rounded-full bg-orange-500/18 blur-3xl"
-            initial={{ opacity: 0, scale: 0.86 }}
-            animate={{ opacity: 0.55, scale: [0.96, 1.08, 0.96] }}
-            transition={{ opacity: { duration: 1.6, delay: 0.25 }, scale: { duration: 8, repeat: Infinity, ease: "easeInOut" } }}
-          />
-          <motion.div
-            aria-hidden="true"
-            className="pointer-events-none absolute right-[4%] top-[12%] h-80 w-80 rounded-full bg-white/[0.08] blur-3xl"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 0.35, scale: [1.04, 0.96, 1.04] }}
-            transition={{ opacity: { duration: 1.8, delay: 0.5 }, scale: { duration: 9, repeat: Infinity, ease: "easeInOut" } }}
-          />
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-            {particles.map((particle, index) => (
-              <span
-                key={`${particle.left}-${particle.top}`}
-                className="ambient-particle absolute rounded-full bg-orange-100/70 shadow-[0_0_18px_rgba(251,146,60,0.45)]"
-                style={{
-                  left: particle.left,
-                  top: particle.top,
-                  height: particle.size,
-                  width: particle.size,
-                  animationDelay: `${index * -1.4}s`,
-                }}
-              />
-            ))}
-          </div>
-
-          <motion.header
-            initial={{ opacity: 0, y: -14, filter: "blur(8px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 0.72, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-20 mx-auto flex max-w-7xl items-center justify-between gap-4"
-          >
+    <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-orange-500/30 selection:text-black">
+      
+      {/* 
+        Phase 1: Foundational Setup & Hero Section
+        White background with a subtle dotted pattern 
+      */}
+      <section className="relative w-full pt-6 pb-32 overflow-hidden">
+        {/* Dotted pattern background matching Symmetra (very light grey, tight spacing) */}
+        <div 
+          className="absolute inset-0 z-0 opacity-40" 
+          style={{ backgroundImage: 'radial-gradient(circle, #d1d5db 1.5px, transparent 1.5px)', backgroundSize: '28px 28px' }} 
+        />
+        
+        <div className="relative z-10 mx-auto max-w-7xl px-5 lg:px-10">
+          
+          {/* Navigation Bar */}
+          <header className="flex items-center justify-between">
             <BrandMark />
 
-            <div className="flex items-center justify-end gap-3">
-              <nav className="hidden min-w-0 items-center justify-end gap-2 rounded-full border border-white/10 bg-white/[0.055] px-3 py-2 shadow-2xl shadow-black/20 backdrop-blur-xl min-[520px]:flex sm:gap-5 sm:px-5">
-                {navLinks.map((link) => (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    className="whitespace-nowrap rounded-full px-2 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-white/52 transition-all duration-300 hover:bg-white/[0.08] hover:text-orange-100 sm:px-3 sm:text-[11px] sm:tracking-[0.2em]"
-                  >
-                    {link.label}
-                  </a>
-                ))}
-              </nav>
+            {/* Pill Navigation */}
+            <nav className="hidden md:flex items-center bg-white border border-gray-100 rounded-full p-1.5 shadow-sm">
+              {navLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                    link.active 
+                      ? "bg-orange-500 text-white shadow-md shadow-orange-500/20" 
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/50"
+                  }`}
+                >
+                  {link.label}
+                </a>
+              ))}
+            </nav>
 
-              <motion.a
-                href="/vault-finance"
-                whileHover={{ y: -2, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="hidden rounded-full border border-orange-300/30 bg-orange-400/10 px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-orange-100 shadow-[0_0_30px_rgba(249,115,22,0.12)] transition-all duration-300 hover:border-orange-300/70 hover:bg-orange-400/16 hover:shadow-[0_0_42px_rgba(249,115,22,0.24)] sm:inline-flex"
-              >
-                Vault Finance →
-              </motion.a>
-            </div>
-          </motion.header>
-
-          <div className="relative z-10 mx-auto grid min-h-[calc(100vh-11rem)] max-w-7xl items-center gap-12 pt-12 lg:grid-cols-[0.92fr_1.08fr] lg:pt-10">
-            <motion.div variants={heroStagger} initial="hidden" animate="visible">
-              <motion.h1 className="max-w-3xl text-5xl font-black leading-[0.96] tracking-tight text-white sm:text-6xl lg:text-7xl">
-                {["Secure your", "digital life in", "one private vault."].map((line) => (
-                  <motion.span key={line} variants={heroItem} className="block">
-                    {line}
-                  </motion.span>
-                ))}
-              </motion.h1>
-
-              <motion.p variants={heroItem} className="mt-7 max-w-2xl text-lg leading-8 text-white/62">
-                Kryptes keeps passwords, documents, banking details, and shared secrets organized behind a zero-knowledge security model built for everyday use.
-              </motion.p>
-
-              <motion.div variants={heroItem} className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <MagneticButton to="/auth">
-                  Access Vault
-                  <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
-                </MagneticButton>
-                <MagneticButton href="#security" variant="secondary">
-                  Explore Security
-                </MagneticButton>
-                <MagneticButton to="/vault-finance" variant="secondary">
-                  Vault Finance
-                  <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
-                </MagneticButton>
-              </motion.div>
-
-              <motion.div variants={heroStagger} className="mt-8 flex flex-wrap gap-3">
-                {trustBadges.map((badge) => (
-                  <motion.div
-                    key={badge}
-                    variants={heroItem}
-                    whileHover={{ y: -2, scale: 1.02 }}
-                    className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 py-2 shadow-sm backdrop-blur"
-                  >
-                    <CheckCircle className="h-4 w-4 text-emerald-300" strokeWidth={2} />
-                    <span className="text-xs font-bold uppercase tracking-[0.16em] text-white/70">{badge}</span>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 72, scale: 0.96 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{ duration: 1.05, delay: 0.75, ease: [0.22, 1, 0.36, 1] }}
-              className="relative min-h-[420px] [perspective:1400px] lg:min-h-[560px]"
-              style={{ rotateX: deviceRotateX, rotateY: deviceRotateY }}
+            {/* CTA */}
+            <Link 
+              to="/auth" 
+              className="hidden md:inline-flex px-6 py-2.5 rounded-full bg-orange-500 text-white text-sm font-medium shadow-lg shadow-orange-500/25 transition-transform hover:scale-105 hover:bg-orange-600"
             >
-              <motion.div
-                className="absolute left-6 top-4 h-52 w-52 rounded-full bg-emerald-300/15 blur-3xl"
-                animate={{ scale: [1, 1.12, 1], opacity: [0.45, 0.7, 0.45] }}
-                transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <motion.div
-                className="absolute bottom-2 right-8 h-64 w-64 rounded-full bg-orange-400/20 blur-3xl"
-                animate={{ scale: [1.08, 0.96, 1.08], opacity: [0.45, 0.72, 0.45] }}
-                transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
-              />
+              Access Vault
+            </Link>
+          </header>
 
-              <motion.div
-                className="relative ml-auto max-w-3xl rounded-lg border border-white/10 bg-white/10 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl"
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <img
-                  src={laptopMockup}
-                  alt="Kryptes desktop vault interface"
-                  className="aspect-video w-full rounded-md object-cover"
-                />
-              </motion.div>
+          {/* Hero Content */}
+          <div className="mt-20 md:mt-28 flex flex-col items-center text-center relative max-w-6xl mx-auto">
+            
+            <h1 className="text-5xl md:text-[5.5rem] lg:text-[6.2rem] font-bold tracking-tight text-gray-900 leading-[1.05] relative z-10 flex flex-col items-center">
+              
+              {/* Line 1 */}
+              <div className="flex items-center justify-center gap-4 md:gap-6 whitespace-nowrap">
+                <span>Secure and <span className="font-serif italic font-medium text-orange-600">Organize</span></span>
+                {/* Server Sticker */}
+                <motion.div 
+                  className="hidden md:flex items-center justify-center -rotate-12 transform translate-y-2 z-20"
+                  animate={{ y: [0, -8, 0], rotate: [-12, -8, -12] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Database className="w-16 h-16 text-orange-500 fill-orange-100 drop-shadow-xl" strokeWidth={1.5} />
+                </motion.div>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 34, rotate: -4 }}
-                animate={{ opacity: 1, y: [0, -10, 0], rotate: 0 }}
-                style={{ x: phoneX }}
-                transition={{
-                  opacity: { duration: 0.6, delay: 1 },
-                  y: { duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.2 },
-                  rotate: { duration: 0.7, delay: 1, ease: "easeOut" },
-                }}
-                className="absolute -bottom-2 left-4 w-36 rounded-lg border border-white/15 bg-white/10 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl sm:w-44 lg:left-10 lg:w-52"
-              >
-                <img
-                  src={phoneMockup}
-                  alt="Kryptes mobile vault interface"
-                  className="aspect-[9/16] w-full rounded-md object-cover"
-                />
-              </motion.div>
+              {/* Line 2 */}
+              <div className="flex items-center justify-center gap-4 md:gap-6 mt-2 md:mt-4 whitespace-nowrap">
+                <span>Your</span>
+                {/* Folder Sticker */}
+                <motion.div 
+                  className="hidden md:block rotate-[12deg] transform -translate-y-2 z-20"
+                  animate={{ y: [0, 10, 0], rotate: [12, 16, 12] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Folder className="w-20 h-20 text-orange-500 fill-orange-100 drop-shadow-2xl" strokeWidth={1.5} />
+                </motion.div>
+                <span>Digital Life</span>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 14, filter: "blur(8px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ duration: 0.7, delay: 1.2, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute right-0 top-0 hidden rounded-lg border border-orange-300/20 bg-white/10 p-4 shadow-xl shadow-orange-950/20 backdrop-blur-xl lg:block"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-400/15">
-                    <Shield className="h-5 w-5 text-orange-200" strokeWidth={1.8} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-white/45">Protected</p>
-                    <p className="text-sm font-black text-white">Keys stay local</p>
-                  </div>
-                </div>
-              </motion.div>
+              {/* Line 3 */}
+              <div className="flex items-center justify-center gap-4 md:gap-6 mt-2 md:mt-4 whitespace-nowrap">
+                <span>in One <span className="font-serif italic font-medium text-orange-600">Private</span> Vault</span>
+                {/* Shield Sticker */}
+                <motion.div 
+                  className="hidden md:flex relative w-16 h-16 transform -translate-y-2 z-20"
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                >
+                  <Shield className="absolute top-0 left-0 w-16 h-16 text-orange-500 fill-orange-100 drop-shadow-xl" strokeWidth={1.5} />
+                </motion.div>
+              </div>
+            </h1>
+
+            {/* Out-of-flow Floating Elements */}
+            
+            {/* Lock Sticker (Left side) */}
+            <motion.div 
+              className="absolute left-0 md:left-8 top-[60%] md:top-[40%] z-20"
+              animate={{ y: [0, 15, 0], rotate: [-15, -5, -15] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            >
+               <Lock className="w-16 h-16 md:w-24 md:h-24 text-orange-500 fill-orange-100 drop-shadow-2xl" strokeWidth={1.5} />
             </motion.div>
-          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, delay: 1.18, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10 mx-auto mt-12 grid max-w-7xl gap-3 border-y border-white/10 bg-white/[0.06] py-4 backdrop-blur-xl md:grid-cols-3"
-          >
-            {stats.map((stat) => (
-              <CountUpStat key={stat.label} stat={stat} />
-            ))}
-          </motion.div>
-        </section>
+            {/* Key Sticker (Right side) */}
+            <motion.div 
+              className="absolute right-0 md:right-16 bottom-0 md:-bottom-8 z-20"
+              animate={{ y: [0, -12, 0], rotate: [15, 25, 15] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+            >
+               <Key className="w-12 h-12 md:w-20 md:h-20 text-orange-500 fill-orange-100 drop-shadow-2xl" strokeWidth={1.5} />
+            </motion.div>
 
-        <Marquee items={["Zero-knowledge vault", "Encrypted documents", "Burn-after-read sharing", "Banking records", "Password manager"]} />
-
-        <section id="security" className="px-5 py-20 lg:px-10 lg:py-24">
-          <div className="mx-auto max-w-7xl">
-            <RevealSection className="mb-12 max-w-3xl">
-              <p className="mb-4 text-xs font-black uppercase tracking-[0.34em] text-orange-600">Layer 01 — Security</p>
-              <h2 className="text-4xl font-black tracking-tight text-gray-950 lg:text-5xl">Fuller protection without the clutter.</h2>
-              <p className="mt-5 text-lg leading-8 text-gray-600">
-                A cleaner vault experience should still feel serious. Kryptes groups sensitive workflows into focused surfaces, with direct controls and visible security states.
-              </p>
-            </RevealSection>
-
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
-              {features.map((feature) => (
-                <RevealSection key={feature.title}>
-                  <FeatureCard {...feature} />
-                </RevealSection>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="workflow" className="border-y border-gray-200 bg-gray-950 px-5 py-20 text-white lg:px-10 lg:py-24">
-          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
-            <RevealSection>
-              <p className="mb-4 text-xs font-black uppercase tracking-[0.34em] text-orange-400">Layer 02 — Workflow</p>
-              <h2 className="text-4xl font-black tracking-tight lg:text-5xl">Built for the way private data actually moves.</h2>
-              <p className="mt-6 text-lg leading-8 text-gray-300">
-                Most vaults stop at storage. Kryptes adds the operational pieces around it: protected sharing, support grants, audit history, and organized document storage.
-              </p>
-            </RevealSection>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              {workflow.map((item, index) => (
-                <RevealSection key={item.title} className="rounded-lg border border-white/10 bg-white/[0.06] p-6">
-                  <div className="mb-8 flex items-center justify-between">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-orange-500 text-white">
-                      <item.icon className="h-5 w-5" strokeWidth={1.8} />
-                    </div>
-                    <span className="text-xs font-black uppercase tracking-[0.24em] text-gray-500">0{index + 1}</span>
-                  </div>
-                  <h3 className="mb-3 text-xl font-black">{item.title}</h3>
-                  <p className="text-sm leading-6 text-gray-300">{item.desc}</p>
-                </RevealSection>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="open-source" className="px-5 py-20 lg:px-10 lg:py-24">
-          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-center">
-            <RevealSection>
-              <p className="mb-4 text-xs font-black uppercase tracking-[0.34em] text-orange-600">Layer 03 — Integrity</p>
-              <h2 className="text-4xl font-black tracking-tight text-gray-950 lg:text-5xl">
-                Open source where it matters. Closed to everyone else.
-              </h2>
-              <p className="mt-6 text-lg leading-8 text-gray-600">
-                The security model is designed to be inspectable, but your vault contents remain private. That balance gives the page a stronger promise and gives users a cleaner reason to trust it.
-              </p>
-              <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                {["Publicly auditable logic", "No server-held master keys", "Ephemeral sharing flows", "Encrypted document storage"].map((item) => (
-                  <div key={item} className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                    <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600" strokeWidth={2} />
-                    <span className="text-sm font-bold text-gray-700">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </RevealSection>
-
-            <RevealSection className="rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm">
-              <div className="rounded-lg border border-gray-200 bg-white p-6">
-                <div className="mb-8 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.24em] text-gray-500">Audit Console</p>
-                    <h3 className="mt-2 text-2xl font-black tracking-tight text-gray-950">Vault events</h3>
-                  </div>
-                  <Globe className="h-8 w-8 text-orange-600" strokeWidth={1.6} />
-                </div>
-                <div className="space-y-3">
-                  {["Master key derived locally", "Document uploaded as ciphertext", "Burn share link expired", "Support grant revoked"].map((event) => (
-                    <div key={event} className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
-                      <span className="text-sm font-semibold text-gray-700">{event}</span>
-                      <span className="rounded bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">Verified</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </RevealSection>
-          </div>
-        </section>
-
-        <section className="bg-orange-500 px-5 py-16 text-center text-white lg:px-10">
-          <RevealSection className="mx-auto max-w-4xl">
-            <p className="mb-5 text-xs font-black uppercase tracking-[0.34em] text-orange-100">Kryptes Protocol</p>
-            <h2 className="text-4xl font-black tracking-tight lg:text-6xl">Bring your vault into one clean command center.</h2>
-            <div className="mt-8 flex justify-center">
-              <a
-                href="/dashboard"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-7 py-4 text-xs font-black uppercase tracking-[0.22em] text-orange-700 shadow-xl shadow-orange-900/20 transition-all hover:bg-gray-950 hover:text-white"
+            {/* Hero Buttons */}
+            <div className="mt-16 flex items-center gap-4 relative z-30">
+              <Link 
+                to="/auth" 
+                className="px-8 py-3.5 rounded-full bg-[#ea580c] text-white font-medium shadow-lg shadow-orange-500/20 transition-transform hover:scale-105"
               >
-                Start Initiative
-                <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
+                Create Vault
+              </Link>
+              <a 
+                href="#security" 
+                className="px-8 py-3.5 rounded-full bg-gray-50 text-gray-700 font-medium transition-colors hover:bg-gray-100"
+              >
+                View features
               </a>
             </div>
-          </RevealSection>
-        </section>
-      </main>
 
-      <footer className="border-t border-gray-200 bg-white px-5 py-10 lg:px-10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-8 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full border border-orange-200 bg-white p-1.5 shadow-[0_0_24px_rgba(249,115,22,0.18)]">
-              <img src="/kryptes.png" alt="Kryptes logo" className="h-full w-full rounded-full object-contain" />
+          </div>
+        </div>
+      </section>
+
+      {/* Phase 2: Core Capabilities & Stats */}
+      <section id="capabilities" className="bg-[#ea580c] py-20 text-white w-full">
+        <div className="mx-auto max-w-7xl px-5 lg:px-10">
+          <div className="max-w-4xl">
+            <span className="inline-flex items-center rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white mb-6">
+              Core Capabilities
+            </span>
+            <h2 className="text-3xl md:text-5xl font-medium tracking-tight leading-tight mb-16">
+              Providing <span className="font-serif italic text-orange-200 font-normal">zero-knowledge</span> encryption solutions that transform your sensitive digital assets into a highly secure, private workspace.
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-6 pt-10 border-t border-white/20">
+            <div>
+              <div className="text-4xl md:text-5xl font-bold mb-2">256-bit</div>
+              <div className="text-white/80 text-sm font-medium">AES-GCM Encryption</div>
             </div>
             <div>
-              <span className="block text-lg font-black leading-none tracking-tight">KRYPTES</span>
-              <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-gray-500">Zero-knowledge vault</span>
+              <div className="text-4xl md:text-5xl font-bold mb-2">0</div>
+              <div className="text-white/80 text-sm font-medium">Server-held keys</div>
+            </div>
+            <div>
+              <div className="text-4xl md:text-5xl font-bold mb-2">24/7</div>
+              <div className="text-white/80 text-sm font-medium">Secure Access</div>
+            </div>
+            <div>
+              <div className="text-4xl md:text-5xl font-bold mb-2">100%</div>
+              <div className="text-white/80 text-sm font-medium">Private & Isolated</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Phase 3: The 6 Bento Designs (Converted to Light Theme) */}
+      <div id="features">
+        <BentoBox />
+      </div>
+
+      {/* Phase 4: Featured Capabilities */}
+      <section id="enterprise" className="bg-white py-24">
+        <div className="mx-auto max-w-7xl px-5 lg:px-10">
+          <div className="text-center mb-16 max-w-2xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-4"><span className="font-serif italic font-medium text-orange-600">Enterprise</span> Features</h2>
+            <p className="text-gray-500">Advanced cryptographic tools curated for exceptional security and professional enterprise standards.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Capability 1 */}
+            <div className="group relative bg-gray-50 rounded-[32px] p-10 overflow-hidden border border-gray-100 transition-all hover:shadow-lg">
+              <div className="absolute top-6 right-6 h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+              </div>
+              <div className="mb-6">
+                <span className="inline-flex items-center rounded-full bg-white border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 shadow-sm">Granular Gatekeeper</span>
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900 mb-4 max-w-xs leading-tight">Advanced Role-Based Access Control</h3>
+              <p className="text-gray-500 text-sm max-w-sm mb-12">Configure custom rules and anomalies blocks to ensure keys are only decrypted exactly when and where they should be.</p>
+              
+              <div className="relative h-48 w-full rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-white" />
+                <Shield className="h-20 w-20 text-orange-500 opacity-20" />
+                <div className="absolute bottom-4 left-4 right-4 h-12 bg-gray-900 rounded-xl flex items-center px-4 shadow-lg">
+                  <div className="h-3 w-3 rounded-full bg-green-500 mr-3" />
+                  <div className="h-2 w-24 bg-gray-700 rounded-full" />
+                </div>
+              </div>
+            </div>
+
+            {/* Capability 2 */}
+            <div className="group relative bg-gray-50 rounded-[32px] p-10 overflow-hidden border border-gray-100 transition-all hover:shadow-lg">
+              <div className="absolute top-6 right-6 h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+              </div>
+              <div className="mb-6">
+                <span className="inline-flex items-center rounded-full bg-white border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 shadow-sm">Ephemeral Sharing</span>
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900 mb-4 max-w-xs leading-tight">Burn-After-Read Shared Secrets</h3>
+              <p className="text-gray-500 text-sm max-w-sm mb-12">Share sensitive data securely with external parties using URLs that permanently destruct after a single view.</p>
+              
+              <div className="relative h-48 w-full rounded-2xl bg-gray-900 shadow-inner overflow-hidden flex items-center justify-center">
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiMzMzMiLz48L3N2Zz4=')] opacity-30" />
+                <div className="relative h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center border border-orange-500/50">
+                  <div className="h-8 w-8 text-orange-500">
+                     <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Phase 4: FAQ & Mobile Mockup Layout */}
+      <section id="faq" className="bg-gray-50 py-24 overflow-hidden">
+        <div className="mx-auto max-w-7xl px-5 lg:px-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+            
+            {/* FAQ Section (Left - 1 part conceptually, ~4/12 of grid) */}
+            <div className="lg:col-span-5 flex flex-col">
+              <div className="mb-10 text-left">
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-4">Frequently Asked Questions</h2>
+                <p className="text-gray-500">Find answers regarding zero-knowledge encryption and vault architecture.</p>
+              </div>
+
+              <div className="space-y-4">
+                {/* Active FAQ Item */}
+                <div className="bg-orange-500 rounded-[24px] p-6 md:p-8 text-white shadow-xl shadow-orange-500/20">
+                  <div className="flex justify-between items-center mb-4 cursor-pointer">
+                    <h4 className="text-lg font-bold">How does Zero-Knowledge work?</h4>
+                    <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
+                    </div>
+                  </div>
+                  <p className="text-orange-100 text-sm leading-relaxed pr-8">
+                    Your data is encrypted locally on your device using AES-GCM before it ever reaches our servers. The encryption key is derived from your master password, which is never transmitted to us. This means we physically cannot read your data.
+                  </p>
+                </div>
+
+                {/* Inactive FAQ Items */}
+                {[
+                  "Can Kryptes recover my master password?",
+                  "Where is the vault data stored?",
+                  "Is the ephemeral sharing fully secure?"
+                ].map((q, i) => (
+                  <div key={i} className="bg-white rounded-[24px] p-6 md:p-8 border border-gray-200 cursor-pointer hover:border-orange-200 transition-colors flex justify-between items-center group">
+                    <h4 className="text-lg font-medium text-gray-900 pr-4">{q}</h4>
+                    <div className="h-8 w-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0 text-gray-400 group-hover:text-orange-500 group-hover:bg-orange-50 transition-colors">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mobile Interface Mockup (Right - 2 parts conceptually, ~7/12 of grid) */}
+            <div className="lg:col-span-7 relative flex justify-center lg:justify-end">
+              {/* Background abstract decoration */}
+              <div className="absolute top-1/2 right-10 -translate-y-1/2 w-[500px] h-[500px] bg-orange-400/10 blur-[100px] rounded-full pointer-events-none" />
+              
+              <div className="relative w-full max-w-[340px] h-[680px] bg-gray-900 rounded-[3rem] border-[10px] border-gray-900 shadow-2xl overflow-hidden flex flex-col transform lg:rotate-3 transition-transform hover:rotate-0 duration-500">
+                {/* Phone notch */}
+                <div className="absolute top-0 inset-x-0 h-6 bg-gray-900 rounded-b-2xl w-36 mx-auto z-20" />
+                
+                {/* Mobile App Header */}
+                <div className="pt-12 px-6 pb-6 bg-gray-900 text-white flex justify-between items-center relative z-10">
+                  <div className="font-bold text-xl tracking-tight">Kryptes Vault</div>
+                  <div className="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-orange-500" />
+                  </div>
+                </div>
+                
+                {/* Mobile App Body */}
+                <div className="flex-1 bg-gray-50 rounded-t-[2.5rem] p-6 overflow-y-auto relative z-10">
+                  
+                  {/* Security Score Widget */}
+                  <div className="w-full h-40 bg-gradient-to-br from-[#ea580c] to-[#f97316] rounded-3xl shadow-lg p-6 text-white flex flex-col justify-between mb-8 relative overflow-hidden">
+                    <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none" />
+                    <div className="absolute top-0 right-0 p-6 opacity-40">
+                      <Shield className="w-12 h-12" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-orange-100 mb-1">Security Score</div>
+                      <div className="text-5xl font-black tracking-tight">98%</div>
+                    </div>
+                    <div className="text-xs text-orange-100 font-medium bg-black/10 self-start px-3 py-1.5 rounded-full backdrop-blur-md">
+                      Vault is fully protected
+                    </div>
+                  </div>
+
+                  {/* Vault Categories */}
+                  <div className="mb-8">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-sm font-bold text-gray-900 uppercase tracking-wider">Recent Items</div>
+                      <div className="text-xs font-semibold text-orange-500 cursor-pointer hover:text-orange-600">See All</div>
+                    </div>
+                    <div className="space-y-3">
+                      {/* Item 1 */}
+                      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 transition-colors hover:bg-gray-50">
+                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 shrink-0">
+                          <img src="/kryptes.png" alt="" className="w-6 h-6 opacity-60 filter grayscale" onError={(e) => e.currentTarget.style.display = 'none'} />
+                          <div className="font-bold text-xl absolute">G</div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-gray-900 truncate">Google Account</div>
+                          <div className="text-xs text-gray-400 truncate">admin@kryptes.com</div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        </div>
+                      </div>
+                      
+                      {/* Item 2 */}
+                      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 transition-colors hover:bg-gray-50">
+                        <div className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center text-white shrink-0">
+                          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-gray-900 truncate">Github Production</div>
+                          <div className="text-xs text-gray-400 truncate">Personal Vault</div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        </div>
+                      </div>
+                      
+                      {/* Item 3 */}
+                      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 transition-colors hover:bg-gray-50">
+                        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 shrink-0">
+                          <Folder className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-gray-900 truncate">AWS SSH Keys</div>
+                          <div className="text-xs text-gray-400 truncate">Work Vault</div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Floating Action Button */}
+                  <div className="absolute bottom-6 right-6 w-14 h-14 bg-gray-900 text-white rounded-full flex items-center justify-center shadow-xl shadow-gray-900/30 cursor-pointer hover:scale-105 transition-transform z-20">
+                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </section>
+
+      {/* Phase 5: Final CTA & Footer */}
+      <section className="bg-white pt-24 pb-12">
+        <div className="mx-auto max-w-7xl px-5 lg:px-10">
+          <div className="bg-gray-50 rounded-[40px] p-10 md:p-16 border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-12 overflow-hidden relative">
+            <div className="relative z-10 max-w-xl">
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-6 leading-tight">
+                Ready To Secure Your <span className="font-serif italic font-medium text-orange-600">Digital Life</span>
+              </h2>
+              <p className="text-gray-500 mb-10 text-lg">
+                Join thousands of users who trust Kryptes to keep their most critical data completely private and instantly accessible.
+              </p>
+              <div className="flex flex-wrap items-center gap-4">
+                <Link to="/auth" className="px-8 py-3.5 rounded-full bg-orange-500 text-white font-medium shadow-xl shadow-orange-500/30 transition-transform hover:scale-105 hover:bg-orange-600">
+                  Create Vault
+                </Link>
+                <a href="#about" className="px-8 py-3.5 rounded-full bg-white text-gray-700 font-medium border border-gray-200 shadow-sm transition-all hover:bg-gray-50 hover:border-gray-300">
+                  View pricing
+                </a>
+              </div>
+            </div>
+            
+            {/* CTA Graphic */}
+            <div className="relative z-10 w-full max-w-sm hidden md:block">
+               <div className="relative h-64 w-full rounded-2xl bg-white border border-gray-200 shadow-xl flex items-center justify-center p-6 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+                  <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNlN2U3ZTciLz48L3N2Zz4=')] opacity-50 rounded-2xl" />
+                  <div className="bg-gray-900 w-full h-full rounded-xl shadow-inner relative flex flex-col items-center justify-center overflow-hidden">
+                    <Shield className="w-16 h-16 text-orange-500 mb-4" />
+                    <div className="text-white font-mono font-bold tracking-widest opacity-80">ENCRYPTED</div>
+                    <div className="absolute top-0 w-full h-1/2 bg-gradient-to-b from-white/10 to-transparent" />
+                  </div>
+               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-6 text-xs font-bold uppercase tracking-[0.2em] text-gray-500">
-            <a href="/privacy" className="transition-colors hover:text-orange-600">
-              Privacy
-            </a>
-            <a href="/terms" className="transition-colors hover:text-orange-600">
-              Terms
-            </a>
-            <a href="#open-source" className="transition-colors hover:text-orange-600">
-              Repository
-            </a>
-          </div>
-
-          <a
-            href="#open-source"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-all hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
-            aria-label="View repository"
-          >
-            <Github className="h-5 w-5" strokeWidth={1.6} />
-          </a>
+          <footer className="mt-16 pt-8 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-gray-500">
+            <div className="flex items-center gap-2">
+               <BrandMark />
+            </div>
+            <div className="flex items-center gap-8">
+              <a href="#" className="hover:text-gray-900">Privacy Policy</a>
+              <a href="#" className="hover:text-gray-900">Terms of Service</a>
+              <a href="#" className="hover:text-gray-900">Help Center</a>
+              <a href="#" className="hover:text-gray-900">Contact</a>
+            </div>
+            <div className="flex items-center gap-4">
+               {/* Social Icons Placeholders */}
+               <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 cursor-pointer transition-colors">in</div>
+               <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 cursor-pointer transition-colors">X</div>
+            </div>
+          </footer>
         </div>
-      </footer>
+      </section>
+
     </div>
   );
-};
-
-export default Index;
+}
