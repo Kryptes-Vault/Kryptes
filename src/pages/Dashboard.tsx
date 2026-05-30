@@ -23,7 +23,8 @@ import {
   CreditCard,
   Target,
   Database,
-  Landmark
+  Landmark,
+  LineChart
 } from "lucide-react";
 import { toast } from "sonner";
 import { AddSecretModal } from "@/components/kryptex/AddSecretModal";
@@ -186,6 +187,7 @@ const Dashboard = () => {
               { id: "documents", icon: FileText, path: null },
               { id: "passwords", icon: KeyRound, path: null },
               { id: "banking", icon: CreditCard, path: null },
+              { id: "finance", icon: LineChart, path: "/vault-finance" },
               { id: "authenticator", icon: QrCode, path: null },
               { id: "settings", icon: Settings, path: null },
             ].map((item) => (
