@@ -86,12 +86,14 @@ const AuthRoute = () => {
           </div>
 
           <div className="p-5 sm:p-6 rounded-xl sm:rounded-2xl bg-[#f8f8f8] border border-black/5 mb-6 sm:mb-8 text-left flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-[#FF3B13]/10 flex items-center justify-center text-[#FF3B13] font-bold text-sm shrink-0">
+            <div className="w-12 h-12 rounded-full bg-[#FF3B13]/10 flex items-center justify-center text-[#FF3B13] font-black text-lg shrink-0 border border-[#FF3B13]/20">
               {user.email?.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[9px] font-bold text-black/30 uppercase tracking-widest">Logged in as</div>
-              <div className="text-xs font-bold text-black truncate">{user.email}</div>
+              <div className="text-[10px] font-bold text-[#FF3B13] uppercase tracking-widest">Logged in as</div>
+              <div className="text-sm sm:text-base font-black text-black truncate mt-0.5" title={user.email}>
+                {user.email}
+              </div>
             </div>
           </div>
 
