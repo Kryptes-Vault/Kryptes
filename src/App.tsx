@@ -78,27 +78,27 @@ const AuthRoute = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="bg-white rounded-[2.5rem] border border-black/10 shadow-[0_40px_100px_rgba(0,0,0,0.2)] p-12 w-full max-w-md relative z-10 text-center"
+          className="bg-white rounded-[2rem] sm:rounded-[2.5rem] border border-black/10 shadow-[0_40px_100px_rgba(0,0,0,0.2)] p-8 sm:p-12 w-full max-w-md relative z-10 text-center"
         >
           <div className="text-center mb-8 flex flex-col items-center">
-            <h2 className="text-2xl font-bold tracking-tight text-black uppercase">Active Session</h2>
-            <p className="text-[10px] text-black/40 mt-2 font-bold uppercase tracking-widest">You are currently logged in</p>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-black uppercase">Active Session</h2>
+            <p className="text-[10px] sm:text-xs text-black/40 mt-1 sm:mt-2 font-bold uppercase tracking-widest">You are currently logged in</p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#f8f8f8] border border-black/5 mb-8 text-left flex items-center gap-4">
+          <div className="p-5 sm:p-6 rounded-xl sm:rounded-2xl bg-[#f8f8f8] border border-black/5 mb-6 sm:mb-8 text-left flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-[#FF3B13]/10 flex items-center justify-center text-[#FF3B13] font-bold text-sm shrink-0">
               {user.email?.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[9px] font-bold text-black/30 uppercase tracking-widest">Logged in as</div>
-              <div className="text-sm font-bold text-black truncate">{user.email}</div>
+              <div className="text-xs font-bold text-black truncate">{user.email}</div>
             </div>
           </div>
 
           <div className="space-y-4">
             <button
               onClick={() => navigate("/dashboard", { replace: true })}
-              className="w-full bg-[#FF3B13] text-white py-4.5 rounded-2xl font-bold text-xs tracking-[0.2em] shadow-[0_15px_30px_rgba(255,59,19,0.3)] hover:bg-black transition-all flex items-center justify-center gap-4 group"
+              className="w-full bg-[#FF3B13] text-white py-4 sm:py-5 rounded-xl sm:rounded-2xl font-bold text-[10px] sm:text-xs tracking-[0.2em] shadow-[0_15px_30px_rgba(255,59,19,0.3)] hover:bg-black transition-all flex items-center justify-center gap-3 sm:gap-4 group"
             >
               CONTINUE TO VAULT
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -107,7 +107,7 @@ const AuthRoute = () => {
             <button
               disabled={signingOut}
               onClick={handleSignOut}
-              className="w-full bg-transparent border border-black/10 text-black py-4.5 rounded-2xl font-bold text-xs tracking-[0.2em] hover:bg-black/5 transition-all flex items-center justify-center disabled:opacity-50"
+              className="w-full bg-transparent border border-black/10 text-black py-4 sm:py-5 rounded-xl sm:rounded-2xl font-bold text-[10px] sm:text-xs tracking-[0.2em] hover:bg-black/5 transition-all flex items-center justify-center disabled:opacity-50"
             >
               {signingOut ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "USE A DIFFERENT ACCOUNT"}
             </button>
