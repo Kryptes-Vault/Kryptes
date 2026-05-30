@@ -27,6 +27,9 @@ Documentation is grouped by **topic**. Paths are from the repository root (e.g. 
 | [frontend/animation-orchestration.md](./frontend/animation-orchestration.md) | Animation orchestration |
 | [frontend/add-node-component.md](./frontend/add-node-component.md) | Add-node component spec |
 | [frontend/branding-handshake.md](./frontend/branding-handshake.md) | Branding & OAuth handshake |
+| [frontend/jitter-free-transitions.md](./frontend/jitter-free-transitions.md) | Absolute transitions, global sidebars, CLS fixes |
+| [frontend/premium-finance-view.md](./frontend/premium-finance-view.md) | Premium Vault Finance interface & Recharts analytics |
+| [frontend/snappy-document-locker.md](./frontend/snappy-document-locker.md) | Document Locker R2 uploads, progress speedup, schema fallback |
 
 ---
 
@@ -54,6 +57,8 @@ Documentation is grouped by **topic**. Paths are from the repository root (e.g. 
 | [platform/env-template.md](./platform/env-template.md) | Environment variable template |
 | [platform/api-configuration.md](./platform/api-configuration.md) | Final API configuration |
 | [R2_MIGRATION_CHANGELOG.md](./R2_MIGRATION_CHANGELOG.md) | Google Drive → Cloudflare R2 migration, pre-signed URL architecture, ZK lifecycle |
+| [platform/non-blocking-redis-cache.md](./platform/non-blocking-redis-cache.md) | Fault-tolerant Redis bypass and non-blocking invalidate |
+| [56_vault_stabilization_and_ui_polish.md](./56_vault_stabilization_and_ui_polish.md) | Protocol 56 — Comprehensive vault stabilization & UI specifications |
 
 ---
 
