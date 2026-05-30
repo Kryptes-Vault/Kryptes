@@ -52,12 +52,12 @@ function whenRedisReadyOrTimeout(ms = 15000) {
 connectRedis();
 
 const getCachedVault = async (userId) => {
-  await connectRedis();
+  if (!redisClient?.isReady) return null;
   return await redisClient.get(`vault:${userId}`);
 };
 
 const setCachedVault = async (userId, encryptedString) => {
-  await connectRedis();
+  if (!redisClient?.isReady) return;
   // 15-minute TTL (900 seconds)
   await redisClient.set(`vault:${userId}`, encryptedString, {
     EX: 900,
@@ -65,13 +65,11 @@ const setCachedVault = async (userId, encryptedString) => {
 };
 
 const deleteCachedVault = async (userId) => {
-  await connectRedis();
-  if (redisClient?.isOpen) {
-    await Promise.all([
-      redisClient.del(`vault:${userId}`),
-      redisClient.del(`documents:${userId}`),
-    ]);
-  }
+  if (!redisClient?.isReady) return;
+  await Promise.all([
+    redisClient.del(`vault:${userId}`),
+    redisClient.del(`documents:${userId}`),
+  ]);
 };
 
 module.exports = { getCachedVault, setCachedVault, deleteCachedVault, whenRedisReadyOrTimeout, redisClient, connectRedis };

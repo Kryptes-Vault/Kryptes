@@ -70,13 +70,26 @@ export function useVaultItems(userId: string | null) {
   // 4. Commit Mutation (for uploads)
   const commitMutation = useMutation({
     mutationFn: async (payload: any) => {
-      const resp = await fetch("/api/vault/documents/commit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!resp.ok) throw new Error("Commit failed");
-      return resp.json();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      try {
+        const resp = await fetch("/api/vault/documents/commit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+        if (!resp.ok) throw new Error("Commit failed");
+        return await resp.json();
+      } catch (err: any) {
+        if (err.name === "AbortError") {
+          throw new Error("Server took too long to respond. Please try again.");
+        }
+        throw err;
+      } finally {
+        clearTimeout(timeoutId);
+      }
     },
     onSuccess: () => {
       // CRITICAL: Invalidate cache immediately on success

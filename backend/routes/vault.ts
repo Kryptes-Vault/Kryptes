@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import { isR2Configured, generateDownloadUrl } from "../services/r2Storage";
 const router = express.Router();
 
 router.use((req, res, next) => {
@@ -341,54 +342,83 @@ router.get("/items", vaultLimiter, async (req: Request, res: Response) => {
 
         // 1. Check Redis Cache
         const cachedData = await getCachedVault(userId);
+        let items = [];
+        let source = "database";
         if (cachedData) {
             console.log(`[Cache Hit] Serving decrypted vault items for: ${userId}`);
-            return res.json({ items: JSON.parse(cachedData), source: "cache" });
-        }
+            items = JSON.parse(cachedData);
+            source = "cache";
+        } else {
+            console.log(`[Cache Miss] Fetching items from Supabase for: ${userId}`);
+            const supabase = getSupabaseAdmin();
+            const { data: rows, error } = await supabase
+                .from("vault_items")
+                .select("*")
+                .eq("user_id", userId)
+                .order("updated_at", { ascending: false });
 
-        console.log(`[Cache Miss] Fetching items from Supabase for: ${userId}`);
-        const supabase = getSupabaseAdmin();
-        const { data: rows, error } = await supabase
-            .from("vault_items")
-            .select("*")
-            .eq("user_id", userId)
-            .order("updated_at", { ascending: false });
-
-        if (error) {
-            console.error("[Vault] Items Retrieval Error:", error);
-            return res.status(500).json({ error: "Failed to retrieve vault items." });
-        }
-
-        const decryptedItems = (rows || []).map((row) => {
-            // ZK documents are client-side encrypted and the backend only stores metadata.
-            // We skip server-side decryption for these items.
-            if (row.item_type === "zk_document") {
-                return {
-                    ...row,
-                    decrypted_data: row.metadata || {},
-                    title: row.title || row.metadata?.fileName || "Untitled Document"
-                };
+            if (error) {
+                console.error("[Vault] Items Retrieval Error:", error);
+                return res.status(500).json({ error: "Failed to retrieve vault items." });
             }
 
-            try {
-                const plain = decryptVaultAtRest(row.iv, row.ciphertext);
-                const payload = JSON.parse(plain);
-                return {
-                    ...row,
-                    decrypted_data: payload,
-                    // For UI compatibility: ensure a title exists if not present in the row
-                    title: row.title || payload.cardholderName || payload.accountNumber || "Unnamed Item"
-                };
-            } catch (e) {
-                console.warn(`[Vault] Failed to decrypt item ${row.id}:`, e);
-                return { ...row, decryption_error: true };
-            }
-        });
+            items = (rows || []).map((row) => {
+                // ZK documents are client-side encrypted and the backend only stores metadata.
+                // We skip server-side decryption for these items.
+                if (row.item_type === "zk_document") {
+                    return {
+                        ...row,
+                        decrypted_data: row.metadata || {},
+                        title: row.title || row.metadata?.fileName || "Untitled Document"
+                    };
+                }
 
-        // 2. Cache in Redis
-        await setCachedVault(userId, JSON.stringify(decryptedItems));
+                try {
+                    const plain = decryptVaultAtRest(row.iv, row.ciphertext);
+                    const payload = JSON.parse(plain);
+                    return {
+                        ...row,
+                        decrypted_data: payload,
+                        // For UI compatibility: ensure a title exists if not present in the row
+                        title: row.title || payload.cardholderName || payload.accountNumber || "Unnamed Item"
+                    };
+                } catch (e) {
+                    console.warn(`[Vault] Failed to decrypt item ${row.id}:`, e);
+                    return { ...row, decryption_error: true };
+                }
+            });
 
-        return res.json({ items: decryptedItems, source: "database" });
+            // Cache raw decrypted items in Redis
+            await setCachedVault(userId, JSON.stringify(items));
+        }
+
+        // Generate fresh R2 pre-signed download URLs on the fly for all zk_document items
+        const processedItems = await Promise.all(
+            items.map(async (item: any) => {
+                if (item.item_type === "zk_document") {
+                    let downloadUrl = "";
+                    const metadata = item.decrypted_data || item.metadata || {};
+                    const objectKey = metadata.objectKey || item.ciphertext;
+                    if (objectKey && isR2Configured()) {
+                        try {
+                            downloadUrl = await generateDownloadUrl(objectKey, 600); // 10 minutes expiry
+                        } catch (e: any) {
+                            console.warn("[Vault] Failed to pre-sign R2 URL on the fly:", e.message);
+                        }
+                    }
+                    return {
+                        ...item,
+                        decrypted_data: {
+                            ...metadata,
+                            downloadUrl
+                        }
+                    };
+                }
+                return item;
+            })
+        );
+
+        return res.json({ items: processedItems, source });
     } catch (error: any) {
         console.error("[Vault] GET /items error:", error);
         return res.status(500).json({ error: "Server error fetching vault items" });

@@ -82,14 +82,23 @@ function makeCode() {
   return `${Math.floor(100000 + Math.random() * 900000)}`;
 }
 
-export default function TwoFAMigrationWizard() {
-  const [activeProvider, setActiveProvider] = useState<AuthenticatorProvider | null>(null);
+export default function TwoFAMigrationWizard({
+  activeProvider = null,
+  onProviderChange
+}: {
+  activeProvider?: AuthenticatorProvider | null;
+  onProviderChange?: (provider: AuthenticatorProvider | null) => void;
+}) {
+  const [localActiveProvider, setLocalActiveProvider] = useState<AuthenticatorProvider | null>(null);
+  const currentProvider = onProviderChange !== undefined ? activeProvider : localActiveProvider;
+  const setProvider = onProviderChange !== undefined ? onProviderChange : setLocalActiveProvider;
+
   const [setupKey, setSetupKey] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
   const [copied, setCopied] = useState(false);
   const [mobileScanOpen, setMobileScanOpen] = useState(false);
 
-  const guide = activeProvider ? COPY[activeProvider] : null;
+  const guide = currentProvider ? COPY[currentProvider] : null;
 
   const appCards = useMemo(
     () =>
@@ -156,7 +165,7 @@ export default function TwoFAMigrationWizard() {
                 <button
                   key={card.id}
                   type="button"
-                  onClick={() => setActiveProvider(card.id)}
+                  onClick={() => setProvider(card.id)}
                   className="group rounded-3xl border border-black/5 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-[#FF3300]/20 hover:shadow-lg dark:border-white/10 dark:bg-white/[0.03]"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -186,7 +195,7 @@ export default function TwoFAMigrationWizard() {
               <button
                 type="button"
                 onClick={() => {
-                  setActiveProvider(null);
+                  setProvider(null);
                   setGeneratedCode("");
                   setSetupKey("");
                   setMobileScanOpen(false);
