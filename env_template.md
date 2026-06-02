@@ -3,6 +3,7 @@
 **Do not commit real keys.** Copy values from the Supabase dashboard and your host settings.
 
 Local dev: Vite runs on **port 5173** by default — add `http://localhost:5173/**` to Supabase redirect URLs (see `docs/encryption/vault-crypto-and-redirects.md`).
+If these frontend env vars are missing, the app will still load, but login buttons will be disabled and OAuth will not work.
 
 ## Vercel (Vite frontend)
 

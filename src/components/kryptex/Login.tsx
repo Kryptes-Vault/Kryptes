@@ -10,7 +10,7 @@ import {
   Loader2 
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabase";
+import { isSupabaseConfigured, supabase, supabaseConfigNotice } from "@/lib/supabase";
 import { getOAuthRedirectUrl, getProviderOptions } from "@/lib/oauthRedirect";
 import { toast } from "sonner";
 
@@ -52,8 +52,15 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
     confirmPassword: ""
   });
 
+  const requireSupabaseConfig = () => {
+    if (isSupabaseConfigured) return true;
+    toast.error(supabaseConfigNotice);
+    return false;
+  };
+
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!requireSupabaseConfig()) return;
     setVerifyingOtp(true);
     try {
       const { data, error } = await supabase.auth.verifyOtp({
@@ -79,6 +86,7 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!requireSupabaseConfig()) return;
     setLoading(true);
 
     try {
@@ -125,6 +133,7 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
   };
 
   const signInWithProvider = async (provider: "google" | "azure" | "x" | "linkedin_oidc") => {
+    if (!requireSupabaseConfig()) return;
     setOauthLoading(provider);
     try {
       const providerOpts = getProviderOptions(provider);
@@ -217,7 +226,7 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
                     <button
                       id="oauth-google"
                       type="button"
-                      disabled={!!oauthLoading}
+                      disabled={!!oauthLoading || !isSupabaseConfigured}
                       onClick={() => signInWithProvider("google")}
                       className="relative flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
                     >
@@ -230,7 +239,7 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
                     <button
                       id="oauth-azure"
                       type="button"
-                      disabled={!!oauthLoading}
+                      disabled={!!oauthLoading || !isSupabaseConfigured}
                       onClick={() => signInWithProvider("azure")}
                       className="relative flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
                     >
@@ -243,7 +252,7 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
                     <button
                       id="oauth-twitter"
                       type="button"
-                      disabled={!!oauthLoading}
+                      disabled={!!oauthLoading || !isSupabaseConfigured}
                       onClick={() => signInWithProvider("x")}
                       className="relative flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
                     >
@@ -258,7 +267,7 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
                     <button
                       id="oauth-linkedin"
                       type="button"
-                      disabled={!!oauthLoading}
+                      disabled={!!oauthLoading || !isSupabaseConfigured}
                       onClick={() => signInWithProvider("linkedin_oidc")}
                       className="relative flex items-center justify-center p-3.5 bg-white border border-black/5 rounded-xl hover:border-[#FF3B13] transition-all group shadow-sm disabled:opacity-50"
                     >
@@ -342,12 +351,18 @@ const Login = ({ isVisible, onClose }: LoginProps) => {
 
                 <div className="space-y-6 pt-2">
                   <button 
-                    disabled={loading}
+                    disabled={loading || !isSupabaseConfigured}
                     className="w-full bg-[#FF3B13] text-white py-4 sm:py-5 rounded-xl sm:rounded-2xl font-bold text-[10px] sm:text-xs tracking-[0.2em] shadow-[0_15px_30px_rgba(255,59,19,0.3)] hover:bg-black transition-all flex items-center justify-center gap-3 sm:gap-4 group disabled:opacity-50"
                   >
                     {loading ? "PROCESSING..." : isSignUp ? "CREATE VAULT" : "LOGIN"}
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </button>
+
+                  {!isSupabaseConfigured && (
+                    <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-amber-800">
+                      {supabaseConfigNotice}
+                    </p>
+                  )}
 
                   <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2 sm:px-4">
                     <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="text-[#FF3B13] hover:underline">

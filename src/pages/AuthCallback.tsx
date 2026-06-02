@@ -13,7 +13,7 @@
  */
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { isSupabaseConfigured, supabase, supabaseConfigNotice } from "@/lib/supabase";
 import { toast } from "sonner";
 
 const backend = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
@@ -54,6 +54,12 @@ const AuthCallback = () => {
   const handled = useRef(false);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      toast.error(supabaseConfigNotice);
+      navigate("/", { replace: true });
+      return;
+    }
+
     // Safety timeout — if nothing happens in 15s, redirect home
     const fallback = setTimeout(() => {
       if (!handled.current) {

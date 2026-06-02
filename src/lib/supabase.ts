@@ -7,6 +7,9 @@ const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 /** True when both URL and anon key are set (trimmed non-empty). */
 export const isSupabaseConfigured = Boolean(envUrl?.trim() && envKey?.trim());
 
+export const supabaseConfigNotice =
+  "Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env before signing in.";
+
 /**
  * Supabase JS throws if URL or key are empty. When env is missing (e.g. fresh clone),
  * we use placeholders so the app boots; API/auth calls fail until `.env` is filled.

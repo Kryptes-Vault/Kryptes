@@ -7,6 +7,29 @@ import { BentoBox } from "@/components/landing/BentoBox";
 
 const MotionLink = motion(Link);
 
+const faqItems = [
+  {
+    question: "How does Zero-Knowledge work?",
+    answer:
+      "Your data is encrypted locally on your device using AES-GCM before it ever reaches our servers. The encryption key is derived from your master password, which is never transmitted to us. This means we physically cannot read your data.",
+  },
+  {
+    question: "Can Kryptes recover my master password?",
+    answer:
+      "No. Your master password never leaves your device in a reversible form, so it cannot be recovered by Kryptes or anyone else.",
+  },
+  {
+    question: "Where is the vault data stored?",
+    answer:
+      "Vault metadata is stored in our backend, while sensitive fields remain encrypted end-to-end. Only encrypted blobs leave your device.",
+  },
+  {
+    question: "Is the ephemeral sharing fully secure?",
+    answer:
+      "Yes. Shared links are designed to expire after a single view, with the payload protected so it cannot be re-read once consumed.",
+  },
+];
+
 const navLinks = [
   { href: "/", label: "Home", active: true },
   { href: "/#capabilities", label: "Capabilities", active: false },
@@ -24,6 +47,25 @@ const BrandMark = () => (
 );
 
 export default function Index() {
+  const [activeFaqIndex, setActiveFaqIndex] = useState(0);
+  const faqListRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+
+      if (target && faqListRef.current && !faqListRef.current.contains(target)) {
+        setActiveFaqIndex(-1);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-orange-500/30 selection:text-black">
       
@@ -272,33 +314,70 @@ export default function Index() {
                 <p className="text-gray-500">Find answers regarding zero-knowledge encryption and vault architecture.</p>
               </div>
 
-              <div className="space-y-4">
-                {/* Active FAQ Item */}
-                <div className="bg-orange-500 rounded-[24px] p-6 md:p-8 text-white shadow-xl shadow-orange-500/20">
-                  <div className="flex justify-between items-center mb-4 cursor-pointer">
-                    <h4 className="text-lg font-bold">How does Zero-Knowledge work?</h4>
-                    <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
-                    </div>
-                  </div>
-                  <p className="text-orange-100 text-sm leading-relaxed pr-8">
-                    Your data is encrypted locally on your device using AES-GCM before it ever reaches our servers. The encryption key is derived from your master password, which is never transmitted to us. This means we physically cannot read your data.
-                  </p>
-                </div>
+              <div ref={faqListRef} className="space-y-4">
+                {faqItems.map((item, index) => {
+                  const isOpen = index === activeFaqIndex;
 
-                {/* Inactive FAQ Items */}
-                {[
-                  "Can Kryptes recover my master password?",
-                  "Where is the vault data stored?",
-                  "Is the ephemeral sharing fully secure?"
-                ].map((q, i) => (
-                  <div key={i} className="bg-white rounded-[24px] p-6 md:p-8 border border-gray-200 cursor-pointer hover:border-orange-200 transition-colors flex justify-between items-center group">
-                    <h4 className="text-lg font-medium text-gray-900 pr-4">{q}</h4>
-                    <div className="h-8 w-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0 text-gray-400 group-hover:text-orange-500 group-hover:bg-orange-50 transition-colors">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  return (
+                    <div
+                      key={item.question}
+                      onClick={() => setActiveFaqIndex(isOpen ? -1 : index)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setActiveFaqIndex(isOpen ? -1 : index);
+                        }
+                      }}
+                      className={`rounded-[24px] p-6 md:p-8 border transition-all ${
+                        isOpen
+                          ? "bg-orange-500 border-orange-500 text-white shadow-xl shadow-orange-500/20"
+                          : "bg-white border-gray-200 hover:border-orange-200"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setActiveFaqIndex(isOpen ? -1 : index)}
+                        className="flex w-full items-center justify-between gap-4 text-left"
+                        aria-expanded={isOpen}
+                      >
+                        <h4 className={`text-lg font-bold ${isOpen ? "text-white" : "text-gray-900"}`}>
+                          {item.question}
+                        </h4>
+                        <div
+                          className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                            isOpen
+                              ? "bg-white/20 text-white"
+                              : "bg-gray-50 text-gray-400"
+                          }`}
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d={isOpen ? "M20 12H4" : "M12 4v16m8-8H4"}
+                            />
+                          </svg>
+                        </div>
+                      </button>
+                      <div
+                        className={`grid transition-all duration-300 ease-out ${
+                          isOpen ? "grid-rows-[1fr] mt-4" : "grid-rows-[0fr]"
+                        }`}
+                      >
+                        <p
+                          className={`overflow-hidden text-sm leading-relaxed pr-8 transition-opacity duration-300 ${
+                            isOpen ? "text-orange-100 opacity-100" : "text-gray-500 opacity-0"
+                          }`}
+                        >
+                          {item.answer}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
