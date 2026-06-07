@@ -136,6 +136,7 @@ const AppRoutes = () => {
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><AuthRoute /></PageTransition>} />
         <Route path="/login" element={<PageTransition><AuthRoute /></PageTransition>} />
+        <Route path="/auth/login" element={<PageTransition><AuthRoute /></PageTransition>} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
           path="/dashboard/:view?"
