@@ -1,0 +1,29 @@
+## Summary of Changes
+
+This Pull Request addresses the document upload hangs, refactors the Redis cache layer to be fully non-blocking, fixes transition layout shifts/glitches, and polishes the user interface across the Document Locker and Vault Finance views to deliver a highly premium experience.
+
+---
+
+### 1. ⚙️ Non-Blocking Redis Layer & Upload Hang Fix
+* **The Issue:** The backend `/commit` route (invoked when finalizing document uploads) would attempt to invalidate the user cache via `deleteCachedVault(userId)`. However, if the Redis instance was unresponsive or experiencing downtime, the call would hang indefinitely due to lack of connection timeout handling, trapping the frontend upload progress at **90%**.
+* **The Fix:**
+  * **Resilient Cache Operations:** Refactored `backend/services/redisService.js` so that all cache interactions (`getCachedVault`, `setCachedVault`, `deleteCachedVault`) are fully non-blocking and safe. If the Redis client fails to connect or throws an error, the operation gracefully logs a warning and allows the request flow to proceed instantly.
+  * **Updated Credentials:** Configured the active Redis cluster URL in `backend/.env`.
+  * **Mutation Timeout:** Added a defensive `AbortController` with a 10-second timeout to the frontend vault mutation fetch (`src/hooks/useVaultItems.ts`) to prevent the UI from hanging under anomalous network conditions.
+
+### 2. ⚡ Snappy Upload Experience & Document Locker Enhancements
+* **Faster Progress Feedback:** Optimized the progress bar simulator in `src/components/kryptex/DocumentLocker.tsx` (reduced update interval from 180ms to 60ms) to make uploads feel extremely rapid.
+* **Instant Listing Updates:** Ensured the upload modal immediately clears upon a success response and triggers an automatic refetch.
+* **Robust Object Matching:** Added safe fallbacks for R2 storage path keys (e.g., matching older schemas via `row.ciphertext` when standard fields are absent), so that newly uploaded files are immediately rendered in the locker list.
+
+### 3. 🎨 Sidebar Harmonization & Transition Polish
+* **Unified Sidebar Context:** Eliminated redundant sub-sidebars from inside individual views (`DocumentLocker.tsx`, etc.), centralizing layout routing to the global Dashboard navigation.
+* **Layout Transition Fixes:** Addressed layout-shifting and page-scroll jumps during transitions. By leveraging `AnimatePresence` and wrapping content switches in an absolute wrapper (`absolute inset-0`), view changes are now buttery-smooth, fluid, and free of jitter.
+
+### 4. 📈 Premium Vault Finance Tracker
+* **Redesigned Dashboard:** Elevated `src/pages/VaultFinance.tsx` and introduced a dedicated `FinanceView.tsx` component.
+* **Polished Aesthetics:** Designed beautiful, high-contrast, modern cards with Outfit/Inter typography, harmonious gradients, custom interactive tooltips, and smooth micro-animations.
+* **Interactive Signal Analysis:** Created a secure drag-and-drop file uploader simulation to parse bank statement signals and unlock zero-knowledge insights.
+
+### 5. 🛠️ General Quality Polish
+* **DOM Warning Fix:** Resolved the console warning in `src/App.tsx` by replacing the legacy DOM property `referrerpolicy` with React-compliant `referrerPolicy`.
